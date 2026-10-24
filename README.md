@@ -27,7 +27,14 @@ Telegram Mini App + бот на **Telegram Serverless**, в котором по�
 - Ответ внешнего HTTP ≤ 30 МБ; стриминг LLM — через `res.body`.
 - Deploy кода (`push`) и миграции БД (`migrate`) — всегда отдельные шаги.
 
-## Структура репозитория (план)
+## Живой бот
+
+- Бот: **@sawapapp** (приватный чат: команды `/start`, `/agents`, `/new`, `/help`)
+- Mini App: `https://app8872967138.tgcloud.ai/` (кнопка «Открыть приложение» у бота, меню-кнопка установлена)
+- Модель по умолчанию: `nvidia/nemotron-3.5-bolt-e4b`
+- Агенты: Общение · Правовед · Маркетолог · Дизайнер · Копирайтер
+
+## Структура репозитория
 
 ```
 sawapapp/
@@ -47,13 +54,66 @@ sawapapp/
 ## Roadmap
 
 - [x] Репозиторий, правила секретов, документация
-- [ ] Включить Serverless в @BotFather, получить CLI-токен
-- [ ] Скаффолд `tgcloud/` (`npm create @tgcloud/bot .`)
-- [ ] Схема БД + обработчик `message` (эхо)
-- [ ] Роли агентов: модель данных + `lib/agents/*`
-- [ ] `endpoints/chat` + стриминг ответов NVIDIA
-- [ ] Mini App: чат-интерфейс, выбор агента
+- [x] Включить Serverless в @BotFather, получить CLI-токен
+- [x] Скаффолд `tgcloud/` (`npm create @tgcloud/bot .`)
+- [x] Схема БД + обработчик `message` (эхо)
+- [x] Роли агентов: модель данных + `lib/agents/*`
+- [x] `endpoints/chat` + стриминг ответов NVIDIA
+- [x] Mini App: чат-интерфейс, выбор агента
 - [ ] Skills агентов (инструменты по специальностям)
+- [ ] MCP-серверы по HTTP (Streamable HTTP transport) через `sdk fetch` + таблица `mcp_servers`
+- [ ] Веб-доступ вне Telegram (отдельный сайт / приложение, своя auth-схема)
+
+## Структура
+
+```
+sawapapp/
+├─ tgcloud/                  # всё, что деплоится в Telegram Serverless
+│  ├─ handlers/
+│  │  ├─ message.js          # команды, диалог в чате, стриминг ответа
+│  │  └─ callback_query.js   # выбор агента кнопками
+│  ├─ endpoints/             # серверная сторона Mini App
+│  │  ├─ listAgents.js       #   метаданные 5 агентов
+│  │  ├─ sendMessage.js      #   отправка сообщения → ответ агента
+│  │  ├─ getHistory.js       #   история диалога
+│  │  ├─ newConversation.js  #   новый диалог
+│  │  ├─ adminSetSetting.js  #   [админ] запись в settings (ключ NVIDIA)
+│  │  ├─ adminSetup.js       #   [админ] команды и кнопка меню бота
+│  │  └─ adminPing.js        #   [админ] проверка модели и стриминга
+│  ├─ lib/
+│  │  ├─ agents.js           # реестр 5 агентов с системными промптами
+│  │  ├─ nvidia.js           # клиент integrate.api.nvidia.com (+ SSE-стриминг)
+│  │  ├─ chat.js             # сценарий диалога: юзеры, диалоги, история
+│  │  ├─ config.js           # модель, лимиты, APP_URL, админы
+│  │  └─ internal/           # вложенные модули
+│  └─ schema.js              # users, conversations, messages, settings, mcp_servers
+├─ src/                      # фронтенд Mini App (Vite + React, SVG-интерфейс)
+├─ scripts/patch-tgcloud-cli.ps1
+└─ tgcloud.jsonc             # static: dist, spa
+```
+
+## Команды
+
+```powershell
+# после npm install — патч бага CLI 0.2.0 на Windows (см. «Известные проблемы»)
+powershell -File scripts\patch-tgcloud-cli.ps1
+
+# переменные окружения для CLI (TGCLOUD_TOKEN из .env)
+$env:TGCLOUD_TOKEN = ((Get-Content .env | Where-Object { $_ -match '^TGCLOUD_TOKEN=' }) -replace '^TGCLOUD_TOKEN=','').Trim()
+
+npx tgcloud status          # что изменилось локально vs облако
+npm run build               # сборка Mini App → dist/
+npx tgcloud push            # деплой модулей (+ dist, если собран)
+npx tgcloud migrate --safe  # применить безопасные изменения схемы
+npx tgcloud fetch           # обновить локальный снапшот облака (после точечных push)
+npx tgcloud run handlers/message '{ chat: { id: 1 }, from: { id: 1 }, text: "/start" }'
+```
+
+Аргументы для `tgcloud run` в PowerShell передавай в **двойных кавычках с одинарными внутри** (JSON5): `"{ text: 'привет' }"` — двойные кавычки внутри аргумента Windows-оболочки съедаются.
+
+## Известные проблемы
+
+- **CLI 0.2.0, Windows:** точечный `push` отдельного файла падал с `ERR_INVALID_ARG_TYPE` (сервер отдаёт `false` вместо контента для неизменённых модулей) и портит локальный снапшот. Патч: `scripts/patch-tgcloud-cli.ps1`; после точечного пуша, если `status` показывает лишнее — `npx tgcloud fetch`.
 
 ## 🔐 Правила работы с ключами и GitHub
 
@@ -65,7 +125,7 @@ sawapapp/
 |---|---|---|
 | API-токен бота (`TELEGRAM_BOT_TOKEN`) | `.env` | ❌ никогда |
 | Serverless CLI-токен (`TGCLOUD_TOKEN`, `app<id>:<secret>`) | `.env` / `TGCLOUD_TOKEN` env | ❌ никогда |
-| NVIDIA API-ключ (`NVIDIA_API_KEY`) | `.env`; в рантайме — БД Telegram или `lib/config`-решение по согласованию | ❌ никогда |
+| NVIDIA API-ключ (`NVIDIA_API_KEY`) | `.env` локально; в рантайме — таблица `settings` в БД Telegram (сидируется через `endpoints/adminSetSetting`, доступ только у админа) | ❌ никогда |
 | Состояние CLI с кредами (`.tgcloud/`) | локальная папка | ❌ никогда |
 
 ### Правила (обязательные)

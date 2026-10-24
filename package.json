@@ -1,0 +1,19 @@
+{
+  "name": "sawapapp",
+  "private": true,
+  "devDependencies": {
+    "@tgcloud/cli": "^0.2.0",
+    "@vitejs/plugin-react": "^6.1.2",
+    "vite": "^8.3.5"
+  },
+  "scripts": {
+    "build": "vite build",
+    "deploy": "vite build && tgcloud push",
+    "status": "tgcloud status",
+    "run": "tgcloud run"
+  },
+  "dependencies": {
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1"
+  }
+}
