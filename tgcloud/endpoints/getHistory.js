@@ -22,6 +22,14 @@ export default async function (input, ctx) {
     conversationId: conv.id,
     agentId: conv.agentId,
     title: conv.title,
-    messages: history.map((m) => ({ id: m.id, role: m.role, content: m.content, createdAt: m.createdAt })),
+    reasoning: conv.reasoning ?? 'fast',
+    messages: history.map((m) => ({
+      id: m.id,
+      role: m.role,
+      content: m.content,
+      agentId: m.agentId,
+      meta: m.meta ?? null,
+      createdAt: m.createdAt instanceof Date ? m.createdAt.getTime() : (m.createdAt ?? null),
+    })),
   };
 }

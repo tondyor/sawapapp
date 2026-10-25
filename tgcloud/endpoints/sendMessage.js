@@ -1,6 +1,6 @@
 import { EndpointError } from 'sdk';
 import { completeTurn } from '../lib/chat.js';
-import { MAX_MESSAGE_CHARS } from '../lib/config.js';
+import { MAX_MESSAGE_CHARS, REASONING_LEVELS } from '../lib/config.js';
 
 export default async function (input, ctx) {
   const tgUser = ctx.initData.user;
@@ -9,9 +9,10 @@ export default async function (input, ctx) {
   if (text.length > MAX_MESSAGE_CHARS) {
     throw new EndpointError(`Сообщение слишком длинное (максимум ${MAX_MESSAGE_CHARS} символов)`, { code: 'TOO_LONG' });
   }
+  const reasoning = REASONING_LEVELS.includes(input?.reasoning) ? input.reasoning : undefined;
   let result;
   try {
-    result = await completeTurn({ tgUser, agentId: input?.agentId, text });
+    result = await completeTurn({ tgUser, agentId: input?.agentId, text, reasoning });
   } catch (e) {
     const m = String(e?.message ?? e);
     if (m.includes('слишком длинное')) throw new EndpointError(m, { code: 'TOO_LONG' });
@@ -23,5 +24,7 @@ export default async function (input, ctx) {
     agentId: result.agent.id,
     agentName: result.agent.name,
     reply: result.reply,
+    reasoning: result.conv.reasoning,
+    meta: result.meta,
   };
 }

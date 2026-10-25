@@ -18,6 +18,7 @@ export const conversations = table('conversations', {
   tgId:      integer('tg_id').notNull(),
   agentId:   text('agent_id').notNull(),
   title:     text('title'),
+  reasoning: text('reasoning').default('fast'),
   createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`(unixepoch())`),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).default(sql`(unixepoch())`),
 }, (t) => ({
@@ -30,6 +31,7 @@ export const messages = table('messages', {
   role:           text('role').notNull(),
   content:        text('content').notNull(),
   agentId:        text('agent_id'),
+  meta:           json('meta'),
   createdAt:      integer('created_at', { mode: 'timestamp_ms' }).default(sql`(unixepoch() * 1000)`),
 }, (t) => ({
   convIdx: index('idx_messages_conv').on(t.conversationId, t.id),

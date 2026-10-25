@@ -2,7 +2,7 @@ import { fetch } from 'sdk';
 import { db } from 'sdk';
 import { eq } from 'sdk/db';
 import { settings } from '../schema.js';
-import { DEFAULT_MODEL, KEY_SETTING, NVIDIA_BASE_URL, MAX_OUTPUT_TOKENS, TEMPERATURE } from './config.js';
+import { DEFAULT_MODEL, KEY_SETTING, NVIDIA_BASE_URL, MAX_OUTPUT_TOKENS, TEMPERATURE, REASONING_BUDGET } from './config.js';
 
 export async function getApiKey() {
   const row = await db.select().from(settings).where(eq(settings.key, KEY_SETTING)).get();
@@ -12,22 +12,25 @@ export async function getApiKey() {
   return row.value;
 }
 
-function buildRequest(messages, opts = {}) {
-  return {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${opts.apiKey}`,
-      'Content-Type': 'application/json',
-      Accept: 'application/json',
-    },
-    body: JSON.stringify({
-      model: opts.model ?? DEFAULT_MODEL,
-      messages,
-      temperature: opts.temperature ?? TEMPERATURE,
-      max_tokens: opts.maxTokens ?? MAX_OUTPUT_TOKENS,
-      stream: false,
-    }),
+function buildBody(messages, opts = {}) {
+  const body = {
+    model: opts.model ?? DEFAULT_MODEL,
+    messages,
+    temperature: opts.temperature ?? TEMPERATURE,
+    max_tokens: opts.maxTokens ?? MAX_OUTPUT_TOKENS,
+    stream: opts.stream === true,
   };
+  if (opts.reasoning && opts.reasoning !== 'fast') {
+    body.chat_template_kwargs = { thinking: true };
+    body.max_tokens = REASONING_BUDGET[opts.reasoning] ?? MAX_OUTPUT_TOKENS;
+  } else {
+    body.chat_template_kwargs = { thinking: false };
+  }
+  if (opts.tools && opts.tools.length) {
+    body.tools = opts.tools;
+    body.tool_choice = 'auto';
+  }
+  return body;
 }
 
 function apiError(status, bodyText) {
@@ -42,37 +45,85 @@ function apiError(status, bodyText) {
 
 export async function completeChat(messages, opts = {}) {
   const apiKey = opts.apiKey ?? (await getApiKey());
-  const res = await fetch(`${NVIDIA_BASE_URL}/chat/completions`, buildRequest(messages, { ...opts, apiKey }));
+  const res = await fetch(`${NVIDIA_BASE_URL}/chat/completions`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+    },
+    body: JSON.stringify(buildBody(messages, { ...opts, apiKey })),
+  });
   const text = await res.text();
   if (!res.ok) throw apiError(res.status, text);
   let data;
   try { data = JSON.parse(text); } catch (_) { throw new Error('NVIDIA API: некорректный JSON в ответе'); }
   const choice = data?.choices?.[0];
-  const content = choice?.message?.content ?? '';
+  const msg = choice?.message ?? {};
+  const content = msg.content ?? '';
   const finish = choice?.finish_reason ?? '';
-  if (!content && finish !== 'length') {
+  if (!content && !msg.tool_calls?.length && finish !== 'length') {
     throw new Error(`NVIDIA API: пустой ответ (finish_reason=${finish})`);
   }
-  return { content, model: data?.model ?? opts.model ?? DEFAULT_MODEL, usage: data?.usage ?? null };
+  return {
+    content,
+    reasoning: typeof msg.reasoning_content === 'string' ? msg.reasoning_content : '',
+    toolCalls: msg.tool_calls ?? null,
+    model: data?.model ?? opts.model ?? DEFAULT_MODEL,
+    usage: data?.usage ?? null,
+  };
 }
 
 export async function* streamChat(messages, opts = {}) {
   const apiKey = opts.apiKey ?? (await getApiKey());
-  const req = buildRequest(messages, { ...opts, apiKey });
-  req.headers.Accept = 'text/event-stream';
-  req.body = req.body.replace('"stream":false', '"stream":true');
-  const res = await fetch(`${NVIDIA_BASE_URL}/chat/completions`, req);
+  const res = await fetch(`${NVIDIA_BASE_URL}/chat/completions`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+      Accept: 'text/event-stream',
+    },
+    body: JSON.stringify(buildBody(messages, { ...opts, apiKey, stream: true })),
+  });
   if (!res.ok) throw apiError(res.status, await res.text());
+  const toolAcc = new Map();
   for await (const line of sseLines(res.body)) {
     const t = line.trim();
     if (!t.startsWith('data:')) continue;
     const payload = t.slice(5).trim();
-    if (payload === '[DONE]') return;
+    if (payload === '[DONE]') {
+      if (toolAcc.size) yield { delta: '', reasoning: null, finish: 'tool_calls', toolCalls: [...toolAcc.values()], model: null };
+      return;
+    }
     let j;
     try { j = JSON.parse(payload); } catch (_) { continue; }
-    const delta = j?.choices?.[0]?.delta?.content;
-    if (delta) yield { delta, finish: j?.choices?.[0]?.finish_reason ?? null };
+    const choice = j?.choices?.[0];
+    if (!choice) continue;
+    const delta = choice?.delta ?? {};
+    const tcs = delta.tool_calls;
+    if (Array.isArray(tcs)) {
+      for (const tc of tcs) {
+        const idx = tc.index ?? 0;
+        const prev = toolAcc.get(idx) ?? { id: tc.id ?? null, type: 'function', function: { name: '', arguments: '' } };
+        if (tc.id) prev.id = tc.id;
+        if (tc.function?.name) prev.function.name = tc.function.name;
+        if (tc.function?.arguments) prev.function.arguments += tc.function.arguments;
+        toolAcc.set(idx, prev);
+      }
+    }
+    const hasContent = typeof delta.content === 'string' && delta.content.length > 0;
+    const hasReasoning = typeof delta.reasoning_content === 'string' && delta.reasoning_content.length > 0;
+    if (hasContent || hasReasoning || toolAcc.size) {
+      yield {
+        delta: delta.content ?? '',
+        reasoning: hasReasoning ? delta.reasoning_content : null,
+        finish: choice?.finish_reason ?? null,
+        model: j?.model ?? null,
+        ...(toolAcc.size ? { toolCalls: [...toolAcc.values()] } : {}),
+      };
+    }
   }
+  if (toolAcc.size) yield { delta: '', reasoning: null, finish: 'tool_calls', toolCalls: [...toolAcc.values()], model: null };
 }
 
 function utf8Decode(bytes) {

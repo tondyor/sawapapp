@@ -1,7 +1,6 @@
 import { api, BotApiError } from 'sdk';
-import { prepareTurn, finishTurn, ensureUser, setAgent, createConversation } from '../lib/chat.js';
+import { prepareTurn, finishTurn, ensureUser, setAgent, createConversation, agentTurnStream, buildMeta } from '../lib/chat.js';
 import { AGENTS, getAgent, getAgentOrDefault, DEFAULT_AGENT_ID } from '../lib/agents.js';
-import { streamChat } from '../lib/nvidia.js';
 import { APP_URL, MAX_MESSAGE_CHARS } from '../lib/config.js';
 
 export default async function (message) {
@@ -100,6 +99,8 @@ async function runTurn(chatId, from, agentId, text) {
 
   const prepared = await prepareTurn({ tgUser: from, agentId, text });
   const { agent, conv, llmMessages } = prepared;
+  const started = Date.now();
+  const out = { started, skills: [], steps: [], model: null, reasoningText: null, content: null };
 
   try { await api.sendChatAction({ chat_id: chatId, action: 'typing' }); } catch (_) {}
 
@@ -109,34 +110,51 @@ async function runTurn(chatId, from, agentId, text) {
   let acc = '';
   let lastEdit = Date.now();
   try {
-    for await (const ev of streamChat(llmMessages)) {
-      acc += ev.delta;
-      const now = Date.now();
-      if (now - lastEdit > 1500 && acc.trim()) {
-        lastEdit = now;
-        await safeEdit(chatId, messageId, `${acc.trim()} ▌`);
+    for await (const ev of agentTurnStream({ agent, llmMessages, reasoning: conv.reasoning }, out)) {
+      if (ev.type === 'delta') {
+        acc += ev.delta;
+        const now = Date.now();
+        if (now - lastEdit > 1500 && acc.trim()) {
+          lastEdit = now;
+          await safeEdit(chatId, messageId, `${acc.trim()} ▌`);
+          try { await api.sendChatAction({ chat_id: chatId, action: 'typing' }); } catch (_) {}
+        }
+      } else if (ev.type === 'skill') {
         try { await api.sendChatAction({ chat_id: chatId, action: 'typing' }); } catch (_) {}
       }
     }
-    const finalText = acc.trim() || 'Модель вернула пустой ответ. Попробуй переформулировать вопрос.';
-    await safeEdit(chatId, messageId, finalText);
+    const finalText = (out.content ?? acc).trim() || 'Модель вернула пустой ответ. Попробуй переформулировать вопрос.';
+    const footer = out.skills.length ? `\n\n— использован навык: ${out.skills.map((s) => s.name).join(', ')}` : '';
+    await safeEdit(chatId, messageId, finalText.slice(0, 4000 - footer.length) + footer);
     if (finalText.length > 4000) {
       for (const chunk of splitLong(finalText, 4000).slice(1)) {
         await api.sendMessage({ chat_id: chatId, text: chunk });
       }
     }
-    await finishTurn(conv, finalText);
+    const meta = buildMeta({
+      started,
+      model: out.model,
+      reasoning: conv.reasoning,
+      steps: out.steps,
+      skills: out.skills,
+      reasoningText: out.reasoningText,
+    });
+    await finishTurn(conv, finalText, meta);
   } catch (e) {
     console.error('turn failed', e);
+    const meta = buildMeta({
+      started,
+      reasoning: conv.reasoning,
+      steps: out.steps,
+      skills: out.skills,
+      reasoningText: out.reasoningText,
+      error: e?.message ?? String(e),
+    });
     const msg = acc.trim()
       ? `${acc.trim()}\n\n(ответ прерван из-за ошибки, попробуй ещё раз)`
       : 'Не получилось получить ответ от модели. Попробуй ещё раз через минуту.';
     await safeEdit(chatId, messageId, msg);
-    if (!acc.trim()) {
-      try { await finishTurn(conv, '[ошибка: ответ не получен]'); } catch (_) {}
-    } else {
-      await finishTurn(conv, acc.trim());
-    }
+    await finishTurn(conv, acc.trim() || '[ошибка: ответ не получен]', meta);
   }
 }
 

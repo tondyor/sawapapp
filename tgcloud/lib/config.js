@@ -16,6 +16,17 @@ export const MAX_OUTPUT_TOKENS = 2048;
 
 export const TEMPERATURE = 0.7;
 
+export const REASONING_LEVELS = ['fast', 'light', 'medium', 'high', 'max'];
+
+export const DEFAULT_REASONING = 'fast';
+
+export const REASONING_BUDGET = {
+  light: 1500,
+  medium: 3000,
+  high: 6000,
+  max: 12000,
+};
+
 export const APP_URL = 'https://app8872967138.tgcloud.ai/';
 
 export const BOT_COMMANDS = [
