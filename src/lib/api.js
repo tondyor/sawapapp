@@ -9,12 +9,24 @@ export async function fetchHistory(agentId = null, conversationId = null) {
   return callEndpoint('getHistory', { agentId, conversationId });
 }
 
-export async function sendUserMessage({ text, agentId, conversationId }) {
-  return callEndpoint('sendMessage', { text, agentId, conversationId });
+export async function sendUserMessage({ text, agentId, conversationId, reasoning }) {
+  return callEndpoint('sendMessage', { text, agentId, conversationId, reasoning });
 }
 
 export async function startConversation(agentId) {
   return callEndpoint('newConversation', { agentId });
+}
+
+export async function fetchConversations() {
+  return callEndpoint('listConversations');
+}
+
+export async function deleteConversation(conversationId) {
+  return callEndpoint('deleteConversation', { conversationId });
+}
+
+export async function forkConversation(conversationId) {
+  return callEndpoint('forkConversation', { conversationId });
 }
 
 export function errorText(err) {

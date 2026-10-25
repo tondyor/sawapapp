@@ -3,6 +3,8 @@ import { AgentIcon, IconSend, TypingDots } from './icons.jsx';
 import { markdownToHtml } from '../lib/format.js';
 import { haptic } from '../lib/tg.js';
 
+const LEVEL_LABELS = { fast: 'Быстро', light: 'Лёгкий', medium: 'Средний', high: 'Высокий', max: 'Max' };
+
 const SUGGESTIONS = {
   chat: ['Расскажи что-нибудь удивительное', 'Помоги составить план на день', 'Объясни квантовую запутанность просто'],
   lawyer: ['Проверь договор на риски', 'Вернули бракованный товар — что делать?', 'Права работника при увольнении'],
@@ -24,7 +26,7 @@ function Message({ m, accent }) {
   );
 }
 
-export default function Chat({ agents, agentId, conversationId, messages, sending, error, onSend, onRetry }) {
+export default function Chat({ agents, agentId, conversationId, messages, sending, error, reasoningLevel, onChangeReasoning, onSend, onRetry }) {
   const [text, setText] = useState('');
   const taRef = useRef(null);
   const endRef = useRef(null);
@@ -92,7 +94,19 @@ export default function Chat({ agents, agentId, conversationId, messages, sendin
         <div ref={endRef} />
       </div>
 
-      <div className="composer" style={{ '--accent': accent }}>
+      <div className="composer-stack" style={{ '--accent': accent }}>
+        <div className="levels">
+          {Object.entries(LEVEL_LABELS).map(([id, label]) => (
+            <button
+              key={id}
+              className={`level-chip ${reasoningLevel === id ? 'active' : ''}`}
+              onClick={() => { haptic(); onChangeReasoning(id); }}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+        <div className="composer">
         <textarea
           ref={taRef}
           value={text}
@@ -109,6 +123,7 @@ export default function Chat({ agents, agentId, conversationId, messages, sendin
         <button className="send" onClick={submit} disabled={!text.trim() || sending} aria-label="Отправить">
           <IconSend size={20} />
         </button>
+        </div>
       </div>
     </>
   );

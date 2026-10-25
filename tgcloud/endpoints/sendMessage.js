@@ -12,7 +12,7 @@ export default async function (input, ctx) {
   const reasoning = REASONING_LEVELS.includes(input?.reasoning) ? input.reasoning : undefined;
   let result;
   try {
-    result = await completeTurn({ tgUser, agentId: input?.agentId, text, reasoning });
+    result = await completeTurn({ tgUser, agentId: input?.agentId, text, reasoning, conversationId: input?.conversationId });
   } catch (e) {
     const m = String(e?.message ?? e);
     if (m.includes('слишком длинное')) throw new EndpointError(m, { code: 'TOO_LONG' });

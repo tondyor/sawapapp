@@ -106,7 +106,7 @@ export function buildLlmMessages(agent, history) {
   ];
 }
 
-export async function prepareTurn({ tgUser, agentId, text, reasoning }) {
+export async function prepareTurn({ tgUser, agentId, text, reasoning, conversationId }) {
   if (!text || !text.trim()) throw new Error('Пустое сообщение');
   const clean = text.trim();
   if (clean.length > MAX_MESSAGE_CHARS) {
@@ -114,7 +114,17 @@ export async function prepareTurn({ tgUser, agentId, text, reasoning }) {
   }
   const userRow = await ensureUser(tgUser);
   const agent = getAgentOrDefault(agentId ?? userRow.agentId);
-  const conv = await ensureConversation(userRow, agent.id);
+  let conv = null;
+  if (conversationId) {
+    conv = await getConversationById(Number(conversationId), tgUser.id);
+  }
+  if (!conv) {
+    conv = await ensureConversation(userRow, agent.id);
+  }
+  if (conv.agentId !== agent.id) {
+    await db.update(conversations).set({ agentId: agent.id }).where(eq(conversations.id, conv.id));
+    conv.agentId = agent.id;
+  }
   if (reasoning && REASONING_LEVELS.includes(reasoning) && reasoning !== conv.reasoning) {
     await setConversationReasoning(conv.id, reasoning);
     conv.reasoning = reasoning;
@@ -243,8 +253,8 @@ export async function* agentTurnStream({ agent, llmMessages, reasoning }, out) {
   }
 }
 
-export async function completeTurn({ tgUser, agentId, text, reasoning }) {
-  const { agent, conv, llmMessages } = await prepareTurn({ tgUser, agentId, text, reasoning });
+export async function completeTurn({ tgUser, agentId, text, reasoning, conversationId }) {
+  const { agent, conv, llmMessages } = await prepareTurn({ tgUser, agentId, text, reasoning, conversationId });
   const started = Date.now();
   const out = { started, skills: [], steps: [], model: null, usage: null, reasoningText: null, content: null };
   try {

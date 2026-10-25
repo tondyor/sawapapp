@@ -1,9 +1,19 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
-import { Logo, IconPlus, IconChevron, Background } from './components/icons.jsx';
+import { IconPlus, IconChevron, Background } from './components/icons.jsx';
 import AgentSheet from './components/AgentSheet.jsx';
 import Chat from './components/Chat.jsx';
 import { initTelegram, callEndpoint, haptic, isTelegram } from './lib/tg.js';
-import { fetchAgents, fetchHistory, sendUserMessage, startConversation, errorText } from './lib/api.js';
+import {
+  fetchAgents,
+  fetchHistory,
+  fetchConversations,
+  deleteConversation,
+  forkConversation,
+  sendUserMessage,
+  startConversation,
+  errorText,
+} from './lib/api.js';
+import Drawer from './components/Drawer.jsx';
 
 export default function App() {
   const [agents, setAgents] = useState([]);
@@ -15,6 +25,9 @@ export default function App() {
   const [error, setError] = useState(null);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [notice, setNotice] = useState(null);
+  const [reasoningLevel, setReasoningLevel] = useState('fast');
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [conversations, setConversations] = useState([]);
   const lastSent = useRef(null);
 
   useEffect(() => {
@@ -31,6 +44,7 @@ export default function App() {
           setAgentId(hist.agentId || 'chat');
           setConversationId(hist.conversationId ?? null);
           setMessages(hist.messages ?? []);
+          setReasoningLevel(hist.reasoning || 'fast');
         } catch (_) {}
       } catch (e) {
         setError(errorText(e));
@@ -38,6 +52,14 @@ export default function App() {
         setLoading(false);
       }
     })();
+    refreshConversations();
+  }, []);
+
+  const refreshConversations = useCallback(async () => {
+    try {
+      const res = await fetchConversations();
+      setConversations(res.conversations ?? []);
+    } catch (_) {}
   }, []);
 
   const agent = agents.find((a) => a.id === agentId) || agents[0];
@@ -49,7 +71,7 @@ export default function App() {
     setSending(true);
     setError(null);
     try {
-      const res = await sendUserMessage({ text, agentId, conversationId });
+      const res = await sendUserMessage({ text, agentId, conversationId, reasoning: reasoningLevel });
       setConversationId(res.conversationId ?? conversationId);
       setAgentId(res.agentId ?? agentId);
       setMessages((prev) => [...prev, { id: `a-${res.conversationId}-${Date.now()}`, role: 'assistant', content: res.reply, agentId: res.agentId }]);
@@ -58,27 +80,20 @@ export default function App() {
       setMessages((prev) => prev.filter((m) => m.content !== text || m.role !== 'user'));
     } finally {
       setSending(false);
+      refreshConversations();
     }
-  }, [sending, agentId, conversationId]);
+  }, [sending, agentId, conversationId, reasoningLevel, refreshConversations]);
 
   const handleRetry = useCallback(() => {
     if (lastSent.current) handleSend(lastSent.current.text);
     else setError(null);
   }, [handleSend]);
 
-  const handleSelectAgent = useCallback(async (a) => {
+  const handleSelectAgent = useCallback((a) => {
     setSheetOpen(false);
     if (a.id === agentId) return;
     setAgentId(a.id);
-    setMessages([]);
     setError(null);
-    try {
-      const res = await startConversation(a.id);
-      setConversationId(res.conversationId ?? null);
-    } catch (e) {
-      setNotice(errorText(e));
-      setConversationId(null);
-    }
   }, [agentId]);
 
   const handleNewChat = useCallback(async () => {
@@ -88,20 +103,66 @@ export default function App() {
     try {
       const res = await startConversation(agentId);
       setConversationId(res.conversationId ?? null);
+      refreshConversations();
     } catch (e) {
       setNotice(errorText(e));
       setConversationId(null);
     }
+  }, [agentId, refreshConversations]);
+
+  const handleOpenConversation = useCallback(async (id) => {
+    setDrawerOpen(false);
+    setError(null);
+    try {
+      const hist = await fetchHistory(null, id);
+      setConversationId(hist.conversationId ?? id);
+      setAgentId(hist.agentId || agentId);
+      setMessages(hist.messages ?? []);
+      setReasoningLevel(hist.reasoning || 'fast');
+    } catch (e) {
+      setNotice(errorText(e));
+    }
   }, [agentId]);
+
+  const handleDeleteConversation = useCallback(async (id) => {
+    if (!confirm('Удалить этот диалог?')) return;
+    try {
+      await deleteConversation(id);
+      setConversations((prev) => prev.filter((c) => c.id !== id));
+      if (conversationId === id) {
+        setConversationId(null);
+        setMessages([]);
+        setError(null);
+      }
+    } catch (e) {
+      setNotice(errorText(e));
+    }
+  }, [conversationId]);
+
+  const handleForkConversation = useCallback(async (id) => {
+    try {
+      const res = await forkConversation(id);
+      setDrawerOpen(false);
+      const hist = await fetchHistory(null, res.conversationId);
+      setConversationId(hist.conversationId ?? res.conversationId);
+      setAgentId(hist.agentId || agentId);
+      setMessages(hist.messages ?? []);
+      setReasoningLevel(hist.reasoning || 'fast');
+      refreshConversations();
+    } catch (e) {
+      setNotice(errorText(e));
+    }
+  }, [agentId, refreshConversations]);
 
   return (
     <div className="app" style={{ '--accent': agent?.color ?? '#7C8CF8' }}>
       <Background />
       <header className="header">
-        <div className="brand">
-          <Logo size={30} />
-          <span className="brand-name">SawaPApp</span>
-        </div>
+        <button className="icon-btn" onClick={() => { haptic(); setDrawerOpen(true); }} aria-label="История чатов">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M3 6h18M3 12h18M3 18h18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+          </svg>
+        </button>
         <button className="agent-pill" onClick={() => { haptic(); setSheetOpen(true); }}>
           <span className="pill-dot" />
           <span className="pill-name">{agent?.name ?? 'Агент'}</span>
@@ -124,6 +185,8 @@ export default function App() {
           messages={messages}
           sending={sending}
           error={error}
+          reasoningLevel={reasoningLevel}
+          onChangeReasoning={setReasoningLevel}
           onSend={handleSend}
           onRetry={handleRetry}
         />
@@ -135,6 +198,17 @@ export default function App() {
         currentId={agentId}
         onSelect={handleSelectAgent}
         onClose={() => setSheetOpen(false)}
+      />
+
+      <Drawer
+        open={drawerOpen}
+        conversations={conversations}
+        currentId={conversationId}
+        onOpen={handleOpenConversation}
+        onDelete={handleDeleteConversation}
+        onFork={handleForkConversation}
+        onNewChat={handleNewChat}
+        onClose={() => setDrawerOpen(false)}
       />
     </div>
   );

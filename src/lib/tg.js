@@ -15,7 +15,13 @@ export function callEndpoint(name, input = {}) {
       reject({ type: 'NO_SDK', message: 'Telegram Mini App SDK недоступен' });
       return;
     }
+    let timer;
+    timer = setTimeout(() => {
+      timer = null;
+      reject({ type: 'TIMEOUT', message: 'Telegram не отвечает. Откройте приложение из чата с ботом.' });
+    }, 10000);
     tg.Serverless.call(name, input, (err, result) => {
+      if (timer) { clearTimeout(timer); timer = null; }
       if (err) reject(err);
       else resolve(result);
     });
