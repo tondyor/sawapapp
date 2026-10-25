@@ -171,37 +171,3 @@ export function TypingDots({ color = '#8B93FF' }) {
     </svg>
   );
 }
-
-export function IconCopy({ color = 'currentColor', size = 18 }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <rect x="9" y="9" width="13" height="13" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M5 15H4a2 2 0 01-2-2V6a2 2 0 012-2h9a2 2 0 012 2v1" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
-export function IconPencil({ color = 'currentColor', size = 18 }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path d="M3 17.25V21h3.75M17.8 3a2.12 2.12 0 013 3L7.5 19.2l-2.1 2.1-3 2.1 2.1-3z" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
-export function IconRefresh({ color = 'currentColor', size = 18 }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path d="M23 4v3.8A9.8 9.8 0 0118.2 2h-3.6A9.8 9.8 0 004 11.8c0 2.4.9 4.6 2.5 6.3M20.2 15.8v3.8A9.8 9.8 0 015.4 22h3.6A9.8 9.8 0 0020 12.2c0-2.4-.9-4.6-2.5-6.3" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
-export function IconExpand({ color = 'currentColor', size = 16 }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <polyline points="18 6 12 12 18 18" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-      <polyline points="6 18 12 12 6 6" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
