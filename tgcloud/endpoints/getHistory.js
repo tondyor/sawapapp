@@ -29,6 +29,7 @@ export default async function (input, ctx) {
       content: m.content,
       agentId: m.agentId,
       meta: m.meta ?? null,
+      attachments: m.attachments ?? null,
       createdAt: m.createdAt instanceof Date ? m.createdAt.getTime() : (m.createdAt ?? null),
     })),
   };

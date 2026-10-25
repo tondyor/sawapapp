@@ -73,12 +73,19 @@ setTimeout(() => {
   const root = w.document.getElementById('root');
   const children = root ? root.children.length : 0;
   const text = root ? (root.textContent || '').slice(0, 400) : '';
+  const cyr = String.fromCharCode(0x0411, 0x044b); // 'Бы'
+  const mojibake = text.indexOf(String.fromCharCode(0x0420, 0x2018)) >= 0; // 'Р‘' double-encoded marker
   console.log('--- SMOKE RESULT ---');
   console.log('root children:', children);
   console.log('endpoints called:', calls.join(', ') || '(none)');
   console.log('rendered text:', JSON.stringify(text));
+  console.log('cyrillic ok:', text.includes(cyr), '| mojibake:', mojibake);
   console.log('console errors:', errors.length ? errors.join(' | ') : '(none)');
-  const ok = children > 0 && calls.includes('listAgents') && !errors.some((e) => /minified|error/i.test(e));
+  const ok = children > 0
+    && calls.includes('listAgents')
+    && text.includes(cyr)
+    && !mojibake
+    && !errors.some((e) => /minified|error/i.test(e));
   console.log(ok ? 'PASS: React mounted, endpoints called, no errors' : 'FAIL');
   process.exit(ok ? 0 : 1);
 }, 800);

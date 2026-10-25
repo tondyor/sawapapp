@@ -62,13 +62,14 @@ export async function getConversationById(convId, tgId) {
   return conv;
 }
 
-export async function appendMessage(conv, role, content, meta = null) {
+export async function appendMessage(conv, role, content, meta = null, attachments = null) {
   const [m] = await db.insert(messages).values({
     conversationId: conv.id,
     role,
     content,
     agentId: conv.agentId,
     ...(meta ? { meta } : {}),
+    ...(attachments ? { attachments } : {}),
   }).returning();
   const patch = { updatedAt: new Date() };
   if (role === 'user' && (!conv.title || conv.title === 'Новый диалог')) patch.title = content.slice(0, 80);
@@ -106,9 +107,9 @@ export function buildLlmMessages(agent, history) {
   ];
 }
 
-export async function prepareTurn({ tgUser, agentId, text, reasoning, conversationId }) {
-  if (!text || !text.trim()) throw new Error('Пустое сообщение');
-  const clean = text.trim();
+export async function prepareTurn({ tgUser, agentId, text, reasoning, conversationId, attachments }) {
+  if ((!text || !text.trim()) && !(attachments && attachments.length)) throw new Error('Пустое сообщение');
+  const clean = (text ?? '').trim();
   if (clean.length > MAX_MESSAGE_CHARS) {
     throw new Error(`Сообщение слишком длинное (максимум ${MAX_MESSAGE_CHARS} символов)`);
   }
@@ -129,7 +130,8 @@ export async function prepareTurn({ tgUser, agentId, text, reasoning, conversati
     await setConversationReasoning(conv.id, reasoning);
     conv.reasoning = reasoning;
   }
-  await appendMessage(conv, 'user', clean);
+  const contentForDb = clean || (attachments && attachments.length ? attachments[0].name : '');
+  await appendMessage(conv, 'user', contentForDb, null, attachments ?? null);
   const history = await getHistory(conv.id);
   const llmMessages = buildLlmMessages(agent, history);
   return { user: userRow, agent, conv, llmMessages };
@@ -253,8 +255,8 @@ export async function* agentTurnStream({ agent, llmMessages, reasoning }, out) {
   }
 }
 
-export async function completeTurn({ tgUser, agentId, text, reasoning, conversationId }) {
-  const { agent, conv, llmMessages } = await prepareTurn({ tgUser, agentId, text, reasoning, conversationId });
+export async function completeTurn({ tgUser, agentId, text, reasoning, conversationId, attachments }) {
+  const { agent, conv, llmMessages } = await prepareTurn({ tgUser, agentId, text, reasoning, conversationId, attachments });
   const started = Date.now();
   const out = { started, skills: [], steps: [], model: null, usage: null, reasoningText: null, content: null };
   try {

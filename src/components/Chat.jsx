@@ -1,7 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { AgentIcon, IconSend, TypingDots, IconCopy, IconPencil, IconFork, IconChevron } from './icons.jsx';
+import { AgentIcon, IconSend, TypingDots, IconCopy, IconPencil, IconFork, IconChevron, IconClip, IconFile, IconX } from './icons.jsx';
 import { markdownToHtml } from '../lib/format.js';
 import { haptic } from '../lib/tg.js';
+import { uploadFileChunk, uploadFileFinish, readFileSliceAsBase64, fetchFileDataUrl } from '../lib/api.js';
+import { convertToWebp } from '../lib/img.js';
 
 const LEVEL_LABELS = { fast: 'Быстро', light: 'Лёгкий', medium: 'Средний', high: 'Высокий', max: 'Max' };
 
@@ -12,6 +14,61 @@ const SUGGESTIONS = {
   designer: ['Как улучшить этот интерфейс?', 'Палитра для fintech-приложения', 'Критика моего лендинга'],
   copywriter: ['Заголовки для поста о запуске', 'Перепиши текст короче и живее', 'Слоган для кофейни'],
 };
+
+function fmtSize(n) {
+  if (n === undefined || n === null) return '';
+  if (n < 1024) return n + ' Б';
+  if (n < 1048576) return (n / 1024).toFixed(1) + ' КБ';
+  return (n / 1048576).toFixed(1) + ' МБ';
+}
+
+function Attachment({ att }) {
+  const isImg = String(att.mime ?? '').startsWith('image/');
+  const [url, setUrl] = useState(att.localUrl ?? null);
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    if (url || !isImg) return;
+    let alive = true;
+    fetchFileDataUrl(att.fileId)
+      .then((r) => { if (alive) setUrl(r.url); })
+      .catch(() => { if (alive) setFailed(true); });
+    return () => { alive = false; };
+  }, [att.fileId, isImg, url]);
+
+  const download = async () => {
+    let u = url;
+    if (!u) {
+      try {
+        const r = await fetchFileDataUrl(att.fileId);
+        u = r.url;
+        setUrl(u);
+      } catch (_) {
+        setFailed(true);
+        return;
+      }
+    }
+    const a = document.createElement('a');
+    a.href = u;
+    a.download = att.name ?? 'file';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  };
+
+  if (isImg) {
+    if (failed) return <div className="att-loading">Файл недоступен</div>;
+    if (!url) return <div className="att-loading">Загрузка файла…</div>;
+    return <img className="att-img" src={url} alt={att.name ?? 'вложение'} />;
+  }
+  return (
+    <button className="att-file" onClick={download}>
+      <IconFile size={16} />
+      <span className="att-name">{att.name ?? 'файл'}</span>
+      <span className="att-size">{fmtSize(att.size)}</span>
+    </button>
+  );
+}
 
 function Message({ m, accent, editing, editContent, onChange, onSave, onCancel, onCopy, onEdit, onFork }) {
   const isUser = m.role === 'user';
@@ -40,9 +97,16 @@ function Message({ m, accent, editing, editContent, onChange, onSave, onCancel, 
   return (
     <div className={`row ${isUser ? 'user' : 'bot'}`}>
       {!isUser && (
-        <div className="avatar"><AgentIcon agentId={m.agentId || 'chat'} color={accent} size={30} idp={`m-${m.id}`} /></div>
+        <div className="avatar"><AgentIcon agentId={m.agentId || 'chat'} color={accent} size={30} idp={'m-' + m.id} /></div>
       )}
       <div className="bubble-wrap">
+        {Array.isArray(m.attachments) && m.attachments.length > 0 && (
+          <div className="att-list">
+            {m.attachments.map((a, i) => (
+              <Attachment key={a.fileId ?? 'att-' + i} att={a} />
+            ))}
+          </div>
+        )}
         {isUser ? (
           <div className="bubble user">{m.content}</div>
         ) : (
@@ -89,16 +153,20 @@ export default function Chat({
   onForkMessage,
   agentName,
   onSelectAgent,
+  onNotice,
 }) {
   const [text, setText] = useState('');
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [uploading, setUploading] = useState(false);
   const taRef = useRef(null);
+  const fileRef = useRef(null);
   const endRef = useRef(null);
   const agent = agents.find((a) => a.id === agentId) || agents[0];
   const accent = agent?.color || '#7C8CF8';
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
-  }, [messages.length, sending]);
+  }, [messages.length, sending, uploading, selectedFile]);
 
   const autosize = () => {
     const ta = taRef.current;
@@ -107,13 +175,53 @@ export default function Chat({
     ta.style.height = Math.min(ta.scrollHeight, 132) + 'px';
   };
 
-  const submit = () => {
+  const submit = async () => {
     const t = text.trim();
-    if (!t || sending) return;
+    if ((!t && !selectedFile) || sending || uploading) return;
     haptic();
     setText('');
     requestAnimationFrame(autosize);
-    onSend(t);
+    let attachment = null;
+    const f = selectedFile;
+    if (f) {
+      setSelectedFile(null);
+      setUploading(true);
+      try {
+        const uploadId = 'u-' + Date.now() + '-' + Math.random().toString(36).slice(2, 10);
+        const chunkSize = 699999;
+        const count = Math.max(1, Math.ceil(f.size / chunkSize));
+        for (let i = 0; i < count; i++) {
+          const b64 = await readFileSliceAsBase64(f, i * chunkSize, Math.min((i + 1) * chunkSize, f.size));
+          await uploadFileChunk({ uploadId, idx: i, dataBase64: b64 });
+        }
+        attachment = await uploadFileFinish({ uploadId, conversationId, name: f.name, mime: f.type });
+      } catch (e) {
+        setUploading(false);
+        onNotice(e?.message || 'Не удалось загрузить файл');
+        if (t) setText(t);
+        return;
+      }
+      setUploading(false);
+    }
+    onSend(t, attachment, f);
+  };
+
+  const pickFile = () => {
+    haptic();
+    fileRef.current?.click();
+  };
+
+  const onFileChosen = async (e) => {
+    const f = e.target.files?.[0];
+    e.target.value = '';
+    if (!f) return;
+    if (f.size > 10 * 1024 * 1024) {
+      onNotice('Файл больше 10 МБ');
+      return;
+    }
+    setSelectedFile(f);
+    const converted = await convertToWebp(f);
+    setSelectedFile((cur) => (cur && cur.name === f.name ? converted : cur));
   };
 
   const isEmpty = messages.length === 0 && !sending;
@@ -171,6 +279,10 @@ export default function Chat({
 
       <div className="composer-stack" style={{ '--accent': accent }}>
         <div className="levels">
+          <button className="act strip-clip" title="Прикрепить файл" onClick={pickFile}>
+            <IconClip size={16} />
+          </button>
+          <input ref={fileRef} type="file" hidden accept="image/*,.pdf,.doc,.docx,.rtf,.txt,.svg,.csv" onChange={onFileChosen} />
           <button className="agent-pill" onClick={() => { haptic(); onSelectAgent(); }}>
             <span className="pill-dot" />
             <span className="pill-name">{agentName}</span>
@@ -186,6 +298,17 @@ export default function Chat({
             </button>
           ))}
         </div>
+        {selectedFile && (
+          <div className="attach-chip">
+            <IconFile size={14} />
+            <span className="attach-name">{selectedFile.name}</span>
+            <span className="attach-size">{fmtSize(selectedFile.size)}</span>
+            <button className="attach-remove" onClick={() => { haptic(); setSelectedFile(null); }}>
+              <IconX size={12} />
+            </button>
+          </div>
+        )}
+        {uploading && <div className="attach-chip uploading">Загрузка файла…</div>}
         <div className="composer">
           <textarea
             ref={taRef}
@@ -200,7 +323,7 @@ export default function Chat({
               }
             }}
           />
-          <button className="send" onClick={submit} disabled={!text.trim() || sending} aria-label="Отправить">
+          <button className="send" onClick={submit} disabled={(!text.trim() && !selectedFile) || sending || uploading} aria-label="Отправить">
             <IconSend size={20} />
           </button>
         </div>

@@ -560,3 +560,67 @@ button {
 @keyframes fade { from { opacity: 0; } }
 @keyframes slide-up { from { transform: translateY(60px); opacity: 0; } }
 @keyframes rise { from { transform: translateY(14px); opacity: 0; } }
+
+.strip-clip {
+  flex: 0 0 auto;
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  background: #1a2030;
+  border: 1px solid var(--border);
+  color: var(--muted);
+}
+.attach-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  border-radius: 12px;
+  background: #1a2030;
+  border: 1px solid var(--border);
+  font-size: 12.5px;
+  color: var(--text);
+}
+.attach-chip.uploading { color: var(--muted); }
+.attach-name { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.attach-size { color: var(--muted); flex: 0 0 auto; }
+.attach-remove {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 7px;
+  background: var(--panel-strong);
+  color: var(--muted);
+  flex: 0 0 auto;
+}
+.att-list { display: flex; flex-direction: column; gap: 6px; width: 100%; }
+.att-img {
+  max-width: 100%;
+  max-height: 340px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  display: block;
+}
+.att-loading {
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 13px;
+}
+.att-file {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 12px;
+  border-radius: 12px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-size: 13px;
+  max-width: 100%;
+}
+.att-name { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.att-size { color: var(--muted); flex: 0 0 auto; }

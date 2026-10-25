@@ -67,20 +67,23 @@ export default function App() {
 
   const agent = agents.find((a) => a.id === agentId) || agents[0];
 
-  const handleSend = useCallback(async (text) => {
+  const handleSend = useCallback(async (text, attachment = null, fileObj = null) => {
     if (sending) return;
     lastSent.current = { text, agentId, conversationId };
-    setMessages((prev) => [...prev, { id: `tmp-${Date.now()}`, role: 'user', content: text }]);
+    const localAtt = fileObj
+      ? [{ fileId: `local-${Date.now()}`, name: fileObj.name, mime: fileObj.type, size: fileObj.size, localUrl: URL.createObjectURL(fileObj) }]
+      : null;
+    setMessages((prev) => [...prev, { id: `tmp-${Date.now()}`, role: 'user', content: text || (localAtt ? localAtt[0].name : ''), attachments: localAtt }]);
     setSending(true);
     setError(null);
     try {
-      const res = await sendUserMessage({ text, agentId, conversationId, reasoning: reasoningLevel });
+      const res = await sendUserMessage({ text, agentId, conversationId, reasoning: reasoningLevel, attachmentIds: attachment ? [attachment.fileId] : undefined });
       setConversationId(res.conversationId ?? conversationId);
       setAgentId(res.agentId ?? agentId);
       setMessages((prev) => [...prev, { id: `a-${res.conversationId}-${Date.now()}`, role: 'assistant', content: res.reply, agentId: res.agentId }]);
     } catch (e) {
       setError(errorText(e));
-      setMessages((prev) => prev.filter((m) => m.content !== text || m.role !== 'user'));
+      setMessages((prev) => prev.filter((m) => !m.id.startsWith('tmp-')));
     } finally {
       setSending(false);
       refreshConversations();
@@ -239,6 +242,7 @@ export default function App() {
           onForkMessage={handleForkMessage}
           agentName={agent?.name ?? 'Агент'}
           onSelectAgent={() => { haptic(); setSheetOpen(true); }}
+          onNotice={setNotice}
         />
       )}
 
