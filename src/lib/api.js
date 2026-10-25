@@ -25,16 +25,12 @@ export async function deleteConversation(conversationId) {
   return callEndpoint('deleteConversation', { conversationId });
 }
 
-export async function forkConversation(conversationId) {
-  return callEndpoint('forkConversation', { conversationId });
+export async function forkConversation(conversationId, upToMessageId = null) {
+  return callEndpoint('forkConversation', { conversationId, upToMessageId });
 }
 
 export async function editMessage({ messageId, content, reasoning }) {
   return callEndpoint('editMessage', { messageId, content, reasoning });
-}
-
-export async function regenerate({ messageId, reasoning }) {
-  return callEndpoint('regenerateMessage', { messageId, reasoning });
 }
 
 export function errorText(err) {

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { AgentIcon, IconSend, TypingDots, IconCopy, IconPencil, IconRefresh } from './icons.jsx';
+import { AgentIcon, IconSend, TypingDots, IconCopy, IconPencil, IconFork } from './icons.jsx';
 import { markdownToHtml } from '../lib/format.js';
 import { haptic } from '../lib/tg.js';
 
@@ -13,7 +13,7 @@ const SUGGESTIONS = {
   copywriter: ['Заголовки для поста о запуске', 'Перепиши текст короче и живее', 'Слоган для кофейни'],
 };
 
-function Message({ m, accent, editing, editContent, onChange, onSave, onCancel, onCopy, onEdit, onRegenerate }) {
+function Message({ m, accent, editing, editContent, onChange, onSave, onCancel, onCopy, onEdit, onFork }) {
   const isUser = m.role === 'user';
   const isTmp = String(m.id).startsWith('tmp-');
 
@@ -53,12 +53,12 @@ function Message({ m, accent, editing, editContent, onChange, onSave, onCancel, 
             <button className="act" title="Скопировать" onClick={() => { haptic(); onCopy(m.content); }}>
               <IconCopy size={15} />
             </button>
-            <button className="act" title="Редактировать" onClick={() => { haptic(); onEdit(m.id); }}>
-              <IconPencil size={15} />
+            <button className="act" title="Продолжить в новом чате с этого места" onClick={() => { haptic(); onFork(m.id); }}>
+              <IconFork size={15} />
             </button>
-            {!isUser && (
-              <button className="act" title="Перегенерировать" onClick={() => { haptic(); onRegenerate(m.id); }}>
-                <IconRefresh size={15} />
+            {isUser && (
+              <button className="act" title="Редактировать" onClick={() => { haptic(); onEdit(m.id); }}>
+                <IconPencil size={15} />
               </button>
             )}
           </div>
@@ -86,7 +86,7 @@ export default function Chat({
   onEditCancel,
   onCopy,
   onEditMessage,
-  onRegenerateMessage,
+  onForkMessage,
 }) {
   const [text, setText] = useState('');
   const taRef = useRef(null);
@@ -147,7 +147,7 @@ export default function Chat({
             onCancel={onEditCancel}
             onCopy={onCopy}
             onEdit={onEditMessage}
-            onRegenerate={onRegenerateMessage}
+            onFork={onForkMessage}
           />
         ))}
         {sending && (

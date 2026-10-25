@@ -10,7 +10,6 @@ import {
   deleteConversation,
   forkConversation,
   editMessage as editMsg,
-  regenerate as regenerateMessage,
   sendUserMessage,
   startConversation,
   errorText,
@@ -183,24 +182,20 @@ export default function App() {
     }
   }, [conversationId, agentId, reasoningLevel, refreshConversations]);
 
-  const handleRegenerateMessage = useCallback(async (messageId) => {
-    setSending(true);
-    setError(null);
+  const handleForkMessage = useCallback(async (messageId) => {
+    if (!conversationId) return;
     try {
-      const res = await regenerateMessage({ messageId, reasoning: reasoningLevel });
-      setConversationId(res.conversationId ?? conversationId);
-      setAgentId(res.agentId ?? agentId);
-      setMessages((prev) => {
-        const cut = prev.findIndex((m) => m.id === messageId);
-        return cut >= 0 ? [...prev.slice(0, cut), { id: `a-${Date.now()}`, role: 'assistant', content: res.reply, agentId: res.agentId, meta: res.meta }] : prev;
-      });
+      const res = await forkConversation(conversationId, messageId);
+      const hist = await fetchHistory(null, res.conversationId);
+      setConversationId(hist.conversationId ?? res.conversationId);
+      setAgentId(hist.agentId || agentId);
+      setMessages(hist.messages ?? []);
+      setReasoningLevel(hist.reasoning || 'fast');
       refreshConversations();
     } catch (e) {
-      setError(errorText(e));
-    } finally {
-      setSending(false);
+      setNotice(errorText(e));
     }
-  }, [conversationId, agentId, reasoningLevel, refreshConversations]);
+  }, [conversationId, agentId, refreshConversations]);
 
   return (
     <div className="app" style={{ '--accent': agent?.color ?? '#7C8CF8' }}>
@@ -246,7 +241,7 @@ export default function App() {
             navigator.clipboard.writeText(t).then(() => { haptic(); setNotice('Скопировано'); setTimeout(() => setNotice(null), 1200); });
           }}
           onEditMessage={setEditingId}
-          onRegenerateMessage={handleRegenerateMessage}
+          onForkMessage={handleForkMessage}
         />
       )}
 

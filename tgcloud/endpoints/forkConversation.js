@@ -1,5 +1,5 @@
 import { db, EndpointError } from 'sdk';
-import { eq, asc } from 'sdk/db';
+import { eq, asc, lte, and } from 'sdk/db';
 import { conversations, messages } from '../schema.js';
 import { getConversationById, createConversation, ensureUser } from '../lib/chat.js';
 
@@ -12,10 +12,16 @@ export default async function (input, ctx) {
 
   const userRow = await ensureUser(tgUser);
   const copy = await createConversation(userRow, src.agentId, src.title ? `Копия: ${src.title.slice(0, 70)}` : 'Копия диалога');
-  if (input?.reasoning) copy.reasoning = src.reasoning;
+  copy.reasoning = src.reasoning ?? 'fast';
 
+  const conds = [eq(messages.conversationId, src.id)];
+  if (input?.upToMessageId) {
+    const upTo = Number(input.upToMessageId);
+    if (!upTo) throw new EndpointError('Неверное сообщение', { code: 'BAD_INPUT' });
+    conds.push(lte(messages.id, upTo));
+  }
   const srcMessages = await db.select().from(messages)
-    .where(eq(messages.conversationId, src.id))
+    .where(and(...conds))
     .orderBy(asc(messages.id))
     .all();
 
@@ -25,6 +31,7 @@ export default async function (input, ctx) {
     await db.insert(messages).values(chunk).run();
     chunk.length = 0;
   };
+  let copied = 0;
   for (const m of srcMessages) {
     if (m.role !== 'user' && m.role !== 'assistant') continue;
     chunk.push({
@@ -34,9 +41,10 @@ export default async function (input, ctx) {
       agentId: m.agentId ?? src.agentId,
       ...(m.meta ? { meta: m.meta } : {}),
     });
+    copied += 1;
     if (chunk.length >= 40) await flush();
   }
   await flush();
 
-  return { conversationId: copy.id, agentId: copy.agentId, copied: srcMessages.length };
+  return { conversationId: copy.id, agentId: copy.agentId, copied };
 }

@@ -199,3 +199,15 @@ export function IconRefresh({ color = 'currentColor', size = 16 }) {
     </svg>
   );
 }
+
+export function IconFork({ color = 'currentColor', size = 16 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <circle cx="6" cy="4.5" r="2.1" stroke={color} strokeWidth="2" />
+      <circle cx="6" cy="19.5" r="2.1" stroke={color} strokeWidth="2" />
+      <circle cx="18" cy="9" r="2.1" stroke={color} strokeWidth="2" />
+      <path d="M6 6.6v10.8" stroke={color} strokeWidth="2" strokeLinecap="round" />
+      <path d="M6.5 11.5c3.5 0 6-.5 9.2-2.2" stroke={color} strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  );
+}
