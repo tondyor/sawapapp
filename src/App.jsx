@@ -206,11 +206,6 @@ export default function App() {
             <path d="M3 6h18M3 12h18M3 18h18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
           </svg>
         </button>
-        <button className="agent-pill" onClick={() => { haptic(); setSheetOpen(true); }}>
-          <span className="pill-dot" />
-          <span className="pill-name">{agent?.name ?? 'Агент'}</span>
-          <IconChevron size={14} />
-        </button>
         <button className="icon-btn" onClick={handleNewChat} aria-label="Новый диалог">
           <IconPlus size={18} />
         </button>
@@ -242,6 +237,8 @@ export default function App() {
           }}
           onEditMessage={setEditingId}
           onForkMessage={handleForkMessage}
+          agentName={agent?.name ?? 'Агент'}
+          onSelectAgent={() => { haptic(); setSheetOpen(true); }}
         />
       )}
 

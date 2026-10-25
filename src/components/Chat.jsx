@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { AgentIcon, IconSend, TypingDots, IconCopy, IconPencil, IconFork } from './icons.jsx';
+import { AgentIcon, IconSend, TypingDots, IconCopy, IconPencil, IconFork, IconChevron } from './icons.jsx';
 import { markdownToHtml } from '../lib/format.js';
 import { haptic } from '../lib/tg.js';
 
@@ -87,6 +87,8 @@ export default function Chat({
   onCopy,
   onEditMessage,
   onForkMessage,
+  agentName,
+  onSelectAgent,
 }) {
   const [text, setText] = useState('');
   const taRef = useRef(null);
@@ -169,6 +171,11 @@ export default function Chat({
 
       <div className="composer-stack" style={{ '--accent': accent }}>
         <div className="levels">
+          <button className="agent-pill" onClick={() => { haptic(); onSelectAgent(); }}>
+            <span className="pill-dot" />
+            <span className="pill-name">{agentName}</span>
+            <IconChevron size={13} />
+          </button>
           {Object.entries(LEVEL_LABELS).map(([id, label]) => (
             <button
               key={id}
