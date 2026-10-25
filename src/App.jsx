@@ -9,6 +9,8 @@ import {
   fetchConversations,
   deleteConversation,
   forkConversation,
+  editMessage as editMsg,
+  regenerate as regenerateMessage,
   sendUserMessage,
   startConversation,
   errorText,
@@ -28,6 +30,8 @@ export default function App() {
   const [reasoningLevel, setReasoningLevel] = useState('fast');
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [conversations, setConversations] = useState([]);
+  const [editingId, setEditingId] = useState(null);
+  const [editContent, setEditContent] = useState('');
   const lastSent = useRef(null);
 
   useEffect(() => {
@@ -154,6 +158,50 @@ export default function App() {
     }
   }, [agentId, refreshConversations]);
 
+  const handleEditSave = useCallback(async (messageId, content, reasoning) => {
+    setSending(true);
+    setError(null);
+    try {
+      const res = await editMsg({ messageId, content, reasoning });
+      setConversationId(res.conversationId ?? conversationId);
+      setAgentId(res.agentId ?? agentId);
+      if (res.reply) {
+        setMessages((prev) => {
+          const cut = prev.findIndex((m) => m.id === messageId);
+          return [...prev.slice(0, cut + 1), { id: `a-${Date.now()}`, role: 'assistant', content: res.reply, agentId: res.agentId, meta: res.meta }];
+        });
+      } else {
+        setMessages((prev) => prev.map((m) => (m.id === messageId ? { ...m, content } : m)));
+      }
+      setEditingId(null);
+      setEditContent('');
+      refreshConversations();
+    } catch (e) {
+      setError(errorText(e));
+    } finally {
+      setSending(false);
+    }
+  }, [conversationId, agentId, reasoningLevel, refreshConversations]);
+
+  const handleRegenerateMessage = useCallback(async (messageId) => {
+    setSending(true);
+    setError(null);
+    try {
+      const res = await regenerateMessage({ messageId, reasoning: reasoningLevel });
+      setConversationId(res.conversationId ?? conversationId);
+      setAgentId(res.agentId ?? agentId);
+      setMessages((prev) => {
+        const cut = prev.findIndex((m) => m.id === messageId);
+        return cut >= 0 ? [...prev.slice(0, cut), { id: `a-${Date.now()}`, role: 'assistant', content: res.reply, agentId: res.agentId, meta: res.meta }] : prev;
+      });
+      refreshConversations();
+    } catch (e) {
+      setError(errorText(e));
+    } finally {
+      setSending(false);
+    }
+  }, [conversationId, agentId, reasoningLevel, refreshConversations]);
+
   return (
     <div className="app" style={{ '--accent': agent?.color ?? '#7C8CF8' }}>
       <Background />
@@ -189,6 +237,16 @@ export default function App() {
           onChangeReasoning={setReasoningLevel}
           onSend={handleSend}
           onRetry={handleRetry}
+          editingId={editingId}
+          editContent={editContent}
+          onEditChange={setEditContent}
+          onEditSave={handleEditSave}
+          onEditCancel={() => { setEditingId(null); setEditContent(''); }}
+          onCopy={(t) => {
+            navigator.clipboard.writeText(t).then(() => { haptic(); setNotice('Скопировано'); setTimeout(() => setNotice(null), 1200); });
+          }}
+          onEditMessage={setEditingId}
+          onRegenerateMessage={handleRegenerateMessage}
         />
       )}
 

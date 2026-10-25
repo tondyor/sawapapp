@@ -29,6 +29,14 @@ export async function forkConversation(conversationId) {
   return callEndpoint('forkConversation', { conversationId });
 }
 
+export async function editMessage({ messageId, content, reasoning }) {
+  return callEndpoint('editMessage', { messageId, content, reasoning });
+}
+
+export async function regenerate({ messageId, reasoning }) {
+  return callEndpoint('regenerateMessage', { messageId, reasoning });
+}
+
 export function errorText(err) {
   if (!err) return 'Неизвестная ошибка';
   if (err.type === 'UNAUTHORIZED') return 'Открой приложение через Telegram';

@@ -3,7 +3,10 @@
   "static": {
     "source": "dist",
     "spa": true,
-    "immutable": ["/assets/*"]
+    "immutable": ["/assets/*"],
+    "headers": [
+      { "path": "/", "set": { "Cache-Control": "no-cache, must-revalidate" } }
+    ]
   },
   "$schema": "./node_modules/@tgcloud/cli/schema/tgcloud.json"
 }

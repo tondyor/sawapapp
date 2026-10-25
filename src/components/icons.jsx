@@ -171,3 +171,31 @@ export function TypingDots({ color = '#8B93FF' }) {
     </svg>
   );
 }
+
+export function IconCopy({ color = 'currentColor', size = 16 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <rect x="9" y="9" width="12" height="12" rx="2" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M5 15V5a2 2 0 012-2h10" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+export function IconPencil({ color = 'currentColor', size = 16 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M12 20h9" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4 12.5-12.5z" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+export function IconRefresh({ color = 'currentColor', size = 16 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M21 4v6h-6" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M3 20v-6h6" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M21 10a9 9 0 00-15-5.7L3 7M3 14a9 9 0 0015 5.7L21 17" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
