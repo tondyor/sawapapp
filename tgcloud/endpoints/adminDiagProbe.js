@@ -1,6 +1,6 @@
 import { db } from 'sdk';
 import { desc, eq } from 'sdk/db';
-import { messages } from '../schema.js';
+import { messages, turns } from '../schema.js';
 import { ADMIN_TG_IDS } from '../lib/config.js';
 import { EndpointError } from 'sdk';
 
@@ -38,5 +38,25 @@ export default async function (input, ctx) {
   }
 
   const withErrors = withMeta.filter((m) => m.error);
-  return { total: withMeta.length, errored: withErrors.length, recent: withMeta, errors: withErrors };
+
+  // Smoke таблицы turns (Ф1.1): insert -> select -> delete.
+  let turnsSmoke = null;
+  try {
+    const tid = `diag-${Date.now().toString(36)}-${Math.floor(Math.random() * 1e6).toString(36)}`;
+    const [ins] = await db.insert(turns).values({
+      turnId: tid, conversationId: 0, tgId: uid, agentId: 'chat',
+      status: 'planning', question: 'diag', plan: [{ type: 'direct_answer', title: 't' }], currentStep: 0,
+    }).returning();
+    const got = await db.select().from(turns).where(eq(turns.turnId, tid)).get();
+    await db.delete(turns).where(eq(turns.turnId, tid));
+    turnsSmoke = {
+      inserted: !!ins, readBack: got?.turnId === tid,
+      planParsed: Array.isArray(got?.plan) && got.plan[0]?.type === 'direct_answer',
+      status: got?.status ?? null,
+    };
+  } catch (e) {
+    turnsSmoke = { error: String(e?.message ?? e).slice(0, 160) };
+  }
+
+  return { total: withMeta.length, errored: withErrors.length, recent: withMeta, errors: withErrors, turnsSmoke };
 }

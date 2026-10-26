@@ -76,6 +76,28 @@ export const turnEvents = table('turn_events', {
   convIdx: index('idx_turn_events_conv').on(t.conversationId, t.id),
 }));
 
+// Состояние агентского хода (конечный автомат). Живёт в БД, а не в изоляте:
+// каждый шаг хода = свежий изолят, ход возобновляем после обрыва клиента.
+export const turns = table('turns', {
+  turnId:         text('turn_id').primaryKey(),
+  conversationId: integer('conversation_id').notNull(),
+  tgId:           integer('tg_id').notNull(),
+  agentId:        text('agent_id').notNull(),
+  status:         text('status').notNull().default('planning'),
+  question:       text('question').notNull(),
+  plan:           json('plan'),
+  currentStep:    integer('current_step').default(0),
+  findings:       json('findings'),
+  reasoning:      text('reasoning'),
+  reasoningLevel: text('reasoning_level').default('fast'),
+  error:          text('error'),
+  createdAt:      integer('created_at', { mode: 'timestamp_ms' }).default(sql`(unixepoch() * 1000)`),
+  updatedAt:      integer('updated_at', { mode: 'timestamp_ms' }).default(sql`(unixepoch() * 1000)`),
+}, (t) => ({
+  convIdx:   index('idx_turns_conv').on(t.conversationId, t.createdAt),
+  statusIdx: index('idx_turns_status').on(t.tgId, t.status),
+}));
+
 export const settings = table('settings', {
   key:       text('key').primaryKey(),
   value:     text('value').notNull(),
