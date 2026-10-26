@@ -113,6 +113,10 @@ function collectImages(historyRows) {
   return { lastUserId: lastUser.id, images };
 }
 
+// Публичный API для lib/agent/executors.js (пайплайн ходов): реиспользуем
+// стриминговые раунды и чтение одной картинки, не дублируя логику.
+export { streamRounds, describeImage, collectImages };
+
 async function describeImage(img) {
   const row = await db.select().from(files).where(eq(files.id, img.fileId)).get();
   if (!row || (row.size ?? 0) > MAX_IMAGE_BYTES) {
