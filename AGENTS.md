@@ -171,7 +171,23 @@ The platform manages the bot's webhook for you, derived from your deployed
   `setTimeout`/fire-and-forget promises; realtime is done by polling
   (`endpoints/getTurnEvents` reads `turn_events` written during the turn).
   Module file names may not contain hyphens (letters/digits/`_` only).
-- Agent turn architecture (vision step, reasoning levels, realtime trace):
-  [docs/agent-turns.md](docs/agent-turns.md). Models are switchable via `settings`
-  (`VISION_MODEL`, `DEFAULT_MODEL`) without redeploy; vision reader default
-  `nvidia/nemotron-3.5-super-vl-120b-a12b` (deepseek-v4.1-flash measured 35s+ first token).
+- **Agent turn pipeline** (Ф0–Ф6, 2026-10): ход = конечный автомат в таблице `turns`;
+  каждый шаг — отдельный вызов эндпоинта = свежий изолят. Клиент: `startTurn` →
+  цикл `runTurnStep` (обрыв ≠ ошибка — ход в БД, повтор шага) → `finishTurn` (синтез);
+  `getTurn`/`stopTurn` — возобновление и «Стоп». Планировщик (`lib/agent/pipeline.js`,
+  bolt-e4b) строит строгий JSON-план шагов (vision/search/read_url/reason/synthesize)
+  c детерминированным JSON-repair и re-plan по находкам; исполнители —
+  `lib/agent/executors.js`, поиск — `lib/agent/websearch.js` (Serper + r.jina.ai).
+  Находки ≤2000 знаков (сжиматель bolt). `fast`-уровень эвристически отвечает без
+  планировщика (нулевая латентность против старого пути). Подробности и замеры:
+  [docs/agent-turns.md](docs/agent-turns.md).
+- Models are switchable via `settings` (`VISION_MODEL`, `DEFAULT_MODEL`, `PLANNER_MODEL`,
+  `COMPRESS_MODEL`) without redeploy; planner/compress = `nvidia/nemotron-3.5-bolt-e4b`,
+  reasoning/vision default `nvidia/nemotron-3.5-super-vl-120b-a12b` (deepseek-v4.1-flash
+  measured 35s+ first token; lightning-30b disqualified as planner: 15.6s, thinking-toggle
+  ignored). Web search key: `SERPER_API_KEY` in `settings`; without it the planner drops
+  search steps and tool failures surface honestly in the answer.
+- **CLI pitfall (repeatedly hit):** a targeted `push` can print `✓` yet silently NOT
+  upload the file (snapshot `non-string content` skip), and dependent endpoints then fail
+  with `Compilation failed`. Always `npx tgcloud fetch` + full `npx tgcloud push` when in
+  doubt; trust `status` only after a `fetch`.

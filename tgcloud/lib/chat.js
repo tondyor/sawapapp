@@ -335,13 +335,6 @@ async function* streamRounds({ agent, llmMessages, reasoning, model }, out, reco
   }
 }
 
-// Публичный API для handlers/message (бот-чат): без записи событий.
-export async function* agentTurnStream({ agent, history, reasoning, model }, out) {
-  await runVisionStep({ history, recorder: null, out });
-  const llmMessages = buildLlmMessages(agent, history);
-  yield* streamRounds({ agent, llmMessages, reasoning, model }, out, null);
-}
-
 async function finalizeTurn({ conv, agent, out, started, recorder, saved }) {
   const meta = buildMeta({
     started,
