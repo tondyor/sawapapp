@@ -36,3 +36,5 @@ desktop.ini
 *.tmp
 .cache/
 dist-test
+
+.playwright-mcp/

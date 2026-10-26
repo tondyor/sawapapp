@@ -166,6 +166,13 @@ export async function runTurnStep({ turnId, tgId }) {
     const result = await EXECUTORS[step.type](step, ctx);
     const ms = Date.now() - t0;
 
+    // Гонка со «Стоп»: пока шаг исполнялся, ход могли остановить —
+    // тогда не пишем ответ и не трогаем статус (резюме уже в чате).
+    const fresh = await db.select().from(turns).where(eq(turns.turnId, tid)).get();
+    if (fresh && fresh.status === 'stopped') {
+      return { status: 'stopped', currentStep: idx, stepResult: { index: idx, type: step.type, ok: false, stopped: true } };
+    }
+
     // Финальный шаг: ответ пишется в чат, ход завершается.
     if (isFinalStep(step.type)) {
       const meta = buildMeta({
@@ -348,7 +355,7 @@ export async function stopTurn({ turnId, tgId }) {
   await touch(tid, { status: 'stopped' });
   const recorder = createRecorder({ turnId: tid, conversationId: turn.conversationId, tgId });
   await recorder.event('stop', { steps: done.length });
-  return { status: 'stopped', stepsDone: done.length };
+  return { status: 'stopped', stepsDone: done.length, summary: lines.join('\n') };
 }
 
 // ── getTurn: состояние для возобновления ───────────────────────────────────
