@@ -3,7 +3,7 @@ import { db } from 'sdk';
 import { eq } from 'sdk/db';
 import { settings } from '../schema.js';
 import {
-  DEFAULT_MODEL, KEY_SETTING, NVIDIA_BASE_URL, MAX_OUTPUT_TOKENS, TEMPERATURE, REASONING_BUDGET, REASONING_MODEL, VISION_MODEL,
+  DEFAULT_MODEL, KEY_SETTING, NVIDIA_BASE_URL, MAX_OUTPUT_TOKENS, TEMPERATURE, REASONING_BUDGET, REASONING_MODEL, VISION_MODEL, PLANNER_MODEL, COMPRESS_MODEL,
 } from './config.js';
 export async function getApiKey() {
   const row = await db.select().from(settings).where(eq(settings.key, KEY_SETTING)).get();
@@ -31,6 +31,16 @@ export function getVisionModel() {
 
 export function getDefaultModel() {
   return getSettingOr('DEFAULT_MODEL', DEFAULT_MODEL);
+}
+
+// Модель-планировщик хода (строгий JSON-план). Ф0: bolt-e4b 5/5 после repair.
+export function getPlannerModel() {
+  return getSettingOr('PLANNER_MODEL', PLANNER_MODEL);
+}
+
+// Модель-сжиматель находок шагов (<=2000 знаков). Ф0: bolt-e4b 3/3.
+export function getCompressModel() {
+  return getSettingOr('COMPRESS_MODEL', COMPRESS_MODEL);
 }
 
 // Основная модель ответа: thinking-модель для уровней рассуждений, иначе дефолт.

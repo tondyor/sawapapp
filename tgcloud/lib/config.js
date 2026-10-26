@@ -1,8 +1,19 @@
 export const ADMIN_TG_IDS = [1707415385];
 
-export const ALLOWED_SETTING_KEYS = ['NVIDIA_API_KEY', 'VISION_MODEL', 'DEFAULT_MODEL'];
+// PLANNER_MODEL/COMPRESS_MODEL переопределяются через settings (смена без деплоя).
+export const ALLOWED_SETTING_KEYS = ['NVIDIA_API_KEY', 'VISION_MODEL', 'DEFAULT_MODEL', 'PLANNER_MODEL', 'COMPRESS_MODEL'];
 
 export const DEFAULT_MODEL = 'nvidia/nemotron-3.5-bolt-e4b';
+
+// Ф0-бенчмарк (2026-10-26, endpoints/adminModelProbe, реальный API):
+// - планировщик: bolt-e4b — валидный JSON 5/5 (после repair лишних "}",
+//   сбой стабилен и ремонтируется детерминированно), TTFB 129-173мс, total <=2.6с.
+//   lightning-30b-a3b дисквалифицирован: 15.6с, 1000+ reasoning-токенов даже при
+//   thinking:false, ленивые 1-шаговые планы. glm-5.3-flash/gpt-oss-20b — холодный
+//   старт >30с, minimax-m3.1-flash — 29с + обрыв JSON, nemotron-nano-3 — 404.
+// - сжатие: bolt-e4b — 3/3 в лимите 2000 знаков, TTFB 132-200мс, факты сохраняет.
+export const PLANNER_MODEL = 'nvidia/nemotron-3.5-bolt-e4b';
+export const COMPRESS_MODEL = 'nvidia/nemotron-3.5-bolt-e4b';
 
 // Модель для уровней рассуждений (light/medium/high/max): умеет thinking через
 // chat_template_kwargs и возвращает reasoning_content. bolt-e4b это не умеет.
