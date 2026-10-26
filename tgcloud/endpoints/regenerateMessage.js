@@ -3,12 +3,14 @@ import { eq, gte, gt, and } from 'sdk/db';
 import { messages } from '../schema.js';
 import { getConversationById, regenerateTurn } from '../lib/chat.js';
 import { REASONING_LEVELS, MAX_MESSAGE_CHARS } from '../lib/config.js';
+import { sanitizeTurnId } from '../lib/turnEvents.js';
 
 export default async function (input, ctx) {
   const tgUser = ctx.initData.user;
   const messageId = Number(input?.messageId);
   const content = input?.content == null ? null : String(input.content).trim();
   const reasoning = REASONING_LEVELS.includes(input?.reasoning) ? input.reasoning : undefined;
+  const turnId = sanitizeTurnId(input?.turnId);
   if (!messageId) throw new EndpointError('Не указано сообщение', { code: 'BAD_INPUT' });
   if (content && content.length > MAX_MESSAGE_CHARS) {
     throw new EndpointError(`Сообщение слишком длинное (максимум ${MAX_MESSAGE_CHARS} символов)`, { code: 'TOO_LONG' });
@@ -32,7 +34,7 @@ export default async function (input, ctx) {
   }
 
   try {
-    const result = await regenerateTurn({ tgUser, conversationId: conv.id, reasoning });
+    const result = await regenerateTurn({ tgUser, conversationId: conv.id, reasoning, turnId });
     return {
       conversationId: conv.id,
       agentId: result.agent.id,

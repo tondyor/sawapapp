@@ -9,11 +9,23 @@ export async function fetchHistory(agentId = null, conversationId = null) {
   return callEndpoint('getHistory', { agentId, conversationId });
 }
 
-export async function sendUserMessage({ text, agentId, conversationId, reasoning, attachmentIds }) {
-  return callEndpoint('sendMessage', { text, agentId, conversationId, reasoning, attachmentIds });
+// Ходы агента (отправка/редактирование) на reasoning-уровнях идут минуты.
+// Таймаут 180с: если сервер не ответил (изолят убит платформой и т.п.), промис
+// отклоняется с понятной ошибкой — ход при этом мог дойти до конца, ответ
+// придёт через события хода (getTurnEvents) даже после отклонения этого вызова.
+export const TURN_TIMEOUT_MS = 180000;
+
+export async function sendUserMessage({ text, agentId, conversationId, reasoning, attachmentIds, turnId }) {
+  return callEndpoint('sendMessage', { text, agentId, conversationId, reasoning, attachmentIds, turnId }, { timeoutMs: TURN_TIMEOUT_MS });
 }
 
-export async function uploadFileChunk({ uploadId, idx, dataBase64 }) {
+export async function getTurnEvents(turnId, afterId = 0) {
+  return callEndpoint('getTurnEvents', { turnId, afterId }, { timeoutMs: 15000 });
+}
+
+export async function editMessage({ messageId, content, reasoning, turnId }) {
+  return callEndpoint('editMessage', { messageId, content, reasoning, turnId }, { timeoutMs: TURN_TIMEOUT_MS });
+}export async function uploadFileChunk({ uploadId, idx, dataBase64 }) {
   return callEndpoint('uploadFileChunk', { uploadId, idx, dataBase64 });
 }
 
@@ -65,13 +77,15 @@ export async function forkConversation(conversationId, upToMessageId = null) {
   return callEndpoint('forkConversation', { conversationId, upToMessageId });
 }
 
-export async function editMessage({ messageId, content, reasoning }) {
-  return callEndpoint('editMessage', { messageId, content, reasoning });
-}
-
 export function errorText(err) {
   if (!err) return 'Неизвестная ошибка';
   if (err.type === 'UNAUTHORIZED') return 'Открой приложение через Telegram';
   if (err.type === 'NO_SDK') return err.message;
+  if (err.type === 'TIMEOUT') return err.message;
+  // Документированное поведение Serverless.call: status 0 = «запрос не смог завершиться»
+  if (err.status === 0) return 'Соединение с сервером прервалось — попробуй ещё раз.';
+  if (err.type && err.type !== 'ENDPOINT_ERROR' && !err.message) {
+    return 'Сервер вернул ошибку без описания — попробуй ещё раз.';
+  }
   return err.message || 'Ошибка соединения, попробуй ещё раз';
 }

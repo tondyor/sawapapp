@@ -2,8 +2,9 @@ import { fetch } from 'sdk';
 import { db } from 'sdk';
 import { eq } from 'sdk/db';
 import { settings } from '../schema.js';
-import { DEFAULT_MODEL, KEY_SETTING, NVIDIA_BASE_URL, MAX_OUTPUT_TOKENS, TEMPERATURE, REASONING_BUDGET } from './config.js';
-
+import {
+  DEFAULT_MODEL, KEY_SETTING, NVIDIA_BASE_URL, MAX_OUTPUT_TOKENS, TEMPERATURE, REASONING_BUDGET, REASONING_MODEL, VISION_MODEL,
+} from './config.js';
 export async function getApiKey() {
   const row = await db.select().from(settings).where(eq(settings.key, KEY_SETTING)).get();
   if (!row || !row.value) {
@@ -12,20 +13,55 @@ export async function getApiKey() {
   return row.value;
 }
 
+// Значение из settings с дефолтом (пустая строка/whitespace = используем дефолт).
+export async function getSettingOr(key, fallback) {
+  try {
+    const row = await db.select().from(settings).where(eq(settings.key, key)).get();
+    const v = row?.value?.trim();
+    return v ? v : fallback;
+  } catch (_) {
+    return fallback;
+  }
+}
+
+// Модель-«зритель» для vision-шага агента (читает изображения).
+export function getVisionModel() {
+  return getSettingOr('VISION_MODEL', VISION_MODEL);
+}
+
+export function getDefaultModel() {
+  return getSettingOr('DEFAULT_MODEL', DEFAULT_MODEL);
+}
+
+// Основная модель ответа: thinking-модель для уровней рассуждений, иначе дефолт.
+export async function pickMainModel({ reasoning, defaultModel }) {
+  if (reasoning && reasoning !== 'fast') return REASONING_MODEL;
+  return defaultModel ?? getDefaultModel();
+}
+
+// chat_template_kwargs.thinking поддерживают модели семейства nemotron-3.5
+// (super-vl, lightning; bolt флаг игнорирует — безвредно). Прочим моделям
+// (например deepseek) флаг не отправляем вообще.
+function thinkingToggleSupported(model) {
+  return typeof model === 'string' && model.startsWith('nvidia/nemotron-3.5');
+}
+
 function buildBody(messages, opts = {}) {
+  const model = opts.model ?? DEFAULT_MODEL;
   const body = {
-    model: opts.model ?? DEFAULT_MODEL,
+    model,
     messages,
     temperature: opts.temperature ?? TEMPERATURE,
     max_tokens: opts.maxTokens ?? MAX_OUTPUT_TOKENS,
     stream: opts.stream === true,
   };
   if (opts.reasoning && opts.reasoning !== 'fast') {
-    body.chat_template_kwargs = { thinking: true };
     body.max_tokens = REASONING_BUDGET[opts.reasoning] ?? MAX_OUTPUT_TOKENS;
-  } else {
-    body.chat_template_kwargs = { thinking: false };
   }
+  if (thinkingToggleSupported(model)) {
+    body.chat_template_kwargs = { thinking: opts.reasoning && opts.reasoning !== 'fast' };
+  }
+  if (body.stream) body.stream_options = { include_usage: true };
   if (opts.tools && opts.tools.length) {
     body.tools = opts.tools;
     body.tool_choice = 'auto';
@@ -69,9 +105,14 @@ export async function completeChat(messages, opts = {}) {
     content,
     reasoning: typeof msg.reasoning_content === 'string' ? msg.reasoning_content : '',
     toolCalls: msg.tool_calls ?? null,
-    model: data?.model ?? opts.model ?? DEFAULT_MODEL,
+    model: normalizeModelId(data?.model) ?? opts.model ?? DEFAULT_MODEL,
     usage: data?.usage ?? null,
   };
+}
+
+// NIM возвращает то 'nvidia/...', то 'private/nvidia/...' — приводим к каталогу.
+export function normalizeModelId(m) {
+  return typeof m === 'string' && m ? m.replace(/^private\//, '') : null;
 }
 
 export async function* streamChat(messages, opts = {}) {
@@ -87,16 +128,19 @@ export async function* streamChat(messages, opts = {}) {
   });
   if (!res.ok) throw apiError(res.status, await res.text());
   const toolAcc = new Map();
+  let usage = null;
   for await (const line of sseLines(res.body)) {
     const t = line.trim();
     if (!t.startsWith('data:')) continue;
     const payload = t.slice(5).trim();
     if (payload === '[DONE]') {
-      if (toolAcc.size) yield { delta: '', reasoning: null, finish: 'tool_calls', toolCalls: [...toolAcc.values()], model: null };
+      if (toolAcc.size) yield { delta: '', reasoning: null, finish: 'tool_calls', toolCalls: [...toolAcc.values()], model: null, usage };
+      else if (usage) yield { delta: '', reasoning: null, finish: null, model: null, usage };
       return;
     }
     let j;
     try { j = JSON.parse(payload); } catch (_) { continue; }
+    if (j?.usage) usage = j.usage;
     const choice = j?.choices?.[0];
     if (!choice) continue;
     const delta = choice?.delta ?? {};
@@ -118,12 +162,14 @@ export async function* streamChat(messages, opts = {}) {
         delta: delta.content ?? '',
         reasoning: hasReasoning ? delta.reasoning_content : null,
         finish: choice?.finish_reason ?? null,
-        model: j?.model ?? null,
+        model: normalizeModelId(j?.model),
+        ...(usage ? { usage } : {}),
         ...(toolAcc.size ? { toolCalls: [...toolAcc.values()] } : {}),
       };
     }
   }
-  if (toolAcc.size) yield { delta: '', reasoning: null, finish: 'tool_calls', toolCalls: [...toolAcc.values()], model: null };
+  if (toolAcc.size) yield { delta: '', reasoning: null, finish: 'tool_calls', toolCalls: [...toolAcc.values()], model: null, usage };
+  else if (usage) yield { delta: '', reasoning: null, finish: null, model: null, usage };
 }
 
 function utf8Decode(bytes) {

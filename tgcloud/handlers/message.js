@@ -98,7 +98,7 @@ async function runTurn(chatId, from, agentId, text) {
   }
 
   const prepared = await prepareTurn({ tgUser: from, agentId, text });
-  const { agent, conv, llmMessages } = prepared;
+  const { agent, conv, history, model } = prepared;
   const started = Date.now();
   const out = { started, skills: [], steps: [], model: null, reasoningText: null, content: null };
 
@@ -109,8 +109,13 @@ async function runTurn(chatId, from, agentId, text) {
 
   let acc = '';
   let lastEdit = Date.now();
+  let hintShown = false;
   try {
-    for await (const ev of agentTurnStream({ agent, llmMessages, reasoning: conv.reasoning }, out)) {
+    for await (const ev of agentTurnStream({ agent, history, reasoning: conv.reasoning, model }, out)) {
+      if (ev.type === 'reasoning' && !hintShown) {
+        hintShown = true;
+        await safeEdit(chatId, messageId, '🧠 Размышляю…');
+      }
       if (ev.type === 'delta') {
         acc += ev.delta;
         const now = Date.now();
@@ -163,13 +168,9 @@ async function safeEdit(chatId, messageId, text) {
     await api.editMessageText({ chat_id: chatId, message_id: messageId, text: text.slice(0, 4000) });
   } catch (e) {
     if (e instanceof BotApiError) {
-      if (e.code === 429) {
-        const after = e.parameters?.retry_after ?? 1;
-        await new Promise((r) => setTimeout(r, after * 1000));
-        try { await api.editMessageText({ chat_id: chatId, message_id: messageId, text: text.slice(0, 4000) }); } catch (_) {}
-        return;
-      }
-      if (e.code === 400) return;
+      // Таймеров в рантайме нет (setTimeout undefined), ждать retry_after нельзя;
+      // 429 пропускаем — следующий дельта через 1.5с всё равно обновит текст.
+      if (e.code === 429 || e.code === 400) return;
     }
     console.warn('edit failed', e?.description ?? String(e));
   }

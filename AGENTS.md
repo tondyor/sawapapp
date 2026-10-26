@@ -166,3 +166,12 @@ The platform manages the bot's webhook for you, derived from your deployed
 - NVIDIA API key lives in the `settings` table (seeded once via `endpoints/adminSetSetting`
   with admin `--ctx`); runtime code reads it through `lib/nvidia.js`. Never put it in code.
 - Mini App URL: `https://app8872967138.tgcloud.ai/` (also in `lib/config.js` → `APP_URL`).
+- Runtime has **no timers** (`typeof setTimeout === 'undefined'`) and **no background
+  work after an endpoint returns** (the isolate dies with the response) — never use
+  `setTimeout`/fire-and-forget promises; realtime is done by polling
+  (`endpoints/getTurnEvents` reads `turn_events` written during the turn).
+  Module file names may not contain hyphens (letters/digits/`_` only).
+- Agent turn architecture (vision step, reasoning levels, realtime trace):
+  [docs/agent-turns.md](docs/agent-turns.md). Models are switchable via `settings`
+  (`VISION_MODEL`, `DEFAULT_MODEL`) without redeploy; vision reader default
+  `nvidia/nemotron-3.5-super-vl-120b-a12b` (deepseek-v4.1-flash measured 35s+ first token).

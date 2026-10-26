@@ -63,6 +63,19 @@ export const fileChunks = table('file_chunks', {
   upIdx: index('idx_file_chunks_up').on(t.uploadId, t.idx),
 }));
 
+export const turnEvents = table('turn_events', {
+  id:             integer('id').primaryKey({ autoIncrement: true }),
+  turnId:         text('turn_id').notNull(),
+  conversationId: integer('conversation_id').notNull(),
+  tgId:           integer('tg_id').notNull(),
+  type:           text('type').notNull(),
+  payload:        json('payload'),
+  createdAt:      integer('created_at', { mode: 'timestamp_ms' }).default(sql`(unixepoch() * 1000)`),
+}, (t) => ({
+  turnIdx: index('idx_turn_events_turn').on(t.turnId, t.id),
+  convIdx: index('idx_turn_events_conv').on(t.conversationId, t.id),
+}));
+
 export const settings = table('settings', {
   key:       text('key').primaryKey(),
   value:     text('value').notNull(),

@@ -9,17 +9,19 @@ export function initTelegram() {
   try { tg.setBackgroundColor('#070a12'); } catch (_) {}
 }
 
-export function callEndpoint(name, input = {}) {
+export function callEndpoint(name, input = {}, { timeoutMs = 15000 } = {}) {
   return new Promise((resolve, reject) => {
     if (!tg?.Serverless?.call) {
       reject({ type: 'NO_SDK', message: 'Telegram Mini App SDK недоступен' });
       return;
     }
     let timer;
-    timer = setTimeout(() => {
-      timer = null;
-      reject({ type: 'TIMEOUT', message: 'Telegram не отвечает. Откройте приложение из чата с ботом.' });
-    }, 10000);
+    if (timeoutMs > 0) {
+      timer = setTimeout(() => {
+        timer = null;
+        reject({ type: 'TIMEOUT', message: 'Telegram не отвечает. Откройте приложение из чата с ботом.' });
+      }, timeoutMs);
+    }
     tg.Serverless.call(name, input, (err, result) => {
       if (timer) { clearTimeout(timer); timer = null; }
       if (err) reject(err);

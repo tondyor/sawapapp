@@ -3,6 +3,7 @@ import { eq } from 'sdk/db';
 import { files } from '../schema.js';
 import { completeTurn } from '../lib/chat.js';
 import { MAX_MESSAGE_CHARS, REASONING_LEVELS } from '../lib/config.js';
+import { sanitizeTurnId } from '../lib/turnEvents.js';
 
 export default async function (input, ctx) {
   const tgUser = ctx.initData.user;
@@ -13,6 +14,7 @@ export default async function (input, ctx) {
     throw new EndpointError(`Сообщение слишком длинное (максимум ${MAX_MESSAGE_CHARS} символов)`, { code: 'TOO_LONG' });
   }
   const reasoning = REASONING_LEVELS.includes(input?.reasoning) ? input.reasoning : undefined;
+  const turnId = sanitizeTurnId(input?.turnId);
 
   let attachments = null;
   if (attachmentIds.length) {
@@ -28,11 +30,18 @@ export default async function (input, ctx) {
 
   let result;
   try {
-    result = await completeTurn({ tgUser, agentId: input?.agentId, text, reasoning, conversationId: input?.conversationId, attachments });
+    result = await completeTurn({ tgUser, agentId: input?.agentId, text, reasoning, conversationId: input?.conversationId, attachments, turnId });
   } catch (e) {
     const m = String(e?.message ?? e);
     if (m.includes('слишком длинное')) throw new EndpointError(m, { code: 'TOO_LONG' });
     if (m.includes('NVIDIA_API_KEY')) throw new EndpointError('Сервис настраивается, ключ модели ещё не задан', { code: 'KEY_MISSING' });
+    if (m.includes('Изображение слишком большое')) throw new EndpointError(m, { code: 'IMAGE_TOO_BIG' });
+    if (m.includes('Файл изображения недоступен')) throw new EndpointError('Не удалось прочитать изображение — попробуйте отправить его заново.', { code: 'IMAGE_UNAVAILABLE' });
+    if (m.includes('Vision-модель')) throw new EndpointError('Не удалось разобрать изображение, попробуйте ещё раз.', { code: 'VISION_FAILED' });
+    if (m.includes('пустой ответ')) throw new EndpointError('Модель вернула пустой ответ — переформулируйте запрос или снизьте уровень рассуждений.', { code: 'EMPTY_REPLY' });
+    if (m.startsWith('NVIDIA API')) {
+      throw new EndpointError(`Модель вернула ошибку: ${m.replace('NVIDIA API', '').trim().slice(0, 200)}`, { code: 'MODEL_ERROR' });
+    }
     throw e;
   }
   return {

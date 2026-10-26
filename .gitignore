@@ -35,3 +35,4 @@ desktop.ini
 # Временные файлы
 *.tmp
 .cache/
+dist-test

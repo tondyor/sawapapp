@@ -4,6 +4,8 @@ import { markdownToHtml } from '../lib/format.js';
 import { haptic } from '../lib/tg.js';
 import { uploadFileChunk, uploadFileFinish, readFileSliceAsBase64, fetchFileDataUrl } from '../lib/api.js';
 import { convertToWebp } from '../lib/img.js';
+import ReasoningTrace from './ReasoningTrace.jsx';
+import { eventsFromMeta } from '../lib/trace.js';
 
 const LEVEL_LABELS = { fast: 'Быстро', light: 'Лёгкий', medium: 'Средний', high: 'Высокий', max: 'Max' };
 
@@ -73,6 +75,8 @@ function Attachment({ att }) {
 function Message({ m, accent, editing, editContent, onChange, onSave, onCancel, onCopy, onEdit, onFork }) {
   const isUser = m.role === 'user';
   const isTmp = String(m.id).startsWith('tmp-');
+  const traceEvents = !isUser && !editing ? eventsFromMeta(m.meta) : [];
+  const hasTrace = traceEvents.some((e) => e.type === 'reasoning' || e.type === 'skill' || e.type === 'image' || e.type === 'error');
 
   if (editing) {
     return (
@@ -100,6 +104,9 @@ function Message({ m, accent, editing, editContent, onChange, onSave, onCancel, 
         <div className="avatar"><AgentIcon agentId={m.agentId || 'chat'} color={accent} size={30} idp={'m-' + m.id} /></div>
       )}
       <div className="bubble-wrap">
+        {!isUser && hasTrace && (
+          <ReasoningTrace events={traceEvents} accent={accent} />
+        )}
         {Array.isArray(m.attachments) && m.attachments.length > 0 && (
           <div className="att-list">
             {m.attachments.map((a, i) => (
@@ -154,6 +161,8 @@ export default function Chat({
   agentName,
   onSelectAgent,
   onNotice,
+  liveTurn,
+  onEnsureConversation,
 }) {
   const [text, setText] = useState('');
   const [selectedFile, setSelectedFile] = useState(null);
@@ -187,6 +196,9 @@ export default function Chat({
       setSelectedFile(null);
       setUploading(true);
       try {
+        let convId = conversationId;
+        if (!convId && onEnsureConversation) convId = await onEnsureConversation();
+        if (!convId) throw new Error('Не удалось создать диалог для файла');
         const uploadId = 'u-' + Date.now() + '-' + Math.random().toString(36).slice(2, 10);
         const chunkSize = 699999;
         const count = Math.max(1, Math.ceil(f.size / chunkSize));
@@ -194,7 +206,7 @@ export default function Chat({
           const b64 = await readFileSliceAsBase64(f, i * chunkSize, Math.min((i + 1) * chunkSize, f.size));
           await uploadFileChunk({ uploadId, idx: i, dataBase64: b64 });
         }
-        attachment = await uploadFileFinish({ uploadId, conversationId, name: f.name, mime: f.type });
+        attachment = await uploadFileFinish({ uploadId, conversationId: convId, name: f.name, mime: f.type });
       } catch (e) {
         setUploading(false);
         onNotice(e?.message || 'Не удалось загрузить файл');
@@ -263,7 +275,12 @@ export default function Chat({
         {sending && (
           <div className="row bot">
             <div className="avatar"><AgentIcon agentId={agentId} color={accent} size={30} idp="typing" /></div>
-            <div className="bubble bot typing-bubble"><TypingDots color={accent} /></div>
+            <div className="bubble-wrap">
+              {liveTurn && (
+                <ReasoningTrace events={liveTurn.events} live accent={accent} startedAt={liveTurn.startedAt} />
+              )}
+              <div className="bubble bot typing-bubble"><TypingDots color={accent} /></div>
+            </div>
           </div>
         )}
         {error && (

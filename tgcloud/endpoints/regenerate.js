@@ -1,12 +1,14 @@
 import { db, EndpointError } from 'sdk';
-import { eq, gte, and } from 'sdk/db';
+import { eq, gte, gt, and } from 'sdk/db';
 import { messages } from '../schema.js';
 import { getConversationById, regenerateTurn, ensureUser, latestConversation } from '../lib/chat.js';
 import { REASONING_LEVELS } from '../lib/config.js';
+import { sanitizeTurnId } from '../lib/turnEvents.js';
 
 export default async function (input, ctx) {
   const tgUser = ctx.initData.user;
   const reasoning = REASONING_LEVELS.includes(input?.reasoning) ? input.reasoning : undefined;
+  const turnId = sanitizeTurnId(input?.turnId);
   let conversationId = input?.conversationId ? Number(input.conversationId) : null;
 
   if (input?.messageId) {
@@ -31,7 +33,7 @@ export default async function (input, ctx) {
   }
 
   try {
-    const result = await regenerateTurn({ tgUser, conversationId, reasoning });
+    const result = await regenerateTurn({ tgUser, conversationId, reasoning, turnId });
     return {
       conversationId: result.conv.id,
       agentId: result.agent.id,

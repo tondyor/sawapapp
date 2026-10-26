@@ -624,3 +624,84 @@ button {
 }
 .att-name { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .att-size { color: var(--muted); flex: 0 0 auto; }
+
+/* ── Трасса хода агента (размышления/шаги над ответом) ─────────────────── */
+.rtrace {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--panel);
+  overflow: hidden;
+  font-size: 12.5px;
+}
+.rtrace-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 10px;
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  text-align: left;
+}
+.rtrace-head svg { margin-left: auto; flex: 0 0 auto; transition: transform 0.18s ease; opacity: 0.7; }
+.rtrace.open .rtrace-head svg { transform: rotate(90deg); }
+.rtrace-status { color: var(--text); font-weight: 600; font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rtrace.live .rtrace-status { color: var(--accent); }
+.rtrace.err .rtrace-status { color: var(--danger); }
+.rtrace-dot {
+  flex: 0 0 auto;
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--muted);
+}
+.rtrace-dot.pulse { background: var(--accent); animation: rt-pulse 1.1s ease-in-out infinite; }
+.rtrace-dot.dot-done { background: #34d399; }
+.rtrace-dot.dot-err { background: var(--danger); }
+@keyframes rt-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(124, 140, 248, 0.45); }
+  50% { box-shadow: 0 0 0 5px rgba(124, 140, 248, 0); }
+}
+.rtrace-timer { color: var(--muted); font-variant-numeric: tabular-nums; flex: 0 0 auto; }
+.rtrace-model {
+  flex: 0 0 auto;
+  color: var(--muted);
+  font-size: 11px;
+  padding: 2px 7px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.rtrace-tail {
+  padding: 0 10px 8px 25px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.rtrace-body { border-top: 1px solid var(--border); }
+.rtrace-steps { padding: 8px 10px; display: flex; flex-direction: column; gap: 4px; }
+.rtrace-step { color: var(--muted); font-size: 12px; }
+.rtrace-step.err { color: var(--danger); }
+.rtrace-text { border-top: 1px dashed var(--border); }
+.rtrace-text-title {
+  padding: 8px 10px 0;
+  color: var(--muted);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.rtrace-text-body {
+  padding: 6px 10px 10px;
+  max-height: 240px;
+  overflow-y: auto;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+}

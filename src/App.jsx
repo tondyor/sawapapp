@@ -12,9 +12,17 @@ import {
   editMessage as editMsg,
   sendUserMessage,
   startConversation,
+  getTurnEvents,
   errorText,
 } from './lib/api.js';
 import Drawer from './components/Drawer.jsx';
+import { eventsFromMeta } from './lib/trace.js';
+
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+function newTurnId() {
+  return 't-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10);
+}
 
 export default function App() {
   const [agents, setAgents] = useState([]);
@@ -31,7 +39,9 @@ export default function App() {
   const [conversations, setConversations] = useState([]);
   const [editingId, setEditingId] = useState(null);
   const [editContent, setEditContent] = useState('');
+  const [liveTurn, setLiveTurn] = useState(null); // { turnId, startedAt, events }
   const lastSent = useRef(null);
+  const pollCancel = useRef(null);
 
   useEffect(() => {
     initTelegram();
@@ -67,6 +77,50 @@ export default function App() {
 
   const agent = agents.find((a) => a.id === agentId) || agents[0];
 
+  // ── Поллинг хода агента: события пишутся в БД по мере генерации ──────────
+  const runTurnPolling = useCallback((turnId) => {
+    let cancelled = false;
+    pollCancel.current = () => { cancelled = true; };
+    const promise = (async () => {
+      let afterId = 0;
+      let stallMs = 0;
+      for (;;) {
+        if (cancelled) return null;
+        try {
+          const res = await getTurnEvents(turnId, afterId);
+          stallMs = 0;
+          if (res.events.length) {
+            afterId = res.lastId;
+            setLiveTurn((t) => (t && t.turnId === turnId ? { ...t, events: [...t.events, ...res.events] } : t));
+          }
+          if (res.done) return res;
+        } catch (_) {
+          stallMs += 800;
+        }
+        await sleep(stallMs > 60000 ? 3000 : 800);
+      }
+    })();
+    return { promise, cancel: () => { cancelled = true; } };
+  }, []);
+
+  const stopPolling = useCallback(() => {
+    if (pollCancel.current) { pollCancel.current(); pollCancel.current = null; }
+  }, []);
+
+  // Финализация хода: ответ могли принести и основной вызов, и done-событие.
+  const applyAssistant = useCallback((turnId, res, convIdFromRes) => {
+    setConversationId((cur) => res.conversationId ?? convIdFromRes ?? cur);
+    setAgentId((cur) => res.agentId ?? cur);
+    setMessages((prev) => [...prev, {
+      id: `a-${res.conversationId ?? 'x'}-${Date.now()}`,
+      role: 'assistant',
+      content: res.reply,
+      agentId: res.agentId,
+      meta: res.meta ?? null,
+    }]);
+    setLiveTurn((t) => (t && t.turnId === turnId ? { ...t, events: [...t.events, { id: 'd-local', type: 'done', payload: { meta: res.meta ?? null } }] } : null));
+  }, []);
+
   const handleSend = useCallback(async (text, attachment = null, fileObj = null) => {
     if (sending) return;
     lastSent.current = { text, agentId, conversationId };
@@ -74,21 +128,41 @@ export default function App() {
       ? [{ fileId: `local-${Date.now()}`, name: fileObj.name, mime: fileObj.type, size: fileObj.size, localUrl: URL.createObjectURL(fileObj) }]
       : null;
     setMessages((prev) => [...prev, { id: `tmp-${Date.now()}`, role: 'user', content: text || (localAtt ? localAtt[0].name : ''), attachments: localAtt }]);
+
+    const turnId = newTurnId();
     setSending(true);
     setError(null);
+    setLiveTurn({ turnId, startedAt: Date.now(), events: [] });
+    const poll = runTurnPolling(turnId);
     try {
-      const res = await sendUserMessage({ text, agentId, conversationId, reasoning: reasoningLevel, attachmentIds: attachment ? [attachment.fileId] : undefined });
-      setConversationId(res.conversationId ?? conversationId);
-      setAgentId(res.agentId ?? agentId);
-      setMessages((prev) => [...prev, { id: `a-${res.conversationId}-${Date.now()}`, role: 'assistant', content: res.reply, agentId: res.agentId }]);
+      const res = await sendUserMessage({ text, agentId, conversationId, reasoning: reasoningLevel, attachmentIds: attachment ? [attachment.fileId] : undefined, turnId });
+      stopPolling();
+      // даём поллингу мгновение доприлететь (косметика трассы), ответ уже есть
+      applyAssistant(turnId, res);
     } catch (e) {
-      setError(errorText(e));
-      setMessages((prev) => prev.filter((m) => !m.id.startsWith('tmp-')));
+      // Основной вызов мог не дожить (таймаут канала), а ход на сервере дошёл
+      // до конца: ждём done-событие до 20с и берём ответ из него.
+      const doneRes = await Promise.race([poll.promise, sleep(20000).then(() => null)]);
+      stopPolling();
+      const doneEv = doneRes?.events?.find?.((ev) => ev.type === 'done');
+      if (doneEv?.payload?.content) {
+        applyAssistant(turnId, {
+          conversationId: null,
+          agentId,
+          reply: doneEv.payload.content,
+          meta: doneEv.payload.meta ?? null,
+        });
+      } else {
+        setError(errorText(e));
+        setMessages((prev) => prev.filter((m) => !m.id.startsWith('tmp-')));
+        setLiveTurn(null);
+      }
     } finally {
+      stopPolling();
       setSending(false);
       refreshConversations();
     }
-  }, [sending, agentId, conversationId, reasoningLevel, refreshConversations]);
+  }, [sending, agentId, conversationId, reasoningLevel, refreshConversations, runTurnPolling, stopPolling, applyAssistant]);
 
   const handleRetry = useCallback(() => {
     if (lastSent.current) handleSend(lastSent.current.text);
@@ -106,6 +180,7 @@ export default function App() {
     haptic();
     setMessages([]);
     setError(null);
+    setLiveTurn(null);
     try {
       const res = await startConversation(agentId);
       setConversationId(res.conversationId ?? null);
@@ -160,11 +235,24 @@ export default function App() {
     }
   }, [agentId, refreshConversations]);
 
+  // Загрузка файла требует существующего conversationId — создаём диалог, если его ещё нет.
+  const ensureConversationForUpload = useCallback(async () => {
+    if (conversationId) return conversationId;
+    const res = await startConversation(agentId);
+    setConversationId(res.conversationId ?? null);
+    refreshConversations();
+    return res.conversationId ?? null;
+  }, [conversationId, agentId, refreshConversations]);
+
   const handleEditSave = useCallback(async (messageId, content, reasoning) => {
     setSending(true);
     setError(null);
+    const turnId = newTurnId();
+    setLiveTurn({ turnId, startedAt: Date.now(), events: [] });
+    const poll = runTurnPolling(turnId);
     try {
-      const res = await editMsg({ messageId, content, reasoning });
+      const res = await editMsg({ messageId, content, reasoning, turnId });
+      stopPolling();
       setConversationId(res.conversationId ?? conversationId);
       setAgentId(res.agentId ?? agentId);
       if (res.reply) {
@@ -179,11 +267,26 @@ export default function App() {
       setEditContent('');
       refreshConversations();
     } catch (e) {
-      setError(errorText(e));
+      const doneRes = await Promise.race([poll.promise, sleep(20000).then(() => null)]);
+      stopPolling();
+      const doneEv = doneRes?.events?.find?.((ev) => ev.type === 'done');
+      if (doneEv?.payload?.content) {
+        setMessages((prev) => {
+          const cut = prev.findIndex((m) => m.id === messageId);
+          return [...prev.slice(0, cut + 1), { id: `a-${Date.now()}`, role: 'assistant', content: doneEv.payload.content, agentId, meta: doneEv.payload.meta ?? null }];
+        });
+        setEditingId(null);
+        setEditContent('');
+      } else {
+        setError(errorText(e));
+        setLiveTurn(null);
+      }
     } finally {
+      stopPolling();
       setSending(false);
+      refreshConversations();
     }
-  }, [conversationId, agentId, reasoningLevel, refreshConversations]);
+  }, [conversationId, agentId, reasoningLevel, refreshConversations, runTurnPolling, stopPolling]);
 
   const handleForkMessage = useCallback(async (messageId) => {
     if (!conversationId) return;
@@ -243,6 +346,8 @@ export default function App() {
           agentName={agent?.name ?? 'Агент'}
           onSelectAgent={() => { haptic(); setSheetOpen(true); }}
           onNotice={setNotice}
+          liveTurn={liveTurn}
+          onEnsureConversation={ensureConversationForUpload}
         />
       )}
 
