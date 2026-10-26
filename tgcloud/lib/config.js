@@ -1,7 +1,8 @@
 export const ADMIN_TG_IDS = [1707415385];
 
 // PLANNER_MODEL/COMPRESS_MODEL переопределяются через settings (смена без деплоя).
-export const ALLOWED_SETTING_KEYS = ['NVIDIA_API_KEY', 'VISION_MODEL', 'DEFAULT_MODEL', 'PLANNER_MODEL', 'COMPRESS_MODEL'];
+// SERPER_API_KEY — ключ веб-поиска (Ф2); READER_MODE=jina|auto — ридер web_read.
+export const ALLOWED_SETTING_KEYS = ['NVIDIA_API_KEY', 'VISION_MODEL', 'DEFAULT_MODEL', 'PLANNER_MODEL', 'COMPRESS_MODEL', 'SERPER_API_KEY', 'READER_MODE'];
 
 export const DEFAULT_MODEL = 'nvidia/nemotron-3.5-bolt-e4b';
 
