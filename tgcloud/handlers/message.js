@@ -1,8 +1,10 @@
-import { api, BotApiError } from 'sdk';
-import { prepareTurn, finishTurn, ensureUser, setAgent, createConversation, agentTurnStream, buildMeta } from '../lib/chat.js';
+import { api } from 'sdk';
+import { ensureUser, setAgent, createConversation } from '../lib/chat.js';
 import { AGENTS, getAgent, getAgentOrDefault, DEFAULT_AGENT_ID } from '../lib/agents.js';
-import { APP_URL, MAX_MESSAGE_CHARS } from '../lib/config.js';
+import { APP_URL } from '../lib/config.js';
 
+// Ф4: бот-чат — точка входа и настройки. Вся агентская логика (ходы, стриминг,
+// навыки) живёт в Mini App; текст сюда → приглашение с кнопкой приложения.
 export default async function (message) {
   const chatId = message?.chat?.id;
   const from = message?.from;
@@ -13,7 +15,7 @@ export default async function (message) {
 
   if (!text) {
     if (message.photo || message.voice || message.document || message.video || message.audio) {
-      await api.sendMessage({ chat_id: chatId, text: 'Пока я понимаю только текст. Напиши сообщение — или открой приложение.' });
+      await api.sendMessage({ chat_id: chatId, text: 'Файлы и фото принимают агенты в приложении.' });
     }
     return;
   }
@@ -23,7 +25,15 @@ export default async function (message) {
     return;
   }
 
-  await runTurn(chatId, from, null, text);
+  await api.sendMessage({
+    chat_id: chatId,
+    text: 'Общение с агентами — в приложении: там ход с планом, шагами и трассой размышлений.',
+    ...(APP_URL ? { reply_markup: appKeyboard() } : {}),
+  });
+}
+
+function appKeyboard() {
+  return { inline_keyboard: [[{ text: 'Открыть приложение', web_app: { url: APP_URL } }]] };
 }
 
 async function handleCommand(chatId, from, text) {
@@ -59,14 +69,14 @@ async function handleCommand(chatId, from, text) {
       }
       await ensureUser(from);
       await setAgent(from.id, agent.id);
-      await api.sendMessage({ chat_id: chatId, text: `Агент выбран: ${agent.name}. Напиши сообщение — начнём диалог.`, reply_markup: agentKeyboard(agent.id) });
+      await api.sendMessage({ chat_id: chatId, text: `Агент по умолчанию: ${agent.name}.`, reply_markup: agentKeyboard(agent.id) });
       return;
     }
     case '/new': {
       const user = await ensureUser(from);
       const agent = getAgentOrDefault(user.agentId);
       await createConversation(user, agent.id, 'Новый диалог');
-      await api.sendMessage({ chat_id: chatId, text: `Начат новый диалог с агентом «${agent.name}». История предыдущего сохранена.`, reply_markup: agentKeyboard(agent.id) });
+      await api.sendMessage({ chat_id: chatId, text: `Начат новый диалог с агентом «${agent.name}» в приложении.`, reply_markup: agentKeyboard(agent.id) });
       return;
     }
     case '/help': {
@@ -78,11 +88,11 @@ async function handleCommand(chatId, from, text) {
           'Команды:',
           '/agents — выбрать агента',
           '/new — начать новый диалог',
-          '/agent <имя> — выбрать агента по имени',
+          '/agent <имя> — агент по умолчанию',
           '',
-          'Или открой приложение: там удобнее.',
+          'Общение — в приложении: план хода, шаги, трасса размышлений.',
         ].join('\n'),
-        ...(APP_URL ? { reply_markup: { inline_keyboard: [[{ text: 'Открыть приложение', web_app: { url: APP_URL } }]] } } : {}),
+        ...(APP_URL ? { reply_markup: appKeyboard() } : {}),
       });
       return;
     }
@@ -91,111 +101,13 @@ async function handleCommand(chatId, from, text) {
   }
 }
 
-async function runTurn(chatId, from, agentId, text) {
-  if (text.length > MAX_MESSAGE_CHARS) {
-    await api.sendMessage({ chat_id: chatId, text: `Сообщение слишком длинное (максимум ${MAX_MESSAGE_CHARS} символов).` });
-    return;
-  }
-
-  const prepared = await prepareTurn({ tgUser: from, agentId, text });
-  const { agent, conv, history, model } = prepared;
-  const started = Date.now();
-  const out = { started, skills: [], steps: [], model: null, reasoningText: null, content: null };
-
-  try { await api.sendChatAction({ chat_id: chatId, action: 'typing' }); } catch (_) {}
-
-  const placeholder = await api.sendMessage({ chat_id: chatId, text: `${agent.name} печатает…` });
-  const messageId = placeholder.message_id;
-
-  let acc = '';
-  let lastEdit = Date.now();
-  let hintShown = false;
-  try {
-    for await (const ev of agentTurnStream({ agent, history, reasoning: conv.reasoning, model }, out)) {
-      if (ev.type === 'reasoning' && !hintShown) {
-        hintShown = true;
-        await safeEdit(chatId, messageId, '🧠 Размышляю…');
-      }
-      if (ev.type === 'delta') {
-        acc += ev.delta;
-        const now = Date.now();
-        if (now - lastEdit > 1500 && acc.trim()) {
-          lastEdit = now;
-          await safeEdit(chatId, messageId, `${acc.trim()} ▌`);
-          try { await api.sendChatAction({ chat_id: chatId, action: 'typing' }); } catch (_) {}
-        }
-      } else if (ev.type === 'skill') {
-        try { await api.sendChatAction({ chat_id: chatId, action: 'typing' }); } catch (_) {}
-      }
-    }
-    const finalText = (out.content ?? acc).trim() || 'Модель вернула пустой ответ. Попробуй переформулировать вопрос.';
-    const footer = out.skills.length ? `\n\n— использован навык: ${out.skills.map((s) => s.name).join(', ')}` : '';
-    await safeEdit(chatId, messageId, finalText.slice(0, 4000 - footer.length) + footer);
-    if (finalText.length > 4000) {
-      for (const chunk of splitLong(finalText, 4000).slice(1)) {
-        await api.sendMessage({ chat_id: chatId, text: chunk });
-      }
-    }
-    const meta = buildMeta({
-      started,
-      model: out.model,
-      reasoning: conv.reasoning,
-      steps: out.steps,
-      skills: out.skills,
-      reasoningText: out.reasoningText,
-    });
-    await finishTurn(conv, finalText, meta);
-  } catch (e) {
-    console.error('turn failed', e);
-    const meta = buildMeta({
-      started,
-      reasoning: conv.reasoning,
-      steps: out.steps,
-      skills: out.skills,
-      reasoningText: out.reasoningText,
-      error: e?.message ?? String(e),
-    });
-    const msg = acc.trim()
-      ? `${acc.trim()}\n\n(ответ прерван из-за ошибки, попробуй ещё раз)`
-      : 'Не получилось получить ответ от модели. Попробуй ещё раз через минуту.';
-    await safeEdit(chatId, messageId, msg);
-    await finishTurn(conv, acc.trim() || '[ошибка: ответ не получен]', meta);
-  }
-}
-
-async function safeEdit(chatId, messageId, text) {
-  try {
-    await api.editMessageText({ chat_id: chatId, message_id: messageId, text: text.slice(0, 4000) });
-  } catch (e) {
-    if (e instanceof BotApiError) {
-      // Таймеров в рантайме нет (setTimeout undefined), ждать retry_after нельзя;
-      // 429 пропускаем — следующий дельта через 1.5с всё равно обновит текст.
-      if (e.code === 429 || e.code === 400) return;
-    }
-    console.warn('edit failed', e?.description ?? String(e));
-  }
-}
-
-function splitLong(text, size) {
-  const parts = [];
-  let rest = text;
-  while (rest.length > size) {
-    let cut = rest.lastIndexOf('\n', size);
-    if (cut < size * 0.5) cut = size;
-    parts.push(rest.slice(0, cut));
-    rest = rest.slice(cut).trimStart();
-  }
-  if (rest) parts.push(rest);
-  return parts;
-}
-
 function welcomeText(agent) {
   return [
     `Привет! Это SawaPApp — здесь ты общаешься с AI-агентами, каждый со своей специальностью.`,
     '',
-    `Текущий агент: «${agent.name}» — ${agent.tagline.toLowerCase()}.`,
+    `Агент по умолчанию: «${agent.name}» — ${agent.tagline.toLowerCase()}.`,
     '',
-    'Выбери агента кнопкой ниже, напиши сообщение прямо в чат — или открой приложение.',
+    'Открой приложение и напиши ему там — с планом, шагами и трассой размышлений.',
   ].join('\n');
 }
 
