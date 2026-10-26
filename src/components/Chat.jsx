@@ -163,6 +163,10 @@ export default function Chat({
   onNotice,
   liveTurn,
   onEnsureConversation,
+  resumeTurn,
+  onResumeTurn,
+  onDiscardTurn,
+  onStopTurn,
 }) {
   const [text, setText] = useState('');
   const [selectedFile, setSelectedFile] = useState(null);
@@ -242,6 +246,17 @@ export default function Chat({
   return (
     <>
       <div className="chat-scroll">
+        {resumeTurn && !sending && (
+          <div className="resume-banner">
+            <div className="resume-text">
+              ⏸ Ход не завершён: «{(resumeTurn.question ?? '').slice(0, 70)}{(resumeTurn.question ?? '').length > 70 ? '…' : ''}»
+            </div>
+            <div className="resume-actions">
+              <button className="resume-go" onClick={() => { haptic(); onResumeTurn(); }}>Продолжить</button>
+              <button className="resume-no" onClick={() => { haptic(); onDiscardTurn(); }}>Остановить</button>
+            </div>
+          </div>
+        )}
         {isEmpty && (
           <div className="empty">
             <div className="empty-icon" style={{ '--accent': accent }}>
@@ -280,6 +295,11 @@ export default function Chat({
                 <ReasoningTrace events={liveTurn.events} live accent={accent} startedAt={liveTurn.startedAt} />
               )}
               <div className="bubble bot typing-bubble"><TypingDots color={accent} /></div>
+              {onStopTurn && liveTurn?.turnId && (
+                <button className="stop-turn" onClick={() => { haptic(); onStopTurn(); }}>
+                  ⏹ Остановить ход
+                </button>
+              )}
             </div>
           </div>
         )}

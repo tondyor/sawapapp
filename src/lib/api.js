@@ -23,6 +23,28 @@ export async function getTurnEvents(turnId, afterId = 0) {
   return callEndpoint('getTurnEvents', { turnId, afterId }, { timeoutMs: 15000 });
 }
 
+// ── Пайплайн хода (конечный автомат в БД) ──────────────────────────────────
+export async function startTurn({ text, agentId, conversationId, reasoning, attachmentIds }) {
+  return callEndpoint('startTurn', { text, agentId, conversationId, reasoning, attachmentIds }, { timeoutMs: 45000 });
+}
+
+export async function runTurnStep(turnId) {
+  return callEndpoint('runTurnStep', { turnId }, { timeoutMs: TURN_TIMEOUT_MS });
+}
+
+export async function finishTurn(turnId) {
+  return callEndpoint('finishTurn', { turnId }, { timeoutMs: TURN_TIMEOUT_MS });
+}
+
+// Состояние хода: с turnId — конкретный, без — последний активный ход диалога.
+export async function getTurnState({ turnId, conversationId }) {
+  return callEndpoint('getTurn', { turnId, conversationId }, { timeoutMs: 15000 });
+}
+
+export async function stopTurn(turnId) {
+  return callEndpoint('stopTurn', { turnId }, { timeoutMs: 30000 });
+}
+
 export async function editMessage({ messageId, content, reasoning, turnId }) {
   return callEndpoint('editMessage', { messageId, content, reasoning, turnId }, { timeoutMs: TURN_TIMEOUT_MS });
 }export async function uploadFileChunk({ uploadId, idx, dataBase64 }) {

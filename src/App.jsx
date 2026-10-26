@@ -10,13 +10,19 @@ import {
   deleteConversation,
   forkConversation,
   editMessage as editMsg,
-  sendUserMessage,
   startConversation,
   getTurnEvents,
   errorText,
 } from './lib/api.js';
 import Drawer from './components/Drawer.jsx';
 import { eventsFromMeta } from './lib/trace.js';
+import {
+  startTurn as apiStartTurn,
+  runTurnStep as apiRunTurnStep,
+  finishTurn as apiFinishTurn,
+  getTurnState,
+  stopTurn as apiStopTurn,
+} from './lib/api.js';
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -39,7 +45,8 @@ export default function App() {
   const [conversations, setConversations] = useState([]);
   const [editingId, setEditingId] = useState(null);
   const [editContent, setEditContent] = useState('');
-  const [liveTurn, setLiveTurn] = useState(null); // { turnId, startedAt, events }
+  const [liveTurn, setLiveTurn] = useState(null); // { turnId, startedAt, events, pipeline }
+  const [resumeTurn, setResumeTurn] = useState(null); // активный ход диалога для баннера возобновления
   const lastSent = useRef(null);
   const pollCancel = useRef(null);
 
@@ -58,6 +65,7 @@ export default function App() {
           setConversationId(hist.conversationId ?? null);
           setMessages(hist.messages ?? []);
           setReasoningLevel(hist.reasoning || 'fast');
+          if (hist.conversationId) checkResumeTurn(hist.conversationId);
         } catch (_) {}
       } catch (e) {
         setError(errorText(e));
@@ -121,6 +129,113 @@ export default function App() {
     setLiveTurn((t) => (t && t.turnId === turnId ? { ...t, events: [...t.events, { id: 'd-local', type: 'done', payload: { meta: res.meta ?? null } }] } : null));
   }, []);
 
+  // ── Пайплайн-ход (конечный автомат в БД) ──────────────────────────────────
+
+  const applyPipelineMessage = useCallback((turnId, message, convId) => {
+    if (convId) setConversationId((cur) => convId ?? cur);
+    if (message) {
+      setMessages((prev) => [...prev, {
+        id: message.id ?? `a-${Date.now()}`,
+        role: 'assistant',
+        content: message.content,
+        agentId: message.meta?.agentId ?? agentId,
+        meta: message.meta ?? null,
+      }]);
+    }
+    setLiveTurn((t) => (t && t.turnId === turnId
+      ? { ...t, events: [...t.events, { id: 'd-local', type: 'done', payload: { meta: message?.meta ?? null } }] }
+      : null));
+  }, [agentId]);
+
+  // Проверка активного хода диалога (баннер «Ход не завершён — продолжить?»).
+  const checkResumeTurn = useCallback(async (cid) => {
+    if (!cid) return;
+    try {
+      const res = await getTurnState({ conversationId: cid });
+      const t = res?.turn;
+      if (t && (t.status === 'executing' || t.status === 'synthesizing' || t.status === 'planning')) {
+        setResumeTurn(t);
+      } else {
+        setResumeTurn(null);
+      }
+    } catch (_) { /* нет хода — нет баннера */ }
+  }, []);
+
+  // Ведение хода: крутим runTurnStep до done/synthesizing→finishTurn.
+  // Обрыв вызова — не ошибка: состояние в БД, повторяем шаг (ход живёт на сервере).
+  const driveTurn = useCallback(async (turnId, convId) => {
+    let fails = 0;
+    for (let iter = 0; iter < 40; iter++) {
+      let r = null;
+      try {
+        r = await apiRunTurnStep(turnId);
+        fails = 0;
+      } catch (e) {
+        fails += 1;
+        if (fails >= 8) throw e;
+        setNotice('Ход продолжается…');
+        await sleep(3000);
+        continue;
+      }
+      if (r.status === 'executing') continue;
+      if (r.status === 'synthesizing') {
+        let f = null;
+        try {
+          f = await apiFinishTurn(turnId);
+          fails = 0;
+        } catch (e2) {
+          fails += 1;
+          if (fails >= 8) throw e2;
+          setNotice('Собираю ответ…');
+          await sleep(3000);
+          continue;
+        }
+        if (f.status === 'done' && f.message) return { turnId, message: f.message, conversationId: convId };
+        if (f.status === 'done') return { turnId, already: true, conversationId: convId };
+        if (f.status === 'error') return { turnId, error: f.error ?? 'Не удалось собрать ответ', conversationId: convId };
+        if (f.status === 'stopped') return { turnId, stopped: true, conversationId: convId };
+        continue;
+      }
+      if (r.status === 'done' && r.message) return { turnId, message: r.message, conversationId: convId };
+      if (r.status === 'done') return { turnId, already: true, conversationId: convId };
+      if (r.status === 'error') return { turnId, error: r.error ?? 'Ход завершился ошибкой', conversationId: convId };
+      if (r.status === 'stopped') return { turnId, stopped: true, conversationId: convId };
+      continue;
+    }
+    return { turnId, error: 'Ход не завершился за отведённое время — открой диалог заново, чтобы продолжить', conversationId: convId };
+  }, []);
+
+  const finishPipelineCall = useCallback(async (turnId, poll, convId) => {
+    try {
+      const res = await driveTurn(turnId, convId);
+      if (res.message || res.stopped) {
+        // даём поллингу доприлететь: события шагов нужны трассе (до 5с)
+        await Promise.race([poll.promise.catch(() => null), sleep(5000).then(() => null)]);
+      }
+      stopPolling();
+      if (res.error) setError(res.error);
+      else if (res.message) applyPipelineMessage(turnId, res.message, res.conversationId);
+      else if (res.stopped || res.already) setLiveTurn(null);
+      else setLiveTurn(null);
+    } catch (e) {
+      // Основной вызов мог не дожить, а ход на сервере дошёл до конца:
+      // ждём done-событие до 20с и берём ответ из него.
+      const doneRes = poll ? await Promise.race([poll.promise, sleep(20000).then(() => null)]) : null;
+      stopPolling();
+      const doneEv = doneRes?.events?.find?.((ev) => ev.type === 'done');
+      if (doneEv?.payload?.content) {
+        applyPipelineMessage(turnId, { content: doneEv.payload.content, meta: doneEv.payload.meta ?? null }, convId);
+      } else {
+        setError(errorText(e));
+        setLiveTurn(null);
+      }
+    } finally {
+      stopPolling();
+      setSending(false);
+      refreshConversations();
+    }
+  }, [driveTurn, stopPolling, applyPipelineMessage, refreshConversations]);
+
   const handleSend = useCallback(async (text, attachment = null, fileObj = null) => {
     if (sending) return;
     lastSent.current = { text, agentId, conversationId };
@@ -129,32 +244,46 @@ export default function App() {
       : null;
     setMessages((prev) => [...prev, { id: `tmp-${Date.now()}`, role: 'user', content: text || (localAtt ? localAtt[0].name : ''), attachments: localAtt }]);
 
-    const turnId = newTurnId();
     setSending(true);
     setError(null);
-    setLiveTurn({ turnId, startedAt: Date.now(), events: [] });
-    const poll = runTurnPolling(turnId);
+    setLiveTurn({ turnId: null, startedAt: Date.now(), events: [], pipeline: true });
+    let poll = null;
+    let turnId = null;
     try {
-      const res = await sendUserMessage({ text, agentId, conversationId, reasoning: reasoningLevel, attachmentIds: attachment ? [attachment.fileId] : undefined, turnId });
-      stopPolling();
-      // даём поллингу мгновение доприлететь (косметика трассы), ответ уже есть
-      applyAssistant(turnId, res);
+      const st = await apiStartTurn({
+        text,
+        agentId,
+        conversationId,
+        reasoning: reasoningLevel,
+        attachmentIds: attachment ? [attachment.fileId] : undefined,
+      });
+      turnId = st.turnId;
+      setConversationId((cur) => st.conversationId ?? cur);
+      setLiveTurn((t) => (t ? { ...t, turnId } : t));
+      poll = runTurnPolling(turnId);
+      // оптимистичное сообщение уже в списке; tmp- убирается при ответе
+      setMessages((prev) => prev.map((m) => (String(m.id).startsWith('tmp-') ? { ...m, id: `u-${turnId}` } : m)));
+      await finishPipelineCall(turnId, poll, st.conversationId);
     } catch (e) {
-      // Основной вызов мог не дожить (таймаут канала), а ход на сервере дошёл
-      // до конца: ждём done-событие до 20с и берём ответ из него.
-      const doneRes = await Promise.race([poll.promise, sleep(20000).then(() => null)]);
+      const doneRes = poll ? await Promise.race([poll.promise, sleep(20000).then(() => null)]) : null;
       stopPolling();
       const doneEv = doneRes?.events?.find?.((ev) => ev.type === 'done');
       if (doneEv?.payload?.content) {
-        applyAssistant(turnId, {
-          conversationId: null,
-          agentId,
-          reply: doneEv.payload.content,
-          meta: doneEv.payload.meta ?? null,
-        });
+        applyPipelineMessage(turnId, { content: doneEv.payload.content, meta: doneEv.payload.meta ?? null }, null);
+      } else if (turnId) {
+        // ход жив на сервере (startTurn прошёл) — не теряем его, предлагаем продолжить
+        try {
+          const t = await getTurnState({ turnId });
+          if (t?.turn && (t.turn.status === 'executing' || t.turn.status === 'synthesizing')) {
+            setResumeTurn(t.turn);
+          }
+        } catch (_) { /* ignore */ }
+        setError(errorText(e));
+        setMessages((prev) => prev.filter((m) => !String(m.id).startsWith('tmp-')));
+        setLiveTurn(null);
       } else {
         setError(errorText(e));
-        setMessages((prev) => prev.filter((m) => !m.id.startsWith('tmp-')));
+        setMessages((prev) => prev.filter((m) => !String(m.id).startsWith('tmp-')));
         setLiveTurn(null);
       }
     } finally {
@@ -162,7 +291,46 @@ export default function App() {
       setSending(false);
       refreshConversations();
     }
-  }, [sending, agentId, conversationId, reasoningLevel, refreshConversations, runTurnPolling, stopPolling, applyAssistant]);
+  }, [sending, agentId, conversationId, reasoningLevel, refreshConversations, runTurnPolling, stopPolling, applyPipelineMessage, finishPipelineCall]);
+
+  const handleResumeTurn = useCallback(async () => {
+    const t = resumeTurn;
+    if (!t || sending) return;
+    setResumeTurn(null);
+    setSending(true);
+    setError(null);
+    setLiveTurn({ turnId: t.turnId, startedAt: Date.now(), events: [], pipeline: true });
+    const poll = runTurnPolling(t.turnId);
+    await finishPipelineCall(t.turnId, poll, t.conversationId);
+  }, [resumeTurn, sending, runTurnPolling, finishPipelineCall]);
+
+  const handleDiscardTurn = useCallback(async () => {
+    const t = resumeTurn;
+    if (!t) return;
+    setResumeTurn(null);
+    try {
+      const res = await apiStopTurn(t.turnId);
+      if (res?.summary) {
+        setMessages((prev) => [...prev, { id: `s-${t.turnId}`, role: 'assistant', content: res.summary, agentId, meta: null }]);
+      }
+    } catch (e) {
+      setNotice(errorText(e));
+    }
+  }, [resumeTurn, agentId]);
+
+  const handleStopTurn = useCallback(async () => {
+    const tid = liveTurn?.turnId;
+    if (!tid) return;
+    try {
+      const res = await apiStopTurn(tid);
+      if (res?.summary) {
+        setMessages((prev) => [...prev, { id: `s-${tid}`, role: 'assistant', content: res.summary, agentId, meta: null }]);
+      }
+      setLiveTurn((t) => (t && t.turnId === tid ? { ...t, events: [...t.events, { id: 'stop-local', type: 'stop', payload: {} }] } : null));
+    } catch (e) {
+      setNotice(errorText(e));
+    }
+  }, [liveTurn, agentId]);
 
   const handleRetry = useCallback(() => {
     if (lastSent.current) handleSend(lastSent.current.text);
@@ -200,10 +368,11 @@ export default function App() {
       setAgentId(hist.agentId || agentId);
       setMessages(hist.messages ?? []);
       setReasoningLevel(hist.reasoning || 'fast');
+      checkResumeTurn(hist.conversationId ?? id);
     } catch (e) {
       setNotice(errorText(e));
     }
-  }, [agentId]);
+  }, [agentId, checkResumeTurn]);
 
   const handleDeleteConversation = useCallback(async (id) => {
     if (!confirm('Удалить этот диалог?')) return;
@@ -348,6 +517,10 @@ export default function App() {
           onNotice={setNotice}
           liveTurn={liveTurn}
           onEnsureConversation={ensureConversationForUpload}
+          resumeTurn={resumeTurn}
+          onResumeTurn={handleResumeTurn}
+          onDiscardTurn={handleDiscardTurn}
+          onStopTurn={handleStopTurn}
         />
       )}
 

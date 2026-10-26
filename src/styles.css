@@ -705,3 +705,54 @@ button {
   white-space: pre-wrap;
   word-break: break-word;
 }
+
+/* ── Пайплайн-трасса (Ф3.2): блоки шагов, план, источники ─────────────────── */
+.rt-block { padding: 8px 10px; display: flex; flex-direction: column; gap: 4px; border-bottom: 1px solid var(--border); }
+.rt-block:last-child { border-bottom: none; }
+.rt-block-title { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; }
+.rt-plan-step { color: var(--muted); font-size: 12px; padding-left: 8px; }
+.rt-step { border-radius: 8px; }
+.rt-step-head {
+  display: flex; align-items: center; gap: 6px;
+  width: 100%; background: none; border: none; padding: 3px 0;
+  color: var(--muted); font-size: 12px; text-align: left; cursor: default;
+}
+.rt-step-head:not(:disabled) { cursor: pointer; }
+.rt-step-head:disabled { opacity: 0.85; }
+.rt-step.fail .rt-step-title { color: var(--danger); }
+.rt-step-icon { flex: none; }
+.rt-step-title { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rt-step-mark { color: var(--muted); }
+.rt-step-mark.err { color: var(--danger); }
+.rt-step-ms { flex: none; opacity: 0.7; font-size: 11px; }
+.rt-step-body { padding: 2px 0 6px 22px; display: flex; flex-direction: column; gap: 6px; }
+.rt-step-detail { color: var(--muted); font-size: 12px; line-height: 1.5; white-space: pre-wrap; word-break: break-word; }
+.rt-step-detail.err { color: var(--danger); }
+.rt-dim { opacity: 0.75; font-size: 11px; }
+.rt-src { display: flex; flex-direction: column; gap: 2px; padding: 4px 0; border-top: 1px dashed var(--border); }
+.rt-src a { color: var(--accent); text-decoration: none; word-break: break-all; }
+.rt-src a:hover { text-decoration: underline; }
+
+/* ── Баннер возобновления хода (Ф3.1) ────────────────────────────────────── */
+.resume-banner {
+  margin: 8px 12px; padding: 10px 12px;
+  border: 1px solid var(--border); border-radius: 12px;
+  background: color-mix(in srgb, var(--accent) 7%, transparent);
+  display: flex; flex-direction: column; gap: 8px;
+}
+.resume-text { color: var(--text); font-size: 13px; line-height: 1.4; }
+.resume-actions { display: flex; gap: 8px; }
+.resume-go, .resume-no {
+  border-radius: 9px; padding: 6px 12px; font-size: 12.5px; border: 1px solid var(--border);
+  background: none; color: var(--text); cursor: pointer;
+}
+.resume-go { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+/* ── Кнопка «Остановить ход» (Ф3.1) ──────────────────────────────────────── */
+.stop-turn {
+  margin: 2px auto 0; display: block;
+  border: 1px solid var(--border); border-radius: 999px;
+  background: none; color: var(--muted);
+  font-size: 12px; padding: 4px 12px; cursor: pointer;
+}
+.stop-turn:hover { color: var(--text); border-color: var(--muted); }
