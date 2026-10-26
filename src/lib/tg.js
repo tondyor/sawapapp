@@ -19,7 +19,7 @@ export function callEndpoint(name, input = {}, { timeoutMs = 15000 } = {}) {
     if (timeoutMs > 0) {
       timer = setTimeout(() => {
         timer = null;
-        reject({ type: 'TIMEOUT', message: 'Telegram не отвечает. Откройте приложение из чата с ботом.' });
+        reject({ type: 'TIMEOUT', message: 'Связь прервалась. Ход мог продолжиться на сервере — открой диалог заново или нажми «Повторить».' });
       }, timeoutMs);
     }
     tg.Serverless.call(name, input, (err, result) => {

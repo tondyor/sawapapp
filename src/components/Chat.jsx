@@ -28,6 +28,7 @@ function Attachment({ att }) {
   const isImg = String(att.mime ?? '').startsWith('image/');
   const [url, setUrl] = useState(att.localUrl ?? null);
   const [failed, setFailed] = useState(false);
+  const [zoom, setZoom] = useState(false);
 
   useEffect(() => {
     if (url || !isImg) return;
@@ -61,7 +62,17 @@ function Attachment({ att }) {
   if (isImg) {
     if (failed) return <div className="att-loading">Файл недоступен</div>;
     if (!url) return <div className="att-loading">Загрузка файла…</div>;
-    return <img className="att-img" src={url} alt={att.name ?? 'вложение'} />;
+    return (
+      <>
+        <img className="att-img clickable" src={url} alt={att.name ?? 'вложение'} onClick={() => setZoom(true)} />
+        {zoom && (
+          <div className="lightbox" onClick={() => setZoom(false)} role="dialog" aria-label={att.name ?? 'Изображение'}>
+            <img src={url} alt={att.name ?? 'вложение'} />
+            <div className="lightbox-name">{att.name}</div>
+          </div>
+        )}
+      </>
+    );
   }
   return (
     <button className="att-file" onClick={download}>

@@ -128,19 +128,28 @@ async function describeImage(img) {
   }
   const url = `data:${row.mime};base64,${bytesToBase64(bytes)}`;
   const reader = await getVisionModel();
-  const r = await completeChat(
-    [
-      { role: 'system', content: VISION_READER_PROMPT },
-      { role: 'user', content: [
-        { type: 'text', text: 'Прочитай изображение и дай описание.' },
-        { type: 'image_url', image_url: { url } },
-      ] },
-    ],
-    { model: reader, reasoning: 'fast', temperature: 0.2, maxTokens: 1024 },
-  );
-  const desc = (r.content ?? '').trim();
-  if (!desc) throw new Error('Vision-модель вернула пустое описание');
-  return desc;
+  // транзиентные 500 NVIDIA ретраим один раз (замечены под нагрузкой)
+  let lastErr = null;
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const r = await completeChat(
+        [
+          { role: 'system', content: VISION_READER_PROMPT },
+          { role: 'user', content: [
+            { type: 'text', text: 'Прочитай изображение и дай описание.' },
+            { type: 'image_url', image_url: { url } },
+          ] },
+        ],
+        { model: reader, reasoning: 'fast', temperature: 0.2, maxTokens: 1024 },
+      );
+      const desc = (r.content ?? '').trim();
+      if (!desc) throw new Error('Vision-модель вернула пустое описание');
+      return desc;
+    } catch (e) {
+      lastErr = e;
+    }
+  }
+  throw lastErr;
 }
 
 // Читает изображения последнего сообщения (уже описанные — берёт из кэша),
@@ -198,7 +207,7 @@ export function buildLlmMessages(agent, history) {
   return out;
 }
 
-export async function prepareTurn({ tgUser, agentId, text, reasoning, conversationId, attachments }) {
+export async function prepareTurn({ tgUser, agentId, text, reasoning, conversationId, attachments, reuseLastUser = false }) {
   if ((!text || !text.trim()) && !(attachments && attachments.length)) throw new Error('Пустое сообщение');
   const clean = (text ?? '').trim();
   if (clean.length > MAX_MESSAGE_CHARS) {
@@ -222,8 +231,20 @@ export async function prepareTurn({ tgUser, agentId, text, reasoning, conversati
     conv.reasoning = reasoning;
   }
   const contentForDb = clean || (attachments && attachments.length ? attachments[0].name : '');
-  await appendMessage(conv, 'user', contentForDb, null, attachments ?? null);
-  const history = await getHistory(conv.id);
+  // «Повторить» после ошибки хода: если последнее user-сообщение — то же самое
+  // (текст + вложение) не старше 5 минут, не дублируем его в истории.
+  let history = await getHistory(conv.id);
+  const last = history[history.length - 1];
+  const ts = last?.createdAt instanceof Date ? last.createdAt.getTime() : Number(last?.createdAt) || 0;
+  const fresh = last && last.role === 'user' && Date.now() - ts < 5 * 60 * 1000;
+  const lastAtts = last?.attachments ?? [];
+  const sameAtts = lastAtts.length === (attachments?.length ?? 0)
+    && (lastAtts.length === 0 || (lastAtts[0]?.name === attachments[0]?.name && lastAtts[0]?.size === attachments[0]?.size));
+  const sameText = String(last?.content ?? '').trim() === contentForDb;
+  if (!(reuseLastUser && fresh && sameText && sameAtts)) {
+    await appendMessage(conv, 'user', contentForDb, null, attachments ?? null);
+    history = await getHistory(conv.id);
+  }
   const model = await pickMainModel({ reasoning: conv.reasoning, defaultModel: await getDefaultModel() });
   return { user: userRow, agent, conv, history, model };
 }

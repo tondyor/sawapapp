@@ -238,10 +238,13 @@ export default function App() {
 
   const handleSend = useCallback(async (text, attachment = null, fileObj = null) => {
     if (sending) return;
-    lastSent.current = { text, agentId, conversationId };
-    const localAtt = fileObj
-      ? [{ fileId: `local-${Date.now()}`, name: fileObj.name, mime: fileObj.type, size: fileObj.size, localUrl: URL.createObjectURL(fileObj) }]
-      : null;
+    lastSent.current = { text, agentId, conversationId, attachment, fileObj };
+    // вложение могло быть уже загружено (повтор после ошибки) — не создаём превью заново
+    const localAtt = attachment
+      ? [attachment]
+      : (fileObj
+        ? [{ fileId: `local-${Date.now()}`, name: fileObj.name, mime: fileObj.type, size: fileObj.size, localUrl: URL.createObjectURL(fileObj) }]
+        : null);
     setMessages((prev) => [...prev, { id: `tmp-${Date.now()}`, role: 'user', content: text || (localAtt ? localAtt[0].name : ''), attachments: localAtt }]);
 
     setSending(true);
@@ -333,8 +336,12 @@ export default function App() {
   }, [liveTurn, agentId]);
 
   const handleRetry = useCallback(() => {
-    if (lastSent.current) handleSend(lastSent.current.text);
-    else setError(null);
+    if (lastSent.current) {
+      const { text, attachment, fileObj } = lastSent.current;
+      handleSend(text, attachment ?? null, fileObj ?? null);
+    } else {
+      setError(null);
+    }
   }, [handleSend]);
 
   const handleSelectAgent = useCallback((a) => {

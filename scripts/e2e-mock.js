@@ -78,7 +78,20 @@
           { id: 'chat', name: 'Общение', tagline: 'Универсальный собеседник', description: 'd', color: '#7C8CF8' },
           { id: 'lawyer', name: 'Правовед', tagline: 'Право и документы', description: 'd', color: '#C9A227' },
         ] });
-        if (name === 'getHistory') return cb(null, { conversationId: params.get('resume') === '1' ? 9002 : null, agentId: 'chat', title: null, messages: [], reasoning: 'fast' });
+        if (name === 'getHistory') {
+          var withImage = params.get('img') === '1';
+          return cb(null, {
+            conversationId: params.get('resume') === '1' ? 9002 : null,
+            agentId: 'chat', title: null, reasoning: 'fast',
+            messages: withImage ? [
+              { id: 10, role: 'user', content: '', attachments: [{ fileId: 777, name: 'IMG_20261026.webp', mime: 'image/webp', size: 328 }] },
+              { id: 11, role: 'assistant', content: 'Ответ с картинкой в истории.', meta: null },
+            ] : [],
+          });
+        }
+        if (name === 'getFileChunk') {
+          return cb(null, { dataBase64: 'iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAIAAAAlC+aJAAAAvUlEQVR4nO3ZuxGEMBRDUZdDOdt/FXTAJiQkfCxh8eDeIbZ1MhjaXLyWHqAGIB2AdADSvRqwTNP5Z+DmTQAAiAEAIAYAgJgf0H7L/vNcwOH0Oxg2wKX1RoMH0LHeZTAAutdbDOr3gLheN0gAy3rR8GGAcb1iAAAAAAAAAADUBJR/F3oDoPz3gMWg3q4DFIPhasf+uc/guddyynrW8PW3/OQbNn29znvc+ACkA5AOQDoA6QCkA5AOQDoA6coD/tR0IJpjf0a1AAAAAElFTkSuQmCC', mime: 'image/webp', name: 'IMG_20261026.webp', size: 328, chunkCount: 1 });
+        }
         if (name === 'listConversations') return cb(null, { conversations: [] });
         if (name === 'newConversation') return cb(null, { conversationId: 9000 + (++turnN) });
         if (name === 'getTurnEvents') {

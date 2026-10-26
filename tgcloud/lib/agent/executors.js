@@ -91,8 +91,19 @@ export async function execReadUrl(step, ctx) {
 async function runStream({ llmMessages, ctx }) {
   const out = { started: Date.now(), skills: [], steps: [], model: null, usage: null, reasoningText: null, content: null };
   const model = await pickMainModel({ reasoning: ctx.reasoning, defaultModel: await getDefaultModel() });
-  for await (const _ev of streamRounds({ agent: ctx.agent, llmMessages, reasoning: ctx.reasoning, model }, out, ctx.recorder)) { /* consume */ }
-  return out;
+  let attempts = 0;
+  for (;;) {
+    attempts += 1;
+    try {
+      for await (const _ev of streamRounds({ agent: ctx.agent, llmMessages, reasoning: ctx.reasoning, model }, out, ctx.recorder)) { /* consume */ }
+      return out;
+    } catch (e) {
+      // Транзиентные 500 NVIDIA (замечены под нагрузкой): если стрим не успел
+      // эмитить ни символа — повтор безопасен; иначе ошибка идёт наверх.
+      const emitted = (out.content && out.content.length) || (out.reasoningText && out.reasoningText.length);
+      if (attempts >= 2 || emitted) throw e;
+    }
+  }
 }
 
 // direct_answer — текущее поведение хода (стрим + цикл read_skill), без плана.

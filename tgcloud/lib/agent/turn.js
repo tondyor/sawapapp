@@ -48,8 +48,11 @@ export async function startTurn({ tgUser, agentId, text, reasoning, conversation
   const level = REASONING_LEVELS.includes(reasoning) ? reasoning : undefined;
 
   // prepareTurn: юзер/агент/диалог + запись user-сообщения + история
+  // (reuseLastUser: «Повторить» после ошибки не дублирует то же сообщение)
   const prepared = await prepareTurn({
-    tgUser, agentId, text, reasoning: level, conversationId, attachments: attachmentIds ? await resolveAttachments(tgUser.id, attachmentIds) : null,
+    tgUser, agentId, text, reasoning: level, conversationId,
+    attachments: attachmentIds ? await resolveAttachments(tgUser.id, attachmentIds) : null,
+    reuseLastUser: true,
   });
   const { agent, conv, history } = prepared;
   const question = String(text ?? '').trim() || (attachmentIds?.length ? 'изображение' : '');

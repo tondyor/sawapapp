@@ -101,7 +101,7 @@ export async function forkConversation(conversationId, upToMessageId = null) {
 
 export function errorText(err) {
   if (!err) return 'Неизвестная ошибка';
-  if (err.type === 'UNAUTHORIZED') return 'Открой приложение через Telegram';
+  if (err.type === 'UNAUTHORIZED') return 'Сессия истекла — открой приложение из чата с ботом заново';
   if (err.type === 'NO_SDK') return err.message;
   if (err.type === 'TIMEOUT') return err.message;
   // Документированное поведение Serverless.call: status 0 = «запрос не смог завершиться»
