@@ -53,6 +53,7 @@ export async function startTurn({ tgUser, agentId, text, reasoning, conversation
     tgUser, agentId, text, reasoning: level, conversationId,
     attachments: attachmentIds ? await resolveAttachments(tgUser.id, attachmentIds) : null,
     reuseLastUser: true,
+    forceNewConversation: !conversationId,
   });
   const { agent, conv, history } = prepared;
   const question = String(text ?? '').trim() || (attachmentIds?.length ? 'изображение' : '');

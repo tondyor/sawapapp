@@ -337,8 +337,8 @@ export default function App() {
 
   const handleRetry = useCallback(() => {
     if (lastSent.current) {
-      const { text, attachment, fileObj } = lastSent.current;
-      handleSend(text, attachment ?? null, fileObj ?? null);
+      const { text, attachment, fileObj, agentId: a, conversationId: c } = lastSent.current;
+      handleSend(text, attachment ?? null, fileObj ?? null, { agentId: a, conversationId: c });
     } else {
       setError(null);
     }
@@ -349,6 +349,7 @@ export default function App() {
     if (a.id === agentId) return;
     setAgentId(a.id);
     setError(null);
+    lastSent.current = null;
   }, [agentId]);
 
   const handleNewChat = useCallback(async () => {
@@ -356,6 +357,9 @@ export default function App() {
     setMessages([]);
     setError(null);
     setLiveTurn(null);
+    setResumeTurn(null);
+    lastSent.current = null;
+    setConversationId(null);
     try {
       const res = await startConversation(agentId);
       setConversationId(res.conversationId ?? null);
@@ -390,6 +394,7 @@ export default function App() {
         setConversationId(null);
         setMessages([]);
         setError(null);
+        lastSent.current = null;
       }
     } catch (e) {
       setNotice(errorText(e));

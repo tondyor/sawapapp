@@ -207,7 +207,7 @@ export function buildLlmMessages(agent, history) {
   return out;
 }
 
-export async function prepareTurn({ tgUser, agentId, text, reasoning, conversationId, attachments, reuseLastUser = false }) {
+export async function prepareTurn({ tgUser, agentId, text, reasoning, conversationId, attachments, reuseLastUser = false, forceNewConversation = false }) {
   if ((!text || !text.trim()) && !(attachments && attachments.length)) throw new Error('Пустое сообщение');
   const clean = (text ?? '').trim();
   if (clean.length > MAX_MESSAGE_CHARS) {
@@ -220,7 +220,13 @@ export async function prepareTurn({ tgUser, agentId, text, reasoning, conversati
     conv = await getConversationById(Number(conversationId), tgUser.id);
   }
   if (!conv) {
-    conv = await ensureConversation(userRow, agent.id);
+    // Новый диалог: создаём чистый, а не переиспользуем последний (иначе
+    // контекст предыдущих диалогов утекает в новый).
+    if (forceNewConversation) {
+      conv = await createConversation(userRow, agent.id);
+    } else {
+      conv = await ensureConversation(userRow, agent.id);
+    }
   }
   if (conv.agentId !== agent.id) {
     await db.update(conversations).set({ agentId: agent.id }).where(eq(conversations.id, conv.id));
