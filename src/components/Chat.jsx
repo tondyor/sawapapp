@@ -182,15 +182,26 @@ export default function Chat({
   const [text, setText] = useState('');
   const [selectedFile, setSelectedFile] = useState(null);
   const [uploading, setUploading] = useState(false);
+  const [levelOpen, setLevelOpen] = useState(false);
   const taRef = useRef(null);
   const fileRef = useRef(null);
   const endRef = useRef(null);
+  const levelWrapRef = useRef(null);
   const agent = agents.find((a) => a.id === agentId) || agents[0];
   const accent = agent?.color || '#7C8CF8';
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
   }, [messages.length, sending, uploading, selectedFile]);
+
+  useEffect(() => {
+    if (!levelOpen) return;
+    const close = (e) => {
+      if (levelWrapRef.current && !levelWrapRef.current.contains(e.target)) setLevelOpen(false);
+    };
+    document.addEventListener('pointerdown', close);
+    return () => document.removeEventListener('pointerdown', close);
+  }, [levelOpen]);
 
   const autosize = () => {
     const ta = taRef.current;
@@ -336,15 +347,29 @@ export default function Chat({
             <span className="pill-name">{agentName}</span>
             <IconChevron size={13} />
           </button>
-          {Object.entries(LEVEL_LABELS).map(([id, label]) => (
+          <div className="level-wrap" ref={levelWrapRef}>
             <button
-              key={id}
-              className={`level-chip ${reasoningLevel === id ? 'active' : ''}`}
-              onClick={() => { haptic(); onChangeReasoning(id); }}
+              className={`level-picker ${levelOpen ? 'open' : ''}`}
+              onClick={() => { haptic(); setLevelOpen((v) => !v); }}
             >
-              {label}
+              {LEVEL_LABELS[reasoningLevel] ?? reasoningLevel}
+              <IconChevron size={13} />
             </button>
-          ))}
+            {levelOpen && (
+              <div className="level-menu">
+                {Object.entries(LEVEL_LABELS).map(([id, label]) => (
+                  <button
+                    key={id}
+                    className={`level-menu-item ${reasoningLevel === id ? 'active' : ''}`}
+                    onClick={() => { haptic(); onChangeReasoning(id); setLevelOpen(false); }}
+                  >
+                    <span>{label}</span>
+                    {reasoningLevel === id && <span className="level-check">✓</span>}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
         {selectedFile && (
           <div className="attach-chip">
