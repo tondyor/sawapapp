@@ -140,6 +140,22 @@ export function fallbackPlan({ hasImages, executedKeys = [] }) {
   steps.push({ type: "direct_answer", title: "Прямой ответ", params: {} });
   return normalizeSteps(steps, { executedKeys });
 }
+const FAST_PATTERNS = [
+  /^(привет|здравствуй|здравствуйте|добрый|доброе|хай|салют|hello|hi|hey|ку|пон|спасибо|благодар|пока|до\s+свидания|как\s+дела)\b/i,
+  /^(что|ты|агент|умеешь|можешь|знаешь)\b/i,
+  /^(повтор|ещё|еще)\b/i,
+];
+function looksChatty(question) {
+  const q = String(question ?? "").trim().toLowerCase();
+  if (q.length <= 40 && /(привет|здравств|приветствую|hello|hi|hey|как дела|спасибо|пока|добрый|доброе|повтор|расскажи|умеешь|можешь)/i.test(q)) return true;
+  if (q.length > 80) return false;
+  return FAST_PATTERNS.some((re) => re.test(q));
+}
+export function fastPathPlan({ question, history, hasImages }) {
+  if (hasImages) return null;
+  if (!looksChatty(question)) return null;
+  return normalizeSteps([{ type: "direct_answer", title: "Прямой ответ", params: {} }]);
+}
 function historyBrief(history, max = 6) {
   const rows = (history ?? []).slice(-max);
   if (!rows.length) return "(пусто)";

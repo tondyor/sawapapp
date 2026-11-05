@@ -18,7 +18,7 @@ import {
 } from "../chat.js";
 import { streamChat, resolveAnswerModel } from "../nvidia.js";
 import { getAgentOrDefault } from "../agents.js";
-import { planTurn, fallbackPlan, planKey, MAX_PLAN_STEPS } from "./pipeline.js";
+import { planTurn, fallbackPlan, planKey, MAX_PLAN_STEPS, fastPathPlan } from "./pipeline.js";
 import {
   EXECUTORS,
   hasExecutor,
@@ -146,20 +146,6 @@ export async function startTurn({
     agentName: agent.name,
     pipeline: true,
   });
-  const skills =
-    agent.id === MARKETER_AGENT_ID ? await ensureMarketerSkills() : [];
-  let plan;
-  let planMeta = { ok: true, repaired: false, model: null, latencyMs: 0 };
-  const res = await planTurn({ question, history, hasImages, skills });
-  plan = res.steps;
-  planMeta = {
-    ok: res.ok,
-    repaired: res.repaired,
-    model: res.model,
-    latencyMs: res.latencyMs,
-    error: res.error ?? null,
-  };
-  if (!plan.length) plan = fallbackPlan({ hasImages });
   const [row] = await db
     .insert(turns)
     .values({
@@ -167,23 +153,17 @@ export async function startTurn({
       conversationId: conv.id,
       tgId: conv.tgId,
       agentId: agent.id,
-      status: "executing",
+      status: "planning",
       question,
-      plan: plan.map((s) => ({
-        type: s.type,
-        title: s.title,
-        params: s.params,
-        key: s.key,
-        duplicate: s.duplicate,
-      })),
+      plan: null,
       currentStep: 0,
       findings: [],
+      stepText: "",
+      stepDone: false,
+      stepAttempts: 0,
     })
     .returning();
-  await recorder.event("plan", {
-    steps: plan.map((s) => ({ type: s.type, title: s.title })),
-    ...planMeta,
-  });
+  await recorder.event("plan_wait", { hasImages });
   return {
     turnId: row.turnId,
     conversationId: conv.id,
@@ -191,7 +171,7 @@ export async function startTurn({
     agentName: agent.name,
     status: row.status,
     plan: row.plan,
-    planMeta,
+    planMeta: { ok: true, pending: true },
   };
 }
 async function resolveAttachments(tgId, ids) {
@@ -233,10 +213,106 @@ export async function runTurnStep({ turnId, tgId }) {
       findings: turn.findings,
     };
   }
-  const plan = Array.isArray(turn.plan) ? turn.plan : [];
+  if (turn.status === "planning") {
+    const turnConv = await getConversationById(turn.conversationId, tgId);
+    if (!turnConv) {
+      const e = new Error("Диалог не найден");
+      e.code = "CONV_NOT_FOUND";
+      throw e;
+    }
+    const turnAgent = getAgentOrDefault(turn.agentId);
+    const turnHistory = await getHistory(turnConv.id);
+    const turnRecorder = createRecorder({
+      turnId: tid,
+      conversationId: turnConv.id,
+      tgId,
+    });
+    const turnImages = lastUserImages(turnHistory);
+    const turnHasImages = turnImages.length > 0;
+    const attemptsPlan = (turn.stepAttempts ?? 0) + 1;
+    const fastPlan = fastPathPlan({
+      question: turn.question,
+      history: turnHistory,
+      hasImages: turnHasImages,
+    });
+    let plan;
+    let planMeta = {
+      ok: true,
+      repaired: false,
+      model: null,
+      latencyMs: 0,
+      fastPath: false,
+      planAttempts: attemptsPlan,
+    };
+    if (fastPlan) {
+      plan = fastPlan;
+      planMeta.fastPath = true;
+    } else if (attemptsPlan >= 3) {
+      plan = fallbackPlan({ hasImages: turnHasImages });
+      planMeta.fallback = true;
+      await turnRecorder.event("plan", {
+        steps: plan.map((s) => ({ type: s.type, title: s.title })),
+        ...planMeta,
+      });
+    } else {
+      await touch(tid, { stepAttempts: attemptsPlan });
+      const res = await planTurn({
+        question: turn.question,
+        history: turnHistory,
+        hasImages: turnHasImages,
+        skills:
+          turn.agentId === MARKETER_AGENT_ID
+            ? await ensureMarketerSkills()
+            : [],
+      });
+      plan = res.steps;
+      planMeta = {
+        ok: res.ok,
+        repaired: res.repaired,
+        model: res.model,
+        latencyMs: res.latencyMs,
+        error: res.error ?? null,
+        fastPath: false,
+        planAttempts: attemptsPlan,
+      };
+    }
+    if (!plan.length) plan = fallbackPlan({ hasImages: turnHasImages });
+    const planRows = [...plan, ...(plan.some((s) => s.type === "synthesize") ? [] : [{ type: "synthesize", title: "Финальный ответ", params: {} }])].map((s) => ({
+      type: s.type,
+      title: s.title,
+      params: s.params,
+      key: s.key,
+      duplicate: s.duplicate,
+    }));
+    const [updatedRow] = await db
+      .update(turns)
+      .set({
+        status: "executing",
+        plan: planRows,
+        currentStep: 0,
+        updatedAt: new Date(),
+        stepAttempts: 0,
+      })
+      .where(eq(turns.turnId, tid))
+      .returning();
+    await turnRecorder.event("plan", {
+      steps: plan.map((s) => ({ type: s.type, title: s.title })),
+      ...planMeta,
+    });
+    return {
+      status: "executing",
+      currentStep: 0,
+      plan: updatedRow.plan,
+      findings: [],
+      planMeta,
+    };
+  }
   const idx = Number(turn.currentStep ?? 0);
-  const conv = await getConversationById(turn.conversationId, tgId);
-  if (!conv) {
+  const plan = Array.isArray(turn.plan) ? turn.plan : [];
+  if (plan.length === 0) {
+    return { status: "synthesizing", currentStep: idx, plan: [], findings: [] };
+  }
+  const conv = await getConversationById(turn.conversationId, tgId);  if (!conv) {
     const e = new Error("Диалог не найден");
     e.code = "CONV_NOT_FOUND";
     throw e;
@@ -263,6 +339,24 @@ export async function runTurnStep({ turnId, tgId }) {
   if (isFinalStep(step.type) && !step.duplicate) {
     await touch(tid, { status: "synthesizing" });
     return { status: "synthesizing", currentStep: idx, plan, findings };
+  }
+  if (step.type === "reason" && !step.duplicate) {
+    return await runReasonChunk({
+      tid,
+      turn,
+      step,
+      ctx: {
+        agent,
+        conv,
+        history,
+        question: turn.question,
+        findings,
+        recorder,
+        stepIndex: idx,
+      },
+      idx,
+      t0,
+    });
   }
   if (step.duplicate) {
     findings.push({
@@ -407,6 +501,11 @@ export async function runTurnStep({ turnId, tgId }) {
       ms,
     });
     if (eventPayload) await recorder.event(step.type, eventPayload);
+    await touch(tid, {
+      currentStep: idx + 1,
+      findings,
+      status: "executing",
+    });
     let updatedPlan = plan;
     let replanned = false;
     {
@@ -539,6 +638,191 @@ export async function runTurnStep({ turnId, tgId }) {
 function keyParams(stepRow) {
   return stepRow?.params ?? {};
 }
+const REASON_CHUNK_TOKENS = 700;
+const REASON_PERSIST_MS = 6e3;
+const SOFT_DEADLINE_MS = 25e3;
+async function runReasonChunk({ tid, turn, step, ctx, idx, t0 }) {
+  const { agent, conv, history, question, findings, recorder } = ctx;
+  const findingsText = findings.length
+    ? `Находки предыдущих шагов:
+${findings.map((f, i) => `${i + 1}. (${f.type}) ${f.title}: ${f.text}`).join("\n")}`
+    : "Находок пока нет.";
+  const task = String(step.params?.task ?? step.title ?? "проанализируй вопрос");
+  const base = await buildLlmMessages(
+    agent,
+    historyWithoutTurnQuestion(history, question)
+  );
+  const acc = turn.stepText ?? "";
+  base.push({
+    role: "user",
+    content: acc
+      ? [
+          "Ты — внутренний модуль анализа AI-агента. Это служебный шаг хода, не диалог с пользователем: не приветствуй и не обращайся к пользователю.",
+          `Вопрос пользователя: ${question}`,
+          `Подзадача шага: ${task}`,
+          findingsText,
+          "Ты уже начал писать результат анализа, но текст оборвался. Ниже — конец уже написанного. Продолжи РОВНО с места обрыва: не повторяй написанное, не начинай заново. Пиши сразу продолжение.",
+          `Конец уже написанного текста:
+…${acc.slice(-1500)}`,
+        ].join("\n\n")
+      : [
+          "Ты — внутренний модуль анализа AI-агента. Это служебный шаг хода, не диалог с пользователем: не приветствуй и не обращайся к пользователю.",
+          `Вопрос пользователя: ${question}`,
+          `Подзадача шага: ${task}`,
+          findingsText,
+          "Верни РЕЗУЛЬТАТ анализа: выводы, факты, числа. Он пойдёт планировщику и финальному ответу.",
+        ].join("\n\n"),
+  });
+  const model = await resolveAnswerModel();
+  let lastPersist = Date.now();
+  let pendingReasoning = "";
+  let pendingContent = "";
+  let finish = null;
+  let grew = 0;
+  const flushEvents = async (force = false) => {
+    if (pendingReasoning && (force || pendingReasoning.length >= 350)) {
+      await recorder.event("reasoning", { text: pendingReasoning });
+      pendingReasoning = "";
+    }
+    if (pendingContent && (force || pendingContent.length >= 300)) {
+      await recorder.event("content", { text: pendingContent });
+      pendingContent = "";
+    }
+  };
+  let accReason = acc;
+  let deadlineHit = false;
+  try {
+    for await (const ev of streamChat(base, {
+      model,
+      maxTokens: REASON_CHUNK_TOKENS,
+    })) {
+      if (Date.now() - t0 > SOFT_DEADLINE_MS) {
+        deadlineHit = true;
+        break;
+      }
+      if (ev.reasoning) {
+        pendingReasoning += ev.reasoning;
+        accReason += ev.reasoning;
+      }
+      if (ev.delta) {
+        accReason += ev.delta;
+        grew += ev.delta.length;
+        pendingContent += ev.delta;
+      }
+      if (ev.finish) finish = ev.finish;
+      if (
+        pendingReasoning.length >= 350 ||
+        pendingContent.length >= 300 ||
+        Date.now() - lastPersist >= REASON_PERSIST_MS
+      )
+        await flushEvents();
+    }
+    await flushEvents(true);
+  } catch (e) {
+    try {
+      await flushEvents(true);
+    } catch (_) {}
+  }
+  await touch(tid, { stepText: accReason });
+  if (deadlineHit || finish === "length") {
+    return {
+      status: "executing",
+      currentStep: idx,
+      stepResult: {
+        index: idx,
+        type: "reason",
+        title: step.title,
+        ok: true,
+        partial: true,
+        appended: grew,
+        ms: Date.now() - t0,
+      },
+    };
+  }
+  if (!accReason) {
+    const attempts = (turn.stepAttempts ?? 0) + 1;
+    if (attempts < 4) {
+      await touch(tid, { stepAttempts: attempts });
+      return {
+        status: "executing",
+        currentStep: idx,
+        stepResult: {
+          index: idx,
+          type: "reason",
+          ok: false,
+          partial: true,
+          retry: true,
+          attempts,
+        },
+      };
+    }
+    findings.push({
+      index: idx,
+      type: step.type,
+      title: step.title,
+      ok: false,
+      ms: Date.now() - t0,
+      text: "Шаг reason не дал результата за 4 попытки — продолжено без него.",
+    });
+    await recorder.event("step_done", {
+      index: idx,
+      type: step.type,
+      title: step.title,
+      ok: false,
+      ms: Date.now() - t0,
+    });
+    await touch(tid, {
+      currentStep: idx + 1,
+      findings,
+      stepText: "",
+      stepDone: false,
+      stepAttempts: 0,
+    });
+    return {
+      status: "executing",
+      currentStep: idx + 1,
+      stepResult: {
+        index: idx,
+        type: step.type,
+        ok: false,
+        ms: Date.now() - t0,
+      },
+    };
+  }
+  findings.push({
+    index: idx,
+    type: step.type,
+    title: step.title,
+    ok: true,
+    ms: Date.now() - t0,
+    text: accReason.slice(0, 2e3),
+  });
+  await recorder.event("step_done", {
+    index: idx,
+    type: step.type,
+    title: step.title,
+    ok: true,
+    ms: Date.now() - t0,
+  });
+  await touch(tid, {
+    currentStep: idx + 1,
+    findings,
+    stepText: "",
+    stepDone: true,
+    stepAttempts: 0,
+  });
+  return {
+    status: "executing",
+    currentStep: idx + 1,
+    stepResult: {
+      index: idx,
+      type: step.type,
+      title: step.title,
+      ok: true,
+      ms: Date.now() - t0,
+    },
+  };
+}
 function stepsMeta(findings, finalStep) {
   return [
     ...findings.map((f) => ({
@@ -666,11 +950,16 @@ ${findingsText}`,
     }
   };
   const t0 = Date.now();
+  let deadlineHit = false;
   try {
     for await (const ev of streamChat(base, {
       model,
       maxTokens: SYNTH_CHUNK_TOKENS,
     })) {
+      if (Date.now() - t0 > SOFT_DEADLINE_MS) {
+        deadlineHit = true;
+        break;
+      }
       if (ev.reasoning) pendingReasoning += ev.reasoning;
       if (ev.delta) {
         acc += ev.delta;
@@ -714,6 +1003,14 @@ ${findingsText}`,
     } catch (_) {}
     await touch(tid, { status: "error", error: errMsg });
     return { status: "error", error: errMsg };
+  }
+  if (deadlineHit && finish !== "stop") {
+    return {
+      status: "synthesizing",
+      partial: true,
+      appended: grew,
+      totalChars: acc.length,
+    };
   }
   if (finish === "stop" || finish == null) {
     const meta = buildMeta({

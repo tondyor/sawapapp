@@ -125,7 +125,10 @@ export const turns = table(
     reasoningLevel: text("reasoning_level")
       .default("fast")
       .deprecated("уровни рассуждений удалены из продукта"),
-    error: text("error"),
+    stepText: text("step_text"),
+  stepDone: integer("step_done", { mode: "boolean" }),
+  stepAttempts: integer("step_attempts").default(0),
+  error: text("error"),
     answerText: text("answer_text"),
     answerDone: integer("answer_done", { mode: "boolean" }),
     createdAt: integer("created_at", { mode: "timestamp_ms" }).default(
