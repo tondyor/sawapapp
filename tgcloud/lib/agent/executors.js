@@ -6,8 +6,10 @@ import { db } from 'sdk';
 import { eq } from 'sdk/db';
 import { messages } from '../../schema.js';
 import { buildLlmMessages, streamRounds, describeImage } from '../chat.js';
-import { completeChat, getCompressModel, pickMainModel, getDefaultModel } from '../nvidia.js';
+import { completeChat, getCompressModel, resolveAnswerModel } from '../nvidia.js';
 import { webSearch, webRead } from './websearch.js';
+import { getSkill } from '../skills/index.js';
+import { ensureMarketerSkills } from '../skills/mSkills.js';
 
 export const MAX_FINDING_CHARS = 2000;
 
@@ -29,7 +31,7 @@ export async function compressFinding(raw, { maxChars = MAX_FINDING_CHARS } = {}
         { role: 'system', content: COMPRESS_PROMPT },
         { role: 'user', content: src },
       ],
-      { model, temperature: 0.2, maxTokens: 900, reasoning: 'fast' },
+      { model, temperature: 0.2, maxTokens: 900 },
     );
     const out = (r.content ?? '').trim();
     return (out && out.length <= maxChars * 1.5 ? out : src).slice(0, maxChars);
@@ -86,16 +88,36 @@ export async function execReadUrl(step, ctx) {
   };
 }
 
+// ── skill: прочитать навык из библиотеки (шаг плана). Тело навыка идёт
+// модели как находка шага (в сообщение пользователя НЕ попадает). Сжатие
+// не применяется — навык должен дойти до финального ответа целиком.
+const MAX_SKILL_FINDING_CHARS = 16000;
+
+export async function execSkill(step, ctx) {
+  const skillId = String(step.params?.skill ?? '').trim();
+  if (!skillId) return { raw: '', finding: 'Шаг skill без id навыка — пропущен.' };
+  const dbSkills = await ensureMarketerSkills();
+  const skill = getSkill(skillId) ?? dbSkills.find((s) => s.id === skillId) ?? null;
+  if (!skill?.content) {
+    return { raw: '', finding: `Навык «${skillId}» не найден в библиотеке — отвечай без него, используя свои знания.` };
+  }
+  return {
+    raw: '',
+    finding: skill.content.slice(0, MAX_SKILL_FINDING_CHARS),
+    event: { index: ctx.stepIndex, id: skillId, name: skill.name },
+  };
+}
+
 // ── Базовые LLM-исполнители через стриминговые раунды (события realtime) ───
 // Возвращают {content, model, usage, reasoningText, skills, steps}.
 async function runStream({ llmMessages, ctx }) {
   const out = { started: Date.now(), skills: [], steps: [], model: null, usage: null, reasoningText: null, content: null };
-  const model = await pickMainModel({ reasoning: ctx.reasoning, defaultModel: await getDefaultModel() });
+  const model = await resolveAnswerModel();
   let attempts = 0;
   for (;;) {
     attempts += 1;
     try {
-      for await (const _ev of streamRounds({ agent: ctx.agent, llmMessages, reasoning: ctx.reasoning, model }, out, ctx.recorder)) { /* consume */ }
+      for await (const _ev of streamRounds({ agent: ctx.agent, llmMessages, model }, out, ctx.recorder)) { /* consume */ }
       return out;
     } catch (e) {
       // Транзиентные 500 NVIDIA (замечены под нагрузкой): если стрим не успел
@@ -108,14 +130,14 @@ async function runStream({ llmMessages, ctx }) {
 
 // direct_answer — текущее поведение хода (стрим + цикл read_skill), без плана.
 export async function execDirectAnswer(step, ctx) {
-  const llmMessages = buildLlmMessages(ctx.agent, ctx.history);
+  const llmMessages = await buildLlmMessages(ctx.agent, ctx.history);
   const out = await runStream({ llmMessages, ctx });
   return { stream: out, content: out.content ?? '', finding: null }; // ответ уходит в чат как есть
 }
 
 // История без последнего user-сообщения (вопрос хода), если это оно — чтобы
 // модель не видела два подряд user-сообщения (вопрос + служебная инструкция).
-function historyWithoutTurnQuestion(history, question) {
+export function historyWithoutTurnQuestion(history, question) {
   const q = String(question ?? '').trim();
   const last = history[history.length - 1];
   if (last && last.role === 'user' && String(last.content ?? '').trim() === q) return history.slice(0, -1);
@@ -124,7 +146,7 @@ function historyWithoutTurnQuestion(history, question) {
 
 // reason — размышление по подзадаче шага (с опциональным read_skill).
 export async function execReason(step, ctx) {
-  const base = buildLlmMessages(ctx.agent, historyWithoutTurnQuestion(ctx.history, ctx.question));
+  const base = await buildLlmMessages(ctx.agent, historyWithoutTurnQuestion(ctx.history, ctx.question));
   const findingsText = (ctx.findings ?? []).length
     ? `Находки предыдущих шагов:\n${ctx.findings.map((f, i) => `${i + 1}. (${f.type}) ${f.title}: ${f.text}`).join('\n')}`
     : 'Находок пока нет.';
@@ -145,7 +167,7 @@ export async function execReason(step, ctx) {
 
 // synthesize — финальный ответ: вопрос + все находки + скиллы + системный промпт.
 export async function execSynthesize(step, ctx) {
-  const base = buildLlmMessages(ctx.agent, historyWithoutTurnQuestion(ctx.history, ctx.question));
+  const base = await buildLlmMessages(ctx.agent, historyWithoutTurnQuestion(ctx.history, ctx.question));
   const findingsText = (ctx.findings ?? []).length
     ? ctx.findings.map((f, i) => `[${i + 1}] ${f.title} (${f.type}, ${f.ok ? 'успешно' : 'не удалось'}):\n${f.text}`).join('\n\n')
     : '(шаги не дали находок)';
@@ -168,6 +190,7 @@ export const EXECUTORS = {
   search: execSearch,
   read_url: execReadUrl,
   reason: execReason,
+  skill: execSkill,
   direct_answer: execDirectAnswer,
   synthesize: execSynthesize,
 };

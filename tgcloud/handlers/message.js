@@ -64,7 +64,11 @@ async function handleCommand(chatId, from, text) {
     case '/agent': {
       const agent = getAgent(arg);
       if (!agent) {
-        await api.sendMessage({ chat_id: chatId, text: `Нет такого агента. Доступны: ${AGENTS.map((a) => a.name).join(', ')}.`, reply_markup: agentKeyboard(null) });
+        await api.sendMessage({ chat_id: chatId, text: `Нет такого агента. Доступны: ${AGENTS.filter((a) => a.active !== false).map((a) => a.name).join(', ')}.`, reply_markup: agentKeyboard(null) });
+        return;
+      }
+      if (agent.active === false) {
+        await api.sendMessage({ chat_id: chatId, text: `Агент «${agent.name}» ещё в разработке — скоро появится.` });
         return;
       }
       await ensureUser(from);
@@ -112,15 +116,18 @@ function welcomeText(agent) {
 }
 
 function agentsText(currentId) {
+  const active = AGENTS.filter((a) => a.active !== false);
+  const soonCount = AGENTS.length - active.length;
   const lines = ['Агенты SAWAP:', ''];
-  for (const a of AGENTS) {
+  for (const a of active) {
     lines.push(`${a.id === currentId ? '•' : '–'} ${a.name} — ${a.description}`);
   }
+  if (soonCount > 0) lines.push('', `+ ещё ${soonCount} агентов в разработке — скоро в приложении.`);
   return lines.join('\n');
 }
 
 function agentKeyboard(currentId) {
-  const rows = AGENTS.map((a) => [{
+  const rows = AGENTS.filter((a) => a.active !== false).map((a) => [{
     text: (a.id === currentId ? '• ' : '') + a.name,
     callback_data: `agent:${a.id}`,
   }]);

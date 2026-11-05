@@ -3,11 +3,12 @@ import { eq, and, desc, gt } from 'sdk/db';
 import { users, conversations, messages, files } from '../schema.js';
 import { getAgentOrDefault } from './agents.js';
 import { skillsToolFor, getSkill, skillsForAgent } from './skills/index.js';
+import { MARKETER_AGENT_ID, ensureMarketerSkills, getMarketerSkillFile } from './skills/mSkills.js';
 import {
-  MAX_HISTORY_MESSAGES, MAX_MESSAGE_CHARS, REASONING_LEVELS,
+  MAX_HISTORY_MESSAGES, MAX_MESSAGE_CHARS,
   MAX_IMAGES_PER_REQUEST, MAX_IMAGE_BYTES, VISION_READER_PROMPT,
 } from './config.js';
-import { completeChat, streamChat, pickMainModel, getDefaultModel, getVisionModel } from './nvidia.js';
+import { completeChat, streamChat, resolveAnswerModel, getVisionModel } from './nvidia.js';
 import { readFileBytes, bytesToBase64 } from './files.js';
 import { createRecorder, sanitizeTurnId, cleanupConversationTurns } from './turnEvents.js';
 
@@ -82,10 +83,6 @@ export async function appendMessage(conv, role, content, meta = null, attachment
   return m;
 }
 
-export async function setConversationReasoning(convId, reasoning) {
-  await db.update(conversations).set({ reasoning }).where(eq(conversations.id, convId));
-}
-
 export async function getHistory(convId, limit = MAX_HISTORY_MESSAGES) {
   const rows = await db.select().from(messages)
     .where(eq(messages.conversationId, convId))
@@ -140,7 +137,7 @@ async function describeImage(img) {
             { type: 'image_url', image_url: { url } },
           ] },
         ],
-        { model: reader, reasoning: 'fast', temperature: 0.2, maxTokens: 1024 },
+        { model: reader, temperature: 0.2, maxTokens: 1024 },
       );
       const desc = (r.content ?? '').trim();
       if (!desc) throw new Error('Vision-модель вернула пустое описание');
@@ -190,9 +187,11 @@ function messageTextForModel(row) {
   return atts.some((a) => String(a.mime ?? '').toLowerCase().startsWith('image/')) ? '(изображение приложено)' : '';
 }
 
-export function buildLlmMessages(agent, history) {
+export async function buildLlmMessages(agent, history) {
   const sysParts = [agent.systemPrompt];
-  const skills = skillsForAgent(agent.id);
+  // Скиллы маркетолога приходят из БД (marketer_skills), остальных — из кода.
+  const dbSkills = agent.id === MARKETER_AGENT_ID ? await ensureMarketerSkills() : [];
+  const skills = [...skillsForAgent(agent.id), ...dbSkills];
   if (skills.length) {
     sysParts.push(
       'Инструмент read_skill даёт доступ к подробным навыкам. Если запрос пользователя попадает в тематику любого навыка из списка ниже — ОБЯЗАТЕЛЬНО сначала вызови read_skill с его id, прочитай содержимое и строй ответ на его основе. Не вызывай навык только для приветствий и совсем коротких вопросов.',
@@ -207,7 +206,7 @@ export function buildLlmMessages(agent, history) {
   return out;
 }
 
-export async function prepareTurn({ tgUser, agentId, text, reasoning, conversationId, attachments, reuseLastUser = false, forceNewConversation = false }) {
+export async function prepareTurn({ tgUser, agentId, text, conversationId, attachments, reuseLastUser = false, forceNewConversation = false }) {
   if ((!text || !text.trim()) && !(attachments && attachments.length)) throw new Error('Пустое сообщение');
   const clean = (text ?? '').trim();
   if (clean.length > MAX_MESSAGE_CHARS) {
@@ -232,10 +231,6 @@ export async function prepareTurn({ tgUser, agentId, text, reasoning, conversati
     await db.update(conversations).set({ agentId: agent.id }).where(eq(conversations.id, conv.id));
     conv.agentId = agent.id;
   }
-  if (reasoning && REASONING_LEVELS.includes(reasoning) && reasoning !== conv.reasoning) {
-    await setConversationReasoning(conv.id, reasoning);
-    conv.reasoning = reasoning;
-  }
   const contentForDb = clean || (attachments && attachments.length ? attachments[0].name : '');
   // «Повторить» после ошибки хода: если последнее user-сообщение — то же самое
   // (текст + вложение) не старше 5 минут, не дублируем его в истории.
@@ -251,7 +246,7 @@ export async function prepareTurn({ tgUser, agentId, text, reasoning, conversati
     await appendMessage(conv, 'user', contentForDb, null, attachments ?? null);
     history = await getHistory(conv.id);
   }
-  const model = await pickMainModel({ reasoning: conv.reasoning, defaultModel: await getDefaultModel() });
+  const model = await resolveAnswerModel();
   return { user: userRow, agent, conv, history, model };
 }
 
@@ -259,10 +254,9 @@ export async function finishTurn(conv, replyText, meta = null) {
   return appendMessage(conv, 'assistant', replyText, meta);
 }
 
-export function buildMeta({ started, model, usage, reasoning, steps = [], skills = [], reasoningText = null, error = null }) {
+export function buildMeta({ started, model, usage, steps = [], skills = [], reasoningText = null, error = null }) {
   return {
     model: model ?? null,
-    reasoning: reasoning ?? 'fast',
     latencyMs: Date.now() - started,
     tokens: usage
       ? {
@@ -286,8 +280,9 @@ function extractReadSkill(toolCalls) {
 // ── Стриминговый ход агента: дельты ответа/размышлений + цикл read_skill ─────
 // recorder (turnEvents) опционален: Mini App передаёт recorder для realtime,
 // бот-чат вызывает без него. Батчинг событий по символам — таймеров в рантайме нет.
-async function* streamRounds({ agent, llmMessages, reasoning, model }, out, recorder = null) {
-  const tool = skillsToolFor(agent);
+async function* streamRounds({ agent, llmMessages, model }, out, recorder = null) {
+  const dbSkills = agent.id === MARKETER_AGENT_ID ? await ensureMarketerSkills() : [];
+  const tool = skillsToolFor(agent, dbSkills);
   const msgs = [...llmMessages];
   let rounds = 0;
   let acc = '';
@@ -314,7 +309,7 @@ async function* streamRounds({ agent, llmMessages, reasoning, model }, out, reco
   for (;;) {
     let roundAcc = '';
     let pendingCalls = null;
-    for await (const ev of streamChat(msgs, { model, reasoning, tools: tool ? [tool] : undefined })) {
+    for await (const ev of streamChat(msgs, { model, tools: tool ? [tool] : undefined })) {
       if (ev.model && !out.model) out.model = ev.model;
       if (ev.usage) out.usage = ev.usage;
       if (ev.reasoning) {
@@ -338,13 +333,24 @@ async function* streamRounds({ agent, llmMessages, reasoning, model }, out, reco
       return;
     }
     rounds += 1;
-    let skillId = '';
-    try { skillId = String(JSON.parse(call.function.arguments || '{}').skill ?? ''); } catch (_) {}
-    const skill = getSkill(skillId);
-    if (skill) out.skills.push({ id: skill.id, name: skill.name });
-    out.steps.push({ type: 'skill_read', skill: skillId, ms: Date.now() - out.started });
-    if (recorder) await recorder.event('skill', { id: skillId, name: skill?.name ?? skillId });
-    yield { type: 'skill', id: skillId, name: skill?.name ?? skillId };
+    let args = {};
+    try { args = JSON.parse(call.function.arguments || '{}'); } catch (_) {}
+    const skillId = String(args.skill ?? '');
+    const fileArg = String(args.file ?? '').trim();
+    let body = null;
+    let skillName = skillId;
+    if (fileArg) {
+      // Запрошен файл навыка (references/…) — только у маркетолога
+      body = await getMarketerSkillFile(skillId, fileArg);
+      if (body != null) skillName = `${skillId} · ${fileArg}`;
+    } else {
+      const skill = getSkill(skillId) ?? dbSkills.find((s) => s.id === skillId) ?? null;
+      if (skill) { body = skill.content; skillName = skill.name; }
+    }
+    if (skillId && !fileArg && body != null) out.skills.push({ id: skillId, name: skillName });
+    out.steps.push({ type: 'skill_read', skill: fileArg ? `${skillId}#${fileArg}` : skillId, ms: Date.now() - out.started });
+    if (recorder) await recorder.event('skill', { id: skillId, name: skillName, ...(fileArg ? { file: fileArg } : {}) });
+    yield { type: 'skill', id: skillId, name: skillName };
     msgs.push({
       role: 'assistant',
       ...(roundAcc ? { content: roundAcc } : {}),
@@ -357,7 +363,9 @@ async function* streamRounds({ agent, llmMessages, reasoning, model }, out, reco
     msgs.push({
       role: 'tool',
       tool_call_id: call.id ?? `call_${rounds}`,
-      content: skill ? skill.content : `Навык «${skillId}» не найден. Отвечай без него, используя свои знания.`,
+      content: body != null
+        ? body
+        : `Навык «${skillId}»${fileArg ? ` / файл «${fileArg}»` : ''} не найден. Отвечай без него, используя свои знания.`,
     });
   }
 }
@@ -367,7 +375,6 @@ async function finalizeTurn({ conv, agent, out, started, recorder, saved }) {
     started,
     model: out.model,
     usage: out.usage,
-    reasoning: conv.reasoning,
     steps: out.steps,
     skills: out.skills,
     reasoningText: out.reasoningText,
@@ -391,24 +398,24 @@ async function runTurn({ agent, conv, history, model }, turnId) {
   const recorder = tid ? createRecorder({ turnId: tid, conversationId: conv.id, tgId: conv.tgId }) : null;
   if (recorder) {
     await cleanupConversationTurns(conv.id, tid);
-    await recorder.event('start', { model, reasoning: conv.reasoning, agentId: agent.id, agentName: agent.name });
+    await recorder.event('start', { model, agentId: agent.id, agentName: agent.name });
   }
   try {
     await runVisionStep({ history, recorder, out });
-    const llmMessages = buildLlmMessages(agent, history);
-    for await (const _ev of streamRounds({ agent, llmMessages, reasoning: conv.reasoning, model }, out, recorder)) { /* consume */ }
+    const llmMessages = await buildLlmMessages(agent, history);
+    for await (const _ev of streamRounds({ agent, llmMessages, model }, out, recorder)) { /* consume */ }
     const message = await finalizeTurn({ conv, agent, out, started, recorder });
     return { agent, conv, reply: message.content, meta: message.meta, message };
   } catch (e) {
-    const meta = buildMeta({ started, reasoning: conv.reasoning, steps: out.steps, skills: out.skills, reasoningText: out.reasoningText, error: e?.message ?? String(e) });
+    const meta = buildMeta({ started, steps: out.steps, skills: out.skills, reasoningText: out.reasoningText, error: e?.message ?? String(e) });
     if (recorder) await recorder.event('error', { message: String(e?.message ?? e).slice(0, 400) });
     try { await finishTurn(conv, '[ошибка: ответ не получен]', meta); } catch (_) {}
     throw e;
   }
 }
 
-export async function completeTurn({ tgUser, agentId, text, reasoning, conversationId, attachments, turnId }) {
-  const prepared = await prepareTurn({ tgUser, agentId, text, reasoning, conversationId, attachments });
+export async function completeTurn({ tgUser, agentId, text, conversationId, attachments, turnId }) {
+  const prepared = await prepareTurn({ tgUser, agentId, text, conversationId, attachments });
   return runTurn(prepared, turnId);
 }
 
@@ -424,19 +431,15 @@ export async function deleteMessagesAfter(convId, messageId) {
   await db.delete(messages).where(and(eq(messages.conversationId, convId), gt(messages.id, messageId)));
 }
 
-export async function regenerateTurn({ tgUser, conversationId, reasoning, turnId }) {
+export async function regenerateTurn({ tgUser, conversationId, turnId }) {
   const userRow = await ensureUser(tgUser);
   const conv = await getConversationById(Number(conversationId), tgUser.id);
   if (!conv) throw new Error('Диалог не найден');
   const lastUser = await lastUserMessage(conv.id);
   if (!lastUser) throw new Error('Нечего перегенерировать: в диалоге нет сообщений');
   await deleteMessagesAfter(conv.id, lastUser.id);
-  if (reasoning && REASONING_LEVELS.includes(reasoning) && reasoning !== conv.reasoning) {
-    await setConversationReasoning(conv.id, reasoning);
-    conv.reasoning = reasoning;
-  }
   const agent = getAgentOrDefault(conv.agentId);
   const history = await getHistory(conv.id);
-  const model = await pickMainModel({ reasoning: conv.reasoning, defaultModel: await getDefaultModel() });
+  const model = await resolveAnswerModel();
   return runTurn({ user: userRow, agent, conv, history, model }, turnId);
 }

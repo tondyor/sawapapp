@@ -12,7 +12,6 @@ export default async function (input, ctx) {
 
   const userRow = await ensureUser(tgUser);
   const copy = await createConversation(userRow, src.agentId, src.title ? `Копия: ${src.title.slice(0, 70)}` : 'Копия диалога');
-  copy.reasoning = src.reasoning ?? 'fast';
 
   const conds = [eq(messages.conversationId, src.id)];
   if (input?.upToMessageId) {

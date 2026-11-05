@@ -5,6 +5,23 @@ This file is auto-loaded by Claude Code, Cursor, and similar tools — keep it s
 and true. For the full SDK reference (db, Bot API, fetch), see
 [docs/tgcloud-sdk.md](docs/tgcloud-sdk.md).
 
+## КРИТИЧЕСКОЕ ПРАВИЛО №1 — коммит и push любого прод-изменения
+
+**Любое изменение, попадающее в Telegram-продакшн, обязано сразу коммититься и
+пушиться в GitHub-репозиторий `tondyor/sawapapp`.**
+
+- Продакшн = всё, что деплоится на платформу Telegram: `npx tgcloud push`
+  (модули `tgcloud/` + сборка Mini App), `npx tgcloud migrate` (изменения схемы БД),
+  правки фронтенда, уходящие в прод.
+- Порядок работы без исключений: изменение → деплой/миграция в прод →
+  `git add` → `git commit` → `git push` в `origin/main`. Промежуток между деплоем
+  в прод и push'ем в GitHub минимален.
+- Нельзя оставлять прод-изменения только в рабочей папке или только в облаке:
+  состояние без коммита в GitHub считается потерянным (история проекта —
+  единственный источник истины о том, что и когда менялось).
+- Исключений нет. Если push невозможен (нет сети, ошибка git) — изменение не
+  считается завершённым: сообщить пользователю в чат и довести push до успеха.
+
 ## What this project is
 
 A **Telegram Mini App bot** running on Telegram's serverless platform. You write
@@ -182,10 +199,11 @@ The platform manages the bot's webhook for you, derived from your deployed
   планировщика (нулевая латентность против старого пути). Подробности и замеры:
   [docs/agent-turns.md](docs/agent-turns.md).
 - Models are switchable via `settings` (`VISION_MODEL`, `DEFAULT_MODEL`, `PLANNER_MODEL`,
-  `COMPRESS_MODEL`) without redeploy; planner/compress = `nvidia/nemotron-3.5-bolt-e4b`,
-  reasoning/vision default `nvidia/nemotron-3.5-super-vl-120b-a12b` (deepseek-v4.1-flash
-  measured 35s+ first token; lightning-30b disqualified as planner: 15.6s, thinking-toggle
-  ignored). Web search key: `SERPER_API_KEY` in `settings`; without it the planner drops
+  `COMPRESS_MODEL`) without redeploy. Since 2026-11-05 the ONLY model in the project is
+  `deepseek-ai/deepseek-v4.1-flash` — planner, compressor, answer for every agent, vision.
+  Measured earlier: 35s+ first token (cold start) on big prompts — answers are therefore
+  generated in ~700-token chunks with checkpoints (`turns.answer_text`, finishTurnSynthesis).
+  Web search key: `SERPER_API_KEY` in `settings`; without it the planner drops
   search steps and tool failures surface honestly in the answer.
 - **CLI pitfall (repeatedly hit):** a targeted `push` can print `✓` yet silently NOT
   upload the file (snapshot `non-string content` skip), and dependent endpoints then fail

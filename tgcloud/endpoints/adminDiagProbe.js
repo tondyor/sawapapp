@@ -28,7 +28,6 @@ export default async function (input, ctx) {
       hasAtt: atts.length > 0,
       attMimes: atts.map((a) => a.mime).join(','),
       model: meta?.model ?? null,
-      reasoning: meta?.reasoning ?? null,
       latencyMs: meta?.latencyMs ?? null,
       skills: (meta?.skills ?? []).map((s) => s.id).join(','),
       steps: (meta?.steps ?? []).map((s) => s.type).join(','),

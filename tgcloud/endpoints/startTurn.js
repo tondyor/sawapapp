@@ -15,7 +15,6 @@ export default async function (input, ctx) {
       tgUser,
       agentId: input?.agentId,
       text,
-      reasoning: input?.reasoning,
       conversationId: input?.conversationId,
       attachmentIds,
     });

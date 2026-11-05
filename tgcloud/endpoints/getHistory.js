@@ -22,7 +22,6 @@ export default async function (input, ctx) {
     conversationId: conv.id,
     agentId: conv.agentId,
     title: conv.title,
-    reasoning: conv.reasoning ?? 'fast',
     messages: history.map((m) => ({
       id: m.id,
       role: m.role,

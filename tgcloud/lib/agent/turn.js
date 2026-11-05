@@ -4,13 +4,15 @@
 // Возобновление: клиент делает getTurn и продолжает runTurnStep с currentStep.
 import { db } from 'sdk';
 import { eq, and, desc } from 'sdk/db';
-import { turns, files } from '../../schema.js';
-import { REASONING_LEVELS, MAX_MESSAGE_CHARS } from '../config.js';
+import { turns, files, messages } from '../../schema.js';
+import { MAX_MESSAGE_CHARS } from '../config.js';
 import { sanitizeTurnId, createRecorder, cleanupConversationTurns } from '../turnEvents.js';
-import { prepareTurn, getHistory, finishTurn, buildMeta, getConversationById } from '../chat.js';
+import { prepareTurn, getHistory, finishTurn, buildMeta, getConversationById, buildLlmMessages, deleteMessagesAfter } from '../chat.js';
+import { streamChat, resolveAnswerModel } from '../nvidia.js';
 import { getAgentOrDefault } from '../agents.js';
-import { planTurn, heuristicPlan, needsPlanner, planKey, EFFORT_CAP } from './pipeline.js';
-import { EXECUTORS, hasExecutor, isFinalStep, compressFinding } from './executors.js';
+import { planTurn, fallbackPlan, planKey, MAX_PLAN_STEPS } from './pipeline.js';
+import { EXECUTORS, hasExecutor, isFinalStep, compressFinding, historyWithoutTurnQuestion } from './executors.js';
+import { MARKETER_AGENT_ID, ensureMarketerSkills } from '../skills/mSkills.js';
 
 const TERMINAL = ['done', 'error', 'stopped'];
 
@@ -38,44 +40,65 @@ async function loadOwnedTurn(turnId, tgId) {
 }
 
 // ── startTurn: создать ход, спланировать, вернуть план ─────────────────────
-export async function startTurn({ tgUser, agentId, text, reasoning, conversationId, attachmentIds }) {
-  if ((!text || !String(text).trim()) && !(attachmentIds && attachmentIds.length)) {
-    const e = new Error('Пустое сообщение'); e.code = 'EMPTY_MESSAGE'; throw e;
-  }
-  if (String(text ?? '').length > MAX_MESSAGE_CHARS) {
-    const e = new Error(`Сообщение слишком длинное (максимум ${MAX_MESSAGE_CHARS} символов)`); e.code = 'TOO_LONG'; throw e;
-  }
-  const level = REASONING_LEVELS.includes(reasoning) ? reasoning : undefined;
+// fromMessageId — перегенерация с сообщения юзера: всё после него удаляется,
+// вопросом становится текст этого сообщения; новое user-сообщение не пишется.
+export async function startTurn({ tgUser, agentId, text, conversationId, attachmentIds, fromMessageId }) {
+  let prepared, question;
 
-  // prepareTurn: юзер/агент/диалог + запись user-сообщения + история
-  // (reuseLastUser: «Повторить» после ошибки не дублирует то же сообщение)
-  const prepared = await prepareTurn({
-    tgUser, agentId, text, reasoning: level, conversationId,
-    attachments: attachmentIds ? await resolveAttachments(tgUser.id, attachmentIds) : null,
-    reuseLastUser: true,
-    forceNewConversation: !conversationId,
-  });
+  if (fromMessageId) {
+    const conv0 = await getConversationById(Number(conversationId) || 0, tgUser.id);
+    if (!conv0) { const e = new Error('Диалог не найден'); e.code = 'CONV_NOT_FOUND'; throw e; }
+    const msg = await db.select().from(messages)
+      .where(and(eq(messages.id, Number(fromMessageId)), eq(messages.conversationId, conv0.id)))
+      .get();
+    if (!msg || msg.role !== 'user') {
+      const e = new Error('Сообщение не найдено'); e.code = 'MESSAGE_NOT_FOUND'; throw e;
+    }
+    await deleteMessagesAfter(conv0.id, msg.id);
+    prepared = {
+      agent: getAgentOrDefault(agentId ?? conv0.agentId),
+      conv: conv0,
+      history: await getHistory(conv0.id),
+    };
+    question = String(msg.content ?? '').trim() || 'изображение';
+  } else {
+    if ((!text || !String(text).trim()) && !(attachmentIds && attachmentIds.length)) {
+      const e = new Error('Пустое сообщение'); e.code = 'EMPTY_MESSAGE'; throw e;
+    }
+    if (String(text ?? '').length > MAX_MESSAGE_CHARS) {
+      const e = new Error(`Сообщение слишком длинное (максимум ${MAX_MESSAGE_CHARS} символов)`); e.code = 'TOO_LONG'; throw e;
+    }
+
+    // prepareTurn: юзер/агент/диалог + запись user-сообщения + история
+    // (reuseLastUser: «Повторить» после ошибки не дублирует то же сообщение)
+    prepared = await prepareTurn({
+      tgUser, agentId, text, conversationId,
+      attachments: attachmentIds ? await resolveAttachments(tgUser.id, attachmentIds) : null,
+      reuseLastUser: true,
+      forceNewConversation: !conversationId,
+    });
+    question = String(text ?? '').trim() || (attachmentIds?.length ? 'изображение' : '');
+  }
+
   const { agent, conv, history } = prepared;
-  const question = String(text ?? '').trim() || (attachmentIds?.length ? 'изображение' : '');
   const images = lastUserImages(history);
   const hasImages = images.length > 0;
-  const effort = conv.reasoning ?? 'fast';
 
   const turnId = genTurnId();
   const recorder = createRecorder({ turnId, conversationId: conv.id, tgId: conv.tgId });
   await cleanupConversationTurns(conv.id, turnId);
-  await recorder.event('start', { model: null, reasoning: effort, agentId: agent.id, agentName: agent.name, pipeline: true });
+  await recorder.event('start', { model: null, agentId: agent.id, agentName: agent.name, pipeline: true });
 
+  // Ход ВСЕГДА начинается с LLM-планировщика: агент решает на трассе, какие
+  // шаги нужны до ответа (скиллы, размышление, изображение, поиск).
+  // Маркетологу в промпт планировщика отдаётся список его навыков (шаг skill).
+  const skills = agent.id === MARKETER_AGENT_ID ? await ensureMarketerSkills() : [];
   let plan;
   let planMeta = { ok: true, repaired: false, model: null, latencyMs: 0 };
-  if (needsPlanner(effort)) {
-    const res = await planTurn({ question, history, effort, hasImages });
-    plan = res.steps;
-    planMeta = { ok: res.ok, repaired: res.repaired, model: res.model, latencyMs: res.latencyMs, error: res.error ?? null };
-  } else {
-    plan = heuristicPlan({ reasoning: effort, hasImages });
-  }
-  if (!plan.length) plan = heuristicPlan({ reasoning: 'medium', hasImages });
+  const res = await planTurn({ question, history, hasImages, skills });
+  plan = res.steps;
+  planMeta = { ok: res.ok, repaired: res.repaired, model: res.model, latencyMs: res.latencyMs, error: res.error ?? null };
+  if (!plan.length) plan = fallbackPlan({ hasImages });
 
   const [row] = await db.insert(turns).values({
     turnId,
@@ -87,7 +110,6 @@ export async function startTurn({ tgUser, agentId, text, reasoning, conversation
     plan: plan.map((s) => ({ type: s.type, title: s.title, params: s.params, key: s.key, duplicate: s.duplicate })),
     currentStep: 0,
     findings: [],
-    reasoningLevel: effort,
   }).returning();
 
   await recorder.event('plan', { steps: plan.map((s) => ({ type: s.type, title: s.title })), ...planMeta });
@@ -100,7 +122,6 @@ export async function startTurn({ tgUser, agentId, text, reasoning, conversation
     status: row.status,
     plan: row.plan,
     planMeta,
-    reasoning: effort,
   };
 }
 
@@ -145,6 +166,15 @@ export async function runTurnStep({ turnId, tgId }) {
   await recorder.event('step_start', { index: idx, type: step.type, title: step.title });
   const t0 = Date.now();
 
+  // Финальные шаги (direct_answer/synthesize) НЕ исполняются внутри этого
+  // вызова: платформа обрывает изолят на ~30-й секунде, а генерация ответа
+  // медленной моделью (glm) в них не укладывается. Уводим ход в synthesizing —
+  // кусочный стрим-синтез делает finishTurnSynthesis (чекпоинты в БД).
+  if (isFinalStep(step.type) && !step.duplicate) {
+    await touch(tid, { status: 'synthesizing' });
+    return { status: 'synthesizing', currentStep: idx, plan, findings };
+  }
+
   // Дубль не исполняем — планировщик пометил; пропускаем как находку.
   if (step.duplicate) {
     findings.push({ index: idx, type: step.type, title: step.title, ok: true, ms: 0, text: 'Шаг с таким же запросом уже выполнялся ранее — пропущен.' });
@@ -162,7 +192,7 @@ export async function runTurnStep({ turnId, tgId }) {
 
   const ctx = {
     agent, conv, history, question: turn.question,
-    findings, reasoning: turn.reasoningLevel ?? conv.reasoning ?? 'fast',
+    findings,
     recorder, stepIndex: idx,
   };
 
@@ -183,7 +213,6 @@ export async function runTurnStep({ turnId, tgId }) {
         started: t0,
         model: result.stream?.model ?? null,
         usage: result.stream?.usage ?? null,
-        reasoning: turn.reasoningLevel,
         steps: stepsMeta(findings, { type: step.type, title: step.title, ms, ok: true }),
         skills: result.stream?.skills ?? [],
         reasoningText: result.stream?.reasoningText ?? null,
@@ -211,16 +240,17 @@ export async function runTurnStep({ turnId, tgId }) {
     // Re-plan: планировщик видит находки и достраивает/объявляет готовность.
     let updatedPlan = plan;
     let replanned = false;
-    if (needsPlanner(turn.reasoningLevel ?? 'medium')) {
+    {
       const rp = await planTurn({
-        question: turn.question, history, effort: turn.reasoningLevel ?? 'medium',
+        question: turn.question, history,
         hasImages: lastUserImages(history).length > 0,
+        skills: turn.agentId === MARKETER_AGENT_ID ? await ensureMarketerSkills() : [],
         priorSteps: plan.map((s, i) => ({ ...s, executed: i <= idx })),
         findings: findings.map((f) => ({ type: f.type, title: f.title, text: f.text })),
         executedKeys: findings.map((f) => planKey({ type: f.type, params: keyParams(plan[f.index]) })),
       });
       if (rp.ok && rp.steps.length) {
-        const cap = (EFFORT_CAP[turn.reasoningLevel] ?? 5) + 1;
+        const cap = MAX_PLAN_STEPS + 1;
         const insertion = rp.steps
           .filter((s) => s.type !== 'synthesize')
           .filter((s) => !plan.some((p, i) => i > idx && planKey(p) === s.key))
@@ -249,7 +279,7 @@ export async function runTurnStep({ turnId, tgId }) {
     const errMsg = String(e?.message ?? e).slice(0, 300);
     if (isFinalStep(step.type)) {
       // финальный шаг упал — ход в ошибку (как текущий runTurn)
-      const meta = buildMeta({ started: t0, reasoning: turn.reasoningLevel, steps: stepsMeta(findings, { type: step.type, title: step.title, ms, ok: false }), error: errMsg });
+      const meta = buildMeta({ started: t0, steps: stepsMeta(findings, { type: step.type, title: step.title, ms, ok: false }), error: errMsg });
       await recorder.event('error', { message: errMsg });
       try { await finishTurn(conv, '[ошибка: ответ не получен]', meta); } catch (_) {}
       await touch(tid, { status: 'error', error: errMsg, findings: stepsMeta(findings, { type: step.type, title: step.title, ms, ok: false }) });
@@ -272,6 +302,13 @@ function stepsMeta(findings, finalStep) {
 }
 
 // ── finishTurn: синтез → запись assistant-сообщения в чат ──────────────────
+// Кусочный стрим-синтез, устойчивый к обрыву изолята (~30 с платформы):
+// ответ накапливается в turns.answer_text с чекпоинтом каждые ~6 с; каждый
+// вызов продолжает РОВНО с места обрыва; конец — finish_reason 'stop'.
+// Клиент видит текст живьём через content-события (turn_events).
+const SYNTH_CHUNK_TOKENS = 700;         // размер куска генерации за один вызов
+const SYNTH_PERSIST_MS = 6000;          // чекпоинт накопленного текста
+
 export async function finishTurnSynthesis({ turnId, tgId }) {
   const tid = sanitizeTurnId(turnId);
   if (!tid) { const e = new Error('Некорректный turnId'); e.code = 'BAD_TURN'; throw e; }
@@ -288,37 +325,112 @@ export async function finishTurnSynthesis({ turnId, tgId }) {
   const recorder = createRecorder({ turnId: tid, conversationId: conv.id, tgId });
   const findings = Array.isArray(turn.findings) ? turn.findings : [];
 
-  await touch(tid, { status: 'synthesizing' });
-  const step = { type: 'synthesize', title: 'Финальный ответ', params: {} };
-  const ctx = {
-    agent, conv, history, question: turn.question,
-    findings, reasoning: turn.reasoningLevel ?? conv.reasoning ?? 'fast',
-    recorder, stepIndex: findings.length,
-  };
-  const t0 = Date.now();
-  try {
-    const result = await EXECUTORS.synthesize(step, ctx);
+  // Ответ уже дописан до конца в предыдущем вызове — просто пишем в чат.
+  if (turn.answerDone && turn.answerText) {
     const meta = buildMeta({
-      started: t0,
-      model: result.stream?.model ?? null,
-      usage: result.stream?.usage ?? null,
-      reasoning: turn.reasoningLevel,
-      steps: stepsMeta(findings, { type: 'synthesize', title: step.title, ms: Date.now() - t0, ok: true }),
-      skills: result.stream?.skills ?? [],
-      reasoningText: result.stream?.reasoningText ?? null,
+      started: Date.now(),
+      steps: findings.map((f) => ({ type: f.type, title: f.title, ms: f.ms, ok: f.ok })),
     });
-    const message = await finishTurn(conv, (result.content ?? '').trim() || '[пустой ответ]', meta);
+    const message = await finishTurn(conv, turn.answerText.trim() || '[пустой ответ]', meta);
     await recorder.event('done', { messageId: message.id, content: message.content, meta });
     await touch(tid, { status: 'done', currentStep: findings.length + 1 });
     return { status: 'done', message: { id: message.id, content: message.content, meta } };
+  }
+
+  await touch(tid, { status: 'synthesizing' });
+
+  // Контекст синтеза: системный промпт агента + история + вопрос + находки.
+  const base = await buildLlmMessages(agent, historyWithoutTurnQuestion(history, turn.question));
+  const findingsText = findings.length
+    ? findings.map((f, i) => `[${i + 1}] ${f.title} (${f.type}, ${f.ok ? 'успешно' : 'не удалось'}):\n${f.text}`).join('\n\n')
+    : '(шаги не дали находок)';
+  const acc = turn.answerText ?? '';
+  base.push({
+    role: 'user',
+    content: acc
+      ? [
+          `Вопрос пользователя: ${turn.question}`,
+          `Результаты выполненных шагов хода:\n${findingsText}`,
+          'Ты уже начал писать ответ, но текст оборвался. Ниже — конец уже написанного. Продолжи ответ РОВНО с места обрыва: не повторяй написанное, не здоровайся, не начинай заново; если обрыв в середине предложения — продолжи со средины. Пиши сразу продолжение, без преамбул.',
+          `Конец уже написанного текста:\n…${acc.slice(-1500)}`,
+        ].join('\n\n')
+      : [
+          `Вопрос пользователя: ${turn.question}`,
+          'Результаты выполненных шагов хода:',
+          findingsText,
+          'Составь финальный ответ пользователю на основе находок. Если инструмент не сработал — скажи об этом честно и ответь тем, что есть. Отвечай на языке вопроса.',
+        ].join('\n\n'),
+  });
+
+  const model = await resolveAnswerModel();
+  const started = Date.now();
+  let lastPersist = Date.now();
+  let pendingContent = '';
+  let pendingReasoning = '';
+  let finish = null;
+  let grew = 0;
+
+  const persist = async () => {
+    await touch(tid, { answerText: acc });
+    lastPersist = Date.now();
+  };
+  const flushEvents = async (force = false) => {
+    if (pendingContent && (force || pendingContent.length >= 300)) {
+      await recorder.event('content', { text: pendingContent });
+      pendingContent = '';
+    }
+    if (pendingReasoning && (force || pendingReasoning.length >= 350)) {
+      await recorder.event('reasoning', { text: pendingReasoning });
+      pendingReasoning = '';
+    }
+  };
+
+  const t0 = Date.now();
+  try {
+    for await (const ev of streamChat(base, { model, maxTokens: SYNTH_CHUNK_TOKENS })) {
+      if (ev.reasoning) pendingReasoning += ev.reasoning;
+      if (ev.delta) {
+        acc += ev.delta;
+        grew += ev.delta.length;
+        pendingContent += ev.delta;
+      }
+      if (ev.finish) finish = ev.finish;
+      if (pendingContent.length >= 300 || pendingReasoning.length >= 350) await flushEvents();
+      if (Date.now() - lastPersist >= SYNTH_PERSIST_MS) await persist();
+    }
+    await flushEvents(true);
+    await persist();
   } catch (e) {
+    // Изолят могли убить по таймеру платформы — код ниже не выполнится.
+    // Сюда попадают только реальные ошибки (например, сбой API модели).
+    try { await flushEvents(true); await persist(); } catch (_) {}
+    if (grew > 0 || acc) {
+      // Прогресс есть — ход продолжается следующим вызовом с места обрыва.
+      return { status: 'synthesizing', partial: true, appended: grew, totalChars: acc.length };
+    }
     const errMsg = String(e?.message ?? e).slice(0, 300);
-    const meta = buildMeta({ started: t0, reasoning: turn.reasoningLevel, steps: stepsMeta(findings, { type: 'synthesize', title: step.title, ms: Date.now() - t0, ok: false }), error: errMsg });
+    const meta = buildMeta({ started: t0, steps: findings.map((f) => ({ type: f.type, title: f.title, ms: f.ms, ok: f.ok })), error: errMsg });
     await recorder.event('error', { message: errMsg });
     try { await finishTurn(conv, '[ошибка: ответ не получен]', meta); } catch (_) {}
     await touch(tid, { status: 'error', error: errMsg });
     return { status: 'error', error: errMsg };
   }
+
+  // Стрим дошёл до конца куска.
+  if (finish === 'stop' || finish == null) {
+    const meta = buildMeta({
+      started,
+      model,
+      steps: findings.map((f) => ({ type: f.type, title: f.title, ms: f.ms, ok: f.ok })),
+    });
+    const message = await finishTurn(conv, acc.trim() || '[пустой ответ]', meta);
+    await recorder.event('done', { messageId: message.id, content: message.content, meta });
+    await touch(tid, { status: 'done', answerDone: true, answerText: acc, currentStep: findings.length + 1 });
+    return { status: 'done', message: { id: message.id, content: message.content, meta } };
+  }
+  // Обрезаны лимитом куска (finish 'length') — продолжение следующим вызовом.
+  await persist();
+  return { status: 'synthesizing', partial: true, appended: grew, totalChars: acc.length };
 }
 
 // ── stopTurn: кнопка «Стоп» → статус stopped + резюме в чат ────────────────
@@ -350,7 +462,6 @@ export async function stopTurn({ turnId, tgId }) {
     try {
       await finishTurn(conv, lines.join('\n'), buildMeta({
         started: Date.now(),
-        reasoning: turn.reasoningLevel,
         steps: findings.map((f) => ({ type: f.type, title: f.title, ms: f.ms, ok: f.ok })),
         error: 'stopped by user',
       }));
@@ -387,7 +498,6 @@ function turnView(row) {
     plan: row.plan,
     currentStep: row.currentStep,
     findings: row.findings,
-    reasoningLevel: row.reasoningLevel,
     error: row.error,
     createdAt: row.createdAt,
   };

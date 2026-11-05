@@ -18,7 +18,7 @@
     { type: 'synthesize', title: 'Финальный ответ' },
   ];
   var turnMeta = {
-    model: 'nvidia/nemotron-3.5-super-120b-a12b', reasoning: 'medium', latencyMs: 12400,
+    model: 'deepseek-ai/deepseek-v4.1-flash', reasoning: 'medium', latencyMs: 12400,
     tokens: { prompt: 980, completion: 640, total: 1620 },
     skills: [], reasoningText: reasoningAll, error: null,
     steps: [
@@ -33,7 +33,7 @@
     seq = 0; served = 0; stepCursor = 0;
     events = [
       ev('start', { model: null, reasoning: 'medium', agentId: 'lawyer', agentName: 'Правовед', pipeline: true }),
-      ev('plan', { steps: planSteps.map(function (s) { return { type: s.type, title: s.title }; }), ok: true, repaired: true, model: 'nvidia/nemotron-3.5-bolt-e4b', latencyMs: 2300 }),
+      ev('plan', { steps: planSteps.map(function (s) { return { type: s.type, title: s.title }; }), ok: true, repaired: true, model: 'deepseek-ai/deepseek-v4.1-flash', latencyMs: 2300 }),
       ev('step_start', { index: 0, type: 'vision', title: 'Изучить документ' }),
       ev('image', { index: 0, name: 'doc.png', description: visionDesc, cached: false }),
       ev('step_done', { index: 0, type: 'vision', title: 'Изучить документ', ok: true, ms: 900 }),
@@ -102,7 +102,7 @@
         }
         if (name === 'startTurn') {
           buildEvents();
-          return cb(null, { turnId: 'a-mock-' + Date.now().toString(36), conversationId: 9001, agentId: 'lawyer', agentName: 'Правовед', status: 'executing', plan: planSteps, planMeta: { ok: true, repaired: true, model: 'nvidia/nemotron-3.5-bolt-e4b', latencyMs: 2300 }, reasoning: 'medium' });
+          return cb(null, { turnId: 'a-mock-' + Date.now().toString(36), conversationId: 9001, agentId: 'lawyer', agentName: 'Правовед', status: 'executing', plan: planSteps, planMeta: { ok: true, repaired: true, model: 'deepseek-ai/deepseek-v4.1-flash', latencyMs: 2300 }, reasoning: 'medium' });
         }
         if (name === 'runTurnStep') {
           var r = stepResults[Math.min(stepCursor, stepResults.length - 1)];

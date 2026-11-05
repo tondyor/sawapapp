@@ -5,7 +5,7 @@
 // и границами у каждого шага, guardrails вместо жёстких лимитов.
 import { getPlannerModel, completeChat, getSettingOr } from '../nvidia.js';
 
-export const STEP_TYPES = ['direct_answer', 'vision', 'search', 'read_url', 'reason', 'synthesize'];
+export const STEP_TYPES = ['direct_answer', 'vision', 'search', 'read_url', 'reason', 'skill', 'synthesize'];
 
 export const STEP_CATALOG = {
   direct_answer: 'прямой ответ без инструментов — для приветствий, болтовни, простых вопросов по контексту диалога',
@@ -13,19 +13,13 @@ export const STEP_CATALOG = {
   search: 'веб-поиск свежих фактов, params: {"query": "точный поисковый запрос"}',
   read_url: 'прочитать конкретную страницу из результатов поиска, params: {"url": "https://..."}',
   reason: 'размышление/анализ по подзадаче на основе находок, params: {"task": "что именно проанализировать"}',
+  skill: 'прочитать профильный навык из библиотеки агента, params: {"skill": "<id навыка>"}',
   synthesize: 'финальный ответ пользователю из находок шагов (ставь последним)',
 };
 
-// Бюджет шагов по уровню усилия (в промпте планировщика + жёсткий кап в коде).
-export const EFFORT_BUDGET = {
-  fast:  'ровно один шаг direct_answer, без инструментов',
-  light: '1-2 шага',
-  medium: '2-4 шага',
-  high: '3-6 шагов',
-  max: 'до 8 шагов, максимально глубоко',
-};
-
-export const EFFORT_CAP = { fast: 2, light: 3, medium: 5, high: 7, max: 9 };
+// Жёсткий бюджет шагов плана (уровней рассуждений в системе больше нет).
+export const PLAN_BUDGET = '1-6 шагов: ровно настолько глубоко, насколько нужен вопрос';
+export const MAX_PLAN_STEPS = 6;
 
 // ── JSON-repair: малые модели стабильно ломают JSON (лишняя "}", оборванный
 // хвост, висячая запятая). Ремонт детерминированный — доказан в Ф0 (5/5).
@@ -77,10 +71,9 @@ export function planKey(step) {
   return `${step?.type ?? ''}|${String(main).trim().toLowerCase().slice(0, 120)}`;
 }
 
-// Валидация и нормализация плана: известные типы, кап по уровню, пометки дубликатов.
-export function normalizeSteps(raw, { effort = 'medium', executedKeys = [] } = {}) {
+// Валидация и нормализация плана: известные типы, кап, пометки дубликатов.
+export function normalizeSteps(raw, { executedKeys = [] } = {}) {
   const arr = Array.isArray(raw) ? raw : [];
-  const cap = EFFORT_CAP[effort] ?? EFFORT_CAP.medium;
   const seen = new Set(executedKeys);
   const out = [];
   for (const s of arr) {
@@ -91,27 +84,23 @@ export function normalizeSteps(raw, { effort = 'medium', executedKeys = [] } = {
     const params = (s.params && typeof s.params === 'object') ? s.params : {};
     if (type === 'search' && !String(params.query ?? '').trim()) continue;
     if (type === 'read_url' && !/^https?:\/\//i.test(String(params.url ?? ''))) continue;
+    if (type === 'skill' && !String(params.skill ?? '').trim()) continue;
     const key = planKey({ type, params });
     const step = { type, title, params, key, duplicate: seen.has(key) };
     seen.add(key);
     out.push(step);
-    if (out.length >= cap) break;
+    if (out.length >= MAX_PLAN_STEPS) break;
   }
   return out;
 }
 
-// ── Эвристический план без вызова LLM (zero-overhead путь, Ф5.5):
-// fast = текущее поведение: [vision?] + direct_answer.
-export function heuristicPlan({ reasoning, hasImages, executedKeys = [] }) {
+// ── Эвристический план без вызова LLM — только как безопасный фолбэк,
+// когда LLM-планировщик упал: [vision?] + direct_answer.
+export function fallbackPlan({ hasImages, executedKeys = [] }) {
   const steps = [];
   if (hasImages) steps.push({ type: 'vision', title: 'Изучить изображения', params: {} });
   steps.push({ type: 'direct_answer', title: 'Прямой ответ', params: {} });
-  return normalizeSteps(steps, { effort: reasoning === 'fast' ? 'fast' : 'light', executedKeys });
-}
-
-// Нужен ли LLM-план: fast-уровень всегда отвечает эвристикой (без оверхеда).
-export function needsPlanner(reasoning) {
-  return reasoning !== 'fast';
+  return normalizeSteps(steps, { executedKeys });
 }
 
 // ── Промпт планировщика ────────────────────────────────────────────────────
@@ -125,7 +114,7 @@ function historyBrief(history, max = 6) {
   }).join('\n');
 }
 
-function capabilitiesText({ hasImages, search, readUrl }) {
+function capabilitiesText({ hasImages, search, readUrl, skills }) {
   const lines = [];
   lines.push('- direct_answer — прямой ответ (всегда доступен)');
   if (hasImages) lines.push('- vision — описать изображения, приложенные к последнему сообщению');
@@ -133,24 +122,33 @@ function capabilitiesText({ hasImages, search, readUrl }) {
   lines.push('- synthesize — финальный ответ из находок (всегда доступен)');
   if (search) lines.push('- search — веб-поиск актуальных фактов');
   if (readUrl) lines.push('- read_url — чтение конкретной страницы');
+  if (skills?.length) {
+    lines.push('- skill — прочитать профильный навык из библиотеки агента, params: {"skill": "<id>"}');
+    lines.push('Доступные навыки (id: название — когда применять):');
+    lines.push(skills.map((s) => `- ${s.id}: ${s.name} — ${s.when}`).join('\n'));
+  }
   return lines.join('\n');
 }
 
-function plannerSystemPrompt({ effort, hasImages, search, readUrl, replan }) {
+function plannerSystemPrompt({ hasImages, search, readUrl, replan, skills }) {
   const parts = [
     'Ты — планировщик многошагового хода AI-агента. Ты составляешь план из шагов-инструментов.',
     'Доступные типы шагов:',
-    capabilitiesText({ hasImages, search, readUrl }),
+    capabilitiesText({ hasImages, search, readUrl, skills }),
     'Правила:',
-    `- Уровень усилия «${effort}»: план из ${EFFORT_BUDGET[effort]}. Ровно настолько глубоко, насколько нужен вопрос, не больше.`,
+    `- Уровень усилия: план из ${PLAN_BUDGET}.`,
+    '- Ход агента начинается с планирования: пользователь получает ответ только в конце. Задача плана — решить, ЧТО нужно сделать до ответа: прочитать навыки, поразмыслить, посмотреть изображение, поискать факты.',
     '- Приветствия, болтовня, простые вопросы по контексту диалога → ровно один шаг direct_answer.',
     '- direct_answer: params оставь пустым {} — НЕ пиши сам ответ в плане, ответ даёт исполнитель.',
+    ...(skills?.length
+      ? ['- Если вопрос попадает в тематику навыков — поставь 1-3 шага skill (id из списка) ДО synthesize. Для приветствий и болтовни навыки не нужны.']
+      : []),
     replan
       ? '- Это ДОСТРОЙКА плана: учитывай выполненные шаги (помечены [ВЫПОЛНЕН]) и находки. Верни массив ТОЛЬКО новых шагов. Если находок уже достаточно для полного ответа — верни пустой массив [].'
       : '- Не планируй шаги, типы которых не перечислены как доступные.',
     '- Каждый шаг — конкретная цель: title коротко о чём шаг; search-запросы самодостаточные и точные.',
     '- Не дублируй шаги (одинаковый тип + запрос).',
-    '- Если используешь инструменты (search/read_url/vision) — последний шаг synthesize.',
+    '- Если используешь инструменты (search/read_url/vision/skill) — последний шаг synthesize.',
     'Ответ: СТРОГО JSON-массив, без markdown, без пояснений, формат:',
     '[{"type":"search","title":"кратко","params":{"query":"точный запрос"}}]',
   ];
@@ -185,7 +183,7 @@ export async function searchAvailable() {
 
 // ── Главная функция: план хода. Возвращает {steps, repaired, model, usage, latencyMs}.
 // При неудаче планировщика — безопасный фолбэк [direct_answer] (ход не ломается).
-export async function planTurn({ question, history = [], effort = 'medium', hasImages = false, priorSteps = [], findings = [], executedKeys = [] }) {
+export async function planTurn({ question, history = [], hasImages = false, skills = [], priorSteps = [], findings = [], executedKeys = [] }) {
   const t0 = Date.now();
   const replan = Boolean(priorSteps.length);
   try {
@@ -193,25 +191,25 @@ export async function planTurn({ question, history = [], effort = 'medium', hasI
     const model = await getPlannerModel();
     const res = await completeChat(
       [
-        { role: 'system', content: plannerSystemPrompt({ effort, hasImages, search, readUrl: search, replan }) },
+        { role: 'system', content: plannerSystemPrompt({ hasImages, search, readUrl: search, replan, skills }) },
         { role: 'user', content: plannerUserPrompt({ question, history, hasImages, priorSteps, findings }) },
       ],
-      { model, temperature: 0.2, maxTokens: 800, reasoning: 'fast' },
+      { model, temperature: 0.2, maxTokens: 800 },
     );
     const { value, repaired } = extractPlanJson(res.content);
-    let steps = normalizeSteps(value, { effort, executedKeys });
+    let steps = normalizeSteps(value, { executedKeys });
     if (replan && steps.length) {
       // в достройку нельзя снова ставить synthesize после каждого шага —
       // synthesize добавляется ровно один раз в конце всего хода
       steps = steps.filter((s) => s.type !== 'synthesize');
     }
     if (!replan && !steps.length) {
-      steps = heuristicPlan({ reasoning: 'medium', hasImages, executedKeys });
+      steps = fallbackPlan({ hasImages, executedKeys });
     }
     if (replan && !steps.length) steps = []; // [] = находок достаточно, к ответу
     return { steps, repaired, model: res.model ?? model, usage: res.usage ?? null, latencyMs: Date.now() - t0, ok: true };
   } catch (e) {
-    const steps = replan ? [] : heuristicPlan({ reasoning: 'medium', hasImages, executedKeys });
+    const steps = replan ? [] : fallbackPlan({ hasImages, executedKeys });
     return {
       steps,
       repaired: false,

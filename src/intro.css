@@ -1,0 +1,236 @@
+/* Интро-анимация SAWAP — стили. Вся динамика — JS (Intro.jsx): один
+   rAF-цикл пишет transform/opacity элементам; CSS-анимаций здесь нет.
+   Только transform/opacity, без фильтров, масок и теней.
+   Структура: якорь → лента агентов (первый ряд 1,0 с) → живой диалог →
+   «нырок» в слово SAWAP (5,5–6,0 с) → готовый чат (новый диалог, SAWAP). */
+
+.intro-si {
+  position: absolute;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: calc(env(safe-area-inset-top, 0px) + 16px) 12px calc(env(safe-area-inset-bottom, 0px) + 46px);
+  gap: 20px;
+  background: var(--bg);
+  color: var(--text);
+  overflow: hidden;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Замороженный QA-кадр (?introAt=<мс>) — чистая функция applyFrame(frozen)
+   в Intro.jsx: те же формулы, что в живом прогоне, без CSS-костылей. */
+
+/* Финал: корень растворяется за 0,5 с (ведёт JS), открывая чат под ним */
+.intro-si--dive {
+  pointer-events: none;
+}
+
+/* Пропуск тапом: быстрый фейд 180 мс без «нырка» */
+.intro-si--skip {
+  pointer-events: none;
+}
+
+/* ── Якорь ──────────────────────────────────────────────────────── */
+.si-anchor {
+  position: relative;
+  z-index: 1;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+/* Статичное свечение за словом: без анимации */
+.si-anchor::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: -1;
+  width: 340px;
+  height: 340px;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(circle, rgba(124, 140, 248, 0.16) 0%, rgba(124, 140, 248, 0) 70%);
+  pointer-events: none;
+}
+
+.si-word {
+  margin: 0;
+  font-size: 44px;
+  font-weight: 700;
+  letter-spacing: 0.32em;
+  padding-left: 0.32em;
+  line-height: 1;
+  background: linear-gradient(180deg, #ffffff 0%, #aeb6d8 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  transform-origin: 50% 62%;
+  will-change: transform, opacity;
+}
+
+.si-tag {
+  margin: 16px 0 0;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.5;
+  color: #c3c9dc;
+}
+
+.si-facts {
+  margin: 20px 0 0;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.si-dim {
+  color: #5b64f0;
+  padding: 0 2px;
+}
+
+/* ── Лента агентов: 55 чипов, 3 ряда, справа налево ─────────────── */
+.si-ribbon {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.si-track {
+  display: grid;
+  grid-auto-flow: column;
+  grid-template-rows: repeat(3, auto);
+  grid-auto-columns: max-content;
+  gap: 10px 12px;
+  width: max-content;
+  will-change: transform;
+}
+
+.si-chip {
+  font-size: 12px;
+  font-weight: 600;
+  color: #c9cfdd;
+  white-space: nowrap;
+}
+
+/* ── Живой диалог: 3 обмена, 3 агента ───────────────────────────── */
+/* Ограниченное окно чата: занимает место между лентой и подсказкой,
+   ленту и якорь не перекрывает; сообщения прокручиваются внутри окна */
+.si-dialog {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 340px;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow-y: auto;
+  padding: 4px 0;
+  will-change: opacity;
+  scrollbar-width: none;
+}
+.si-dialog::-webkit-scrollbar { display: none; }
+
+.si-msg {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-width: 85%;
+  animation: none;
+}
+
+.si-msg--user {
+  align-self: flex-end;
+  align-items: flex-end;
+}
+
+.si-msg--assistant {
+  align-self: flex-start;
+  align-items: flex-start;
+}
+
+.si-msg-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.si-msg-agent {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #070a12;
+  padding: 2px 8px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.si-msg-bubble {
+  padding: 10px 14px;
+  border-radius: 16px;
+  font-size: 13px;
+  line-height: 1.45;
+  word-wrap: break-word;
+}
+
+.si-msg--user .si-msg-bubble {
+  background: #1a2238;
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-bottom-right-radius: 4px;
+}
+
+.si-msg--assistant .si-msg-bubble {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-bottom-left-radius: 4px;
+}
+
+.si-msg-text {
+  display: block;
+}
+
+/* ── Подсказка ──────────────────────────────────────────────────── */
+.si-hint {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 12px);
+  z-index: 2;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 500;
+  color: rgba(152, 161, 184, 0.6);
+}
+
+/* ── Вспышка-ядро: «нырок» в SAWAP ─────────────────────────────── */
+/* Центр вспышки совпадает с центром слова SAWAP (top: паддинг + половина строки) */
+.si-halo {
+  position: absolute;
+  z-index: 0;
+  top: calc(env(safe-area-inset-top, 0px) + 38px);
+  left: 50%;
+  width: 120px;
+  height: 120px;
+  margin: -60px 0 0 -60px;
+  border-radius: 50%;
+  transform: scale(0.2);
+  opacity: 0;
+  background: radial-gradient(circle, rgba(139, 155, 255, 0.95) 0%, rgba(124, 140, 248, 0.55) 45%, rgba(124, 140, 248, 0) 72%);
+  pointer-events: none;
+  will-change: transform, opacity;
+}

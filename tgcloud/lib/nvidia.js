@@ -3,7 +3,7 @@ import { db } from 'sdk';
 import { eq } from 'sdk/db';
 import { settings } from '../schema.js';
 import {
-  DEFAULT_MODEL, KEY_SETTING, NVIDIA_BASE_URL, MAX_OUTPUT_TOKENS, TEMPERATURE, REASONING_BUDGET, REASONING_MODEL, VISION_MODEL, PLANNER_MODEL, COMPRESS_MODEL,
+  DEFAULT_MODEL, KEY_SETTING, NVIDIA_BASE_URL, MAX_OUTPUT_TOKENS, TEMPERATURE, ANSWER_MODEL, VISION_MODEL, PLANNER_MODEL, COMPRESS_MODEL,
 } from './config.js';
 export async function getApiKey() {
   const row = await db.select().from(settings).where(eq(settings.key, KEY_SETTING)).get();
@@ -33,27 +33,30 @@ export function getDefaultModel() {
   return getSettingOr('DEFAULT_MODEL', DEFAULT_MODEL);
 }
 
-// Модель-планировщик хода (строгий JSON-план). Ф0: bolt-e4b 5/5 после repair.
+// Модель-планировщик хода (строгий JSON-план, ремонт в pipeline.js).
 export function getPlannerModel() {
   return getSettingOr('PLANNER_MODEL', PLANNER_MODEL);
 }
 
-// Модель-сжиматель находок шагов (<=2000 знаков). Ф0: bolt-e4b 3/3.
+// Модель ответа ВСЕХ агентов (размышления выключены хардкодом).
+export function getAnswerModel() {
+  return getSettingOr('ANSWER_MODEL', ANSWER_MODEL);
+}
+
+// Модель-сжиматель находок шагов (<=2000 знаков).
 export function getCompressModel() {
   return getSettingOr('COMPRESS_MODEL', COMPRESS_MODEL);
 }
 
-// Основная модель ответа: thinking-модель для уровней рассуждений, иначе дефолт.
-export async function pickMainModel({ reasoning, defaultModel }) {
-  if (reasoning && reasoning !== 'fast') return REASONING_MODEL;
-  return defaultModel ?? getDefaultModel();
+// Модель ответа — одна для всех агентов (уровней рассуждений в системе нет).
+export function resolveAnswerModel() {
+  return getAnswerModel();
 }
 
-// chat_template_kwargs.thinking поддерживают модели семейства nemotron-3.5
-// (super-vl, lightning; bolt флаг игнорирует — безвредно). Прочим моделям
-// (например deepseek) флаг не отправляем вообще.
+// Размышления выключены хардкодом для моделей, поддерживающих флаг (deepseek).
+// Прочим моделям флаг не отправляется вообще.
 function thinkingToggleSupported(model) {
-  return typeof model === 'string' && model.startsWith('nvidia/nemotron-3.5');
+  return typeof model === 'string' && model.startsWith('deepseek-ai/deepseek');
 }
 
 function buildBody(messages, opts = {}) {
@@ -65,11 +68,8 @@ function buildBody(messages, opts = {}) {
     max_tokens: opts.maxTokens ?? MAX_OUTPUT_TOKENS,
     stream: opts.stream === true,
   };
-  if (opts.reasoning && opts.reasoning !== 'fast') {
-    body.max_tokens = REASONING_BUDGET[opts.reasoning] ?? MAX_OUTPUT_TOKENS;
-  }
   if (thinkingToggleSupported(model)) {
-    body.chat_template_kwargs = { thinking: opts.reasoning && opts.reasoning !== 'fast' };
+    body.chat_template_kwargs = { thinking: false };
   }
   if (body.stream) body.stream_options = { include_usage: true };
   if (opts.tools && opts.tools.length) {

@@ -2,14 +2,13 @@ import { db, EndpointError } from 'sdk';
 import { eq } from 'sdk/db';
 import { conversations, messages } from '../schema.js';
 import { getConversationById, deleteMessagesAfter, regenerateTurn } from '../lib/chat.js';
-import { REASONING_LEVELS, MAX_MESSAGE_CHARS } from '../lib/config.js';
+import { MAX_MESSAGE_CHARS } from '../lib/config.js';
 import { sanitizeTurnId } from '../lib/turnEvents.js';
 
 export default async function (input, ctx) {
   const tgUser = ctx.initData.user;
   const messageId = Number(input?.messageId);
   const content = String(input?.content ?? '').trim();
-  const reasoning = REASONING_LEVELS.includes(input?.reasoning) ? input.reasoning : undefined;
   const turnId = sanitizeTurnId(input?.turnId);
   if (!messageId) throw new EndpointError('Не указано сообщение', { code: 'BAD_INPUT' });
   if (!content) throw new EndpointError('Пустое сообщение', { code: 'EMPTY_MESSAGE' });
@@ -35,13 +34,12 @@ export default async function (input, ctx) {
   await deleteMessagesAfter(conv.id, messageId);
 
   try {
-    const result = await regenerateTurn({ tgUser, conversationId: conv.id, reasoning, turnId });
+    const result = await regenerateTurn({ tgUser, conversationId: conv.id, turnId });
     return {
       conversationId: conv.id,
       agentId: result.agent.id,
       agentName: result.agent.name,
       reply: result.reply,
-      reasoning: result.conv.reasoning,
       meta: result.meta,
     };
   } catch (e) {
@@ -51,7 +49,7 @@ export default async function (input, ctx) {
     if (msg.includes('Изображение слишком большое')) throw new EndpointError(msg, { code: 'IMAGE_TOO_BIG' });
     if (msg.includes('Файл изображения недоступен')) throw new EndpointError('Не удалось прочитать изображение — попробуйте отправить его заново.', { code: 'IMAGE_UNAVAILABLE' });
     if (msg.includes('Vision-модель')) throw new EndpointError('Не удалось разобрать изображение, попробуйте ещё раз.', { code: 'VISION_FAILED' });
-    if (msg.includes('пустой ответ')) throw new EndpointError('Модель вернула пустой ответ — переформулируйте запрос или снизьте уровень рассуждений.', { code: 'EMPTY_REPLY' });
+    if (msg.includes('пустой ответ')) throw new EndpointError('Модель вернула пустой ответ — переформулируйте запрос.', { code: 'EMPTY_REPLY' });
     if (msg.startsWith('NVIDIA API')) {
       throw new EndpointError(`Модель вернула ошибку: ${msg.replace('NVIDIA API', '').trim().slice(0, 200)}`, { code: 'MODEL_ERROR' });
     }

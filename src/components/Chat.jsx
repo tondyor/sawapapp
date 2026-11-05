@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { AgentIcon, IconSend, TypingDots, IconCopy, IconPencil, IconFork, IconChevron, IconClip, IconFile, IconX } from './icons.jsx';
+import { AgentIcon, IconSend, TypingDots, IconCopy, IconPencil, IconFork, IconChevron, IconClip, IconFile, IconX, IconRefresh } from './icons.jsx';
 import { markdownToHtml } from '../lib/format.js';
 import { haptic } from '../lib/tg.js';
 import { uploadFileChunk, uploadFileFinish, readFileSliceAsBase64, fetchFileDataUrl } from '../lib/api.js';
@@ -83,7 +83,7 @@ function Attachment({ att }) {
   );
 }
 
-function Message({ m, accent, editing, editContent, onChange, onSave, onCancel, onCopy, onEdit, onFork }) {
+function Message({ m, accent, editing, editContent, onChange, onSave, onCancel, onCopy, onEdit, onFork, onRegenerate }) {
   const isUser = m.role === 'user';
   const isTmp = String(m.id).startsWith('tmp-');
   const traceEvents = !isUser && !editing ? eventsFromMeta(m.meta) : [];
@@ -143,6 +143,11 @@ function Message({ m, accent, editing, editContent, onChange, onSave, onCancel, 
                 <IconPencil size={15} />
               </button>
             )}
+            {isUser && onRegenerate && (
+              <button className="act" title="Сгенерировать ответ заново с этого сообщения" onClick={() => { haptic(); onRegenerate(m.id); }}>
+                <IconRefresh size={15} />
+              </button>
+            )}
           </div>
         )}
       </div>
@@ -157,8 +162,6 @@ export default function Chat({
   messages,
   sending,
   error,
-  reasoningLevel,
-  onChangeReasoning,
   onSend,
   onRetry,
   editingId,
@@ -169,6 +172,7 @@ export default function Chat({
   onCopy,
   onEditMessage,
   onForkMessage,
+  onRegenerate,
   agentName,
   onSelectAgent,
   onNotice,
@@ -264,6 +268,10 @@ export default function Chat({
 
   const isEmpty = messages.length === 0 && !sending;
   const suggestions = SUGGESTIONS[agentId] || SUGGESTIONS.chat;
+  // Живой текст ответа: content-события стримятся сервером по мере генерации.
+  const liveText = liveTurn
+    ? liveTurn.events.filter((e) => e.type === 'content').map((e) => e.payload?.text ?? '').join('')
+    : '';
 
   return (
     <>
@@ -302,11 +310,12 @@ export default function Chat({
             editing={m.id === editingId}
             editContent={editContent}
             onChange={onEditChange}
-            onSave={() => onEditSave(m.id, editContent, reasoningLevel)}
+            onSave={() => onEditSave(m.id, editContent)}
             onCancel={onEditCancel}
             onCopy={onCopy}
             onEdit={onEditMessage}
             onFork={onForkMessage}
+            onRegenerate={onRegenerate}
           />
         ))}
         {sending && (
@@ -316,7 +325,9 @@ export default function Chat({
               {liveTurn && (
                 <ReasoningTrace events={liveTurn.events} live accent={accent} startedAt={liveTurn.startedAt} />
               )}
-              <div className="bubble bot typing-bubble"><TypingDots color={accent} /></div>
+              {liveText
+                ? <div className="bubble bot md" dangerouslySetInnerHTML={{ __html: markdownToHtml(liveText) }} />
+                : <div className="bubble bot typing-bubble"><TypingDots color={accent} /></div>}
               {onStopTurn && liveTurn?.turnId && (
                 <button className="stop-turn" onClick={() => { haptic(); onStopTurn(); }}>
                   ⏹ Остановить ход

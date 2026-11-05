@@ -3,7 +3,7 @@
 // vision/search/read_url/reason/direct_answer/synthesize с finding/ms/ok).
 export function eventsFromMeta(meta) {
   if (!meta) return [];
-  const evs = [{ id: 's', type: 'start', payload: { model: meta.model, reasoning: meta.reasoning } }];
+  const evs = [{ id: 's', type: 'start', payload: { model: meta.model } }];
   for (const s of meta.steps ?? []) {
     if (s.type === 'image_read') {
       evs.push({ id: 'i' + s.name, type: 'image', payload: { name: s.name, description: s.desc ?? '' } });

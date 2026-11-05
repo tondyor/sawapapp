@@ -1,31 +1,31 @@
 export const ADMIN_TG_IDS = [1707415385];
 
-// PLANNER_MODEL/COMPRESS_MODEL переопределяются через settings (смена без деплоя).
+// Единственная модель проекта — deepseek-v4.1-flash: планировщик, сжатие,
+// ответы всех агентов и зрение. Переопределяется через settings без деплоя.
 // SERPER_API_KEY — ключ веб-поиска (Ф2); READER_MODE=jina|auto — ридер web_read.
 export const ALLOWED_SETTING_KEYS = ['NVIDIA_API_KEY', 'VISION_MODEL', 'DEFAULT_MODEL', 'PLANNER_MODEL', 'COMPRESS_MODEL', 'SERPER_API_KEY', 'READER_MODE'];
 
-export const DEFAULT_MODEL = 'nvidia/nemotron-3.5-bolt-e4b';
+export const DEFAULT_MODEL = 'deepseek-ai/deepseek-v4.1-flash';
 
-// Ф0-бенчмарк (2026-10-26, endpoints/adminModelProbe, реальный API):
-// - планировщик: bolt-e4b — валидный JSON 5/5 (после repair лишних "}",
-//   сбой стабилен и ремонтируется детерминированно), TTFB 129-173мс, total <=2.6с.
-//   lightning-30b-a3b дисквалифицирован: 15.6с, 1000+ reasoning-токенов даже при
-//   thinking:false, ленивые 1-шаговые планы. glm-5.3-flash/gpt-oss-20b — холодный
-//   старт >30с, minimax-m3.1-flash — 29с + обрыв JSON, nemotron-nano-3 — 404.
-// - сжатие: bolt-e4b — 3/3 в лимите 2000 знаков, TTFB 132-200мс, факты сохраняет.
-export const PLANNER_MODEL = 'nvidia/nemotron-3.5-bolt-e4b';
-export const COMPRESS_MODEL = 'nvidia/nemotron-3.5-bolt-e4b';
+// Замеры на этом аккаунте: planning-JSON у deepseek не бенчмаркался отдельно —
+// строгость плана держится на детерминированном JSON-repair (pipeline.js).
+// Старые замеры (2026-10): bolt-e4b TTFB 129-173мс; lightning-30b — 15.6с;
+// glm-5.3-flash/gpt-oss-20b — холодный старт >30с; minimax-m3.1-flash — 29с.
+export const PLANNER_MODEL = 'deepseek-ai/deepseek-v4.1-flash';
+export const COMPRESS_MODEL = 'deepseek-ai/deepseek-v4.1-flash';
 
-// Модель для уровней рассуждений (light/medium/high/max): умеет thinking через
-// chat_template_kwargs и возвращает reasoning_content. bolt-e4b это не умеет.
-export const REASONING_MODEL = 'nvidia/nemotron-3.5-super-vl-120b-a12b';
+// Модель ответа ВСЕХ агентов: deepseek. Размышления идут отдельным каналом
+// reasoning_content (в трассу хода, не в сообщение); thinking выключается
+// флагом chat_template_kwargs (nvidia.js). Ответ генерится кусками
+// (finishTurnSynthesis): изолят платформы живёт ~30с, кусок ~700 токенов.
+export const ANSWER_MODEL = 'deepseek-ai/deepseek-v4.1-flash';
 
 // Модель-«зритель» для шага чтения изображений (vision step агента).
 // Переопределяется через settings.VISION_MODEL (endpoints/adminSetSetting).
-// Замеры на этом аккаунте (2026-10): nemotron-3.5-super-vl ~2.8с на картинку;
-// deepseek-v4.1-flash — первый токен 35с+ (холодный старт), поэтому ридер по
-// умолчанию — super-vl. DeepSeek можно включить одной настройкой.
-export const VISION_MODEL = 'nvidia/nemotron-3.5-super-vl-120b-a12b';
+// Замер (2026-10): первый токен deepseek на большом промпте — 35с+ (холодный
+// старт). Если deepseek не примет image_url, vision-шаг честно отчитается
+// об ошибке инструмента — тогда картинку не увидит ни один агент.
+export const VISION_MODEL = 'deepseek-ai/deepseek-v4.1-flash';
 
 // Системный промпт шага чтения изображения: описание для текстовой модели.
 export const VISION_READER_PROMPT = [
@@ -45,19 +45,6 @@ export const MAX_MESSAGE_CHARS = 6000;
 export const MAX_OUTPUT_TOKENS = 2048;
 
 export const TEMPERATURE = 0.7;
-
-export const REASONING_LEVELS = ['fast', 'light', 'medium', 'high', 'max'];
-
-export const DEFAULT_REASONING = 'fast';
-
-// Бюджет completion-токенов (включая размышления): у thinking-моделей
-// reasoning_content входит в completion, поэтому уровни сильно больше MAX_OUTPUT_TOKENS.
-export const REASONING_BUDGET = {
-  light: 4096,
-  medium: 8192,
-  high: 16384,
-  max: 28000,
-};
 
 // Встраиваем в промпт не больше этого числа картинок и не больше этого размера.
 export const MAX_IMAGES_PER_REQUEST = 4;

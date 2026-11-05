@@ -18,7 +18,7 @@ export const conversations = table('conversations', {
   tgId:      integer('tg_id').notNull(),
   agentId:   text('agent_id').notNull(),
   title:     text('title'),
-  reasoning: text('reasoning').default('fast'),
+  reasoning: text('reasoning').default('fast').deprecated('уровни рассуждений удалены из продукта'),
   createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`(unixepoch())`),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).default(sql`(unixepoch())`),
 }, (t) => ({
@@ -88,9 +88,11 @@ export const turns = table('turns', {
   plan:           json('plan'),
   currentStep:    integer('current_step').default(0),
   findings:       json('findings'),
-  reasoning:      text('reasoning'),
-  reasoningLevel: text('reasoning_level').default('fast'),
+  reasoning:      text('reasoning').deprecated('уровни рассуждений удалены из продукта'),
+  reasoningLevel: text('reasoning_level').default('fast').deprecated('уровни рассуждений удалены из продукта'),
   error:          text('error'),
+  answerText:     text('answer_text'),
+  answerDone:     integer('answer_done', { mode: 'boolean' }),
   createdAt:      integer('created_at', { mode: 'timestamp_ms' }).default(sql`(unixepoch() * 1000)`),
   updatedAt:      integer('updated_at', { mode: 'timestamp_ms' }).default(sql`(unixepoch() * 1000)`),
 }, (t) => ({
@@ -125,3 +127,28 @@ export const mcpServers = table('mcp_servers', {
   enabled:   boolean('enabled').default(true),
   createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`(unixepoch())`),
 });
+
+// Скиллы маркетолога — отдельная таблица (источник: C:\Users\Dell\agents\marketer).
+// Сидируется лениво из lib/skills/marketer/marketer-pack.js при первом обращении;
+// после сида БД — единственный источник (правки skills в БД подхватываются без деплоя).
+export const marketerSkills = table('marketer_skills', {
+  id:        integer('id').primaryKey({ autoIncrement: true }),
+  skillId:   text('skill_id').notNull().unique(),
+  name:      text('name').notNull(),
+  useWhen:   text('use_when').notNull().default(''),
+  content:   text('content').notNull(),
+  active:    boolean('active').default(true),
+  createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`(unixepoch())`),
+});
+
+// Файлы references/*, на которые скиллы маркетолога ссылаются из тела.
+// Читаются инструментом read_skill (параметр file), кэшируются из пака по запросу.
+export const marketerSkillFiles = table('marketer_skill_files', {
+  id:        integer('id').primaryKey({ autoIncrement: true }),
+  skillId:   text('skill_id').notNull(),
+  path:      text('path').notNull(),
+  content:   text('content').notNull(),
+  createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`(unixepoch())`),
+}, (t) => ({
+  fileIdx: index('idx_marketer_skill_files_key').on(t.skillId, t.path),
+}));

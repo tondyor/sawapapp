@@ -10,14 +10,11 @@ import { IconChevron } from './icons.jsx';
 //   start|plan|step_start|step_done|image|search|read_url|vision|skill|reasoning|content|done|error|stop
 
 const MODEL_LABELS = {
-  'nvidia/nemotron-3.5-bolt-e4b': 'SAWAP',
-  'nvidia/nemotron-3.5-super-vl-120b-a12b': 'SAWAP',
-  'nvidia/nemotron-3.5-super-120b-a12b': 'SAWAP',
+  'deepseek-ai/deepseek-v4.1-flash': 'SAWAP',
 };
-const LEVEL_SHORT = { fast: 'быстро', light: 'лёгкий', medium: 'средний', high: 'высокий', max: 'max' };
 
-const STEP_ICON = { vision: '👁', search: '🔎', read_url: '📖', reason: '🧠', direct_answer: '💬', synthesize: '✨', image_read: '👁', skill_read: '📕' };
-const STEP_NAME = { vision: 'картинка', search: 'поиск', read_url: 'страница', reason: 'размышления', direct_answer: 'ответ', synthesize: 'сборка ответа', image_read: 'картинка', skill_read: 'навык' };
+const STEP_ICON = { vision: '👁', search: '🔎', read_url: '📖', reason: '🧠', direct_answer: '💬', synthesize: '✨', image_read: '👁', skill_read: '📕', skill: '📕' };
+const STEP_NAME = { vision: 'картинка', search: 'поиск', read_url: 'страница', reason: 'размышления', direct_answer: 'ответ', synthesize: 'сборка ответа', image_read: 'картинка', skill_read: 'навык', skill: 'навык' };
 
 function modelLabel(m) { return MODEL_LABELS[m] ?? (m ? String(m).split('/').pop() : ''); }
 function fmtSec(ms) {
@@ -125,7 +122,30 @@ export default function ReasoningTrace({ events, live = false, accent = '#7C8CF8
     }
   }, [reasoning.length, open, live]);
 
-  const running = live && !doneEv && !errorEv && !stopEv;
+  // Реальное время таймера: WebView троттлит интервалы в нетронутом iframe,
+  // поэтому перерисовываемся и по интервалу, и по любому взаимодействию.
+  const active = live && !doneEv && !errorEv && !stopEv;
+  const [, forceTick] = useState(0);
+  useEffect(() => {
+    if (!active) return undefined;
+    const bump = () => forceTick((n) => n + 1);
+    const iv = setInterval(bump, 500);
+    const opts = { passive: true };
+    const onVis = () => { if (document.visibilityState === 'visible') bump(); };
+    window.addEventListener('focus', bump, opts);
+    window.addEventListener('pointerdown', bump, opts);
+    window.addEventListener('touchstart', bump, opts);
+    document.addEventListener('visibilitychange', onVis, opts);
+    return () => {
+      clearInterval(iv);
+      window.removeEventListener('focus', bump, opts);
+      window.removeEventListener('pointerdown', bump, opts);
+      window.removeEventListener('touchstart', bump, opts);
+      document.removeEventListener('visibilitychange', onVis, opts);
+    };
+  }, [active]);
+
+  const running = active;
   const hasAnything = running || reasoning.length > 0 || steps.length > 0 || legacySteps.length > 0 || Boolean(errorEv) || Boolean(stopEv) || Boolean(planEv);
   if (!hasAnything) return null;
 
@@ -150,7 +170,6 @@ export default function ReasoningTrace({ events, live = false, accent = '#7C8CF8
   else statusText = seq.join(' · ');
 
   const model = startEv?.payload?.model ?? doneEv?.payload?.meta?.model ?? null;
-  const level = startEv?.payload?.reasoning ?? null;
   const tail = reasoning.length > 160 ? '…' + reasoning.slice(-160).replace(/\s+/g, ' ') : reasoning.replace(/\s+/g, ' ');
 
   return (
@@ -159,7 +178,7 @@ export default function ReasoningTrace({ events, live = false, accent = '#7C8CF8
         <span className={`rtrace-dot ${running ? 'pulse' : ''} ${errorEv ? 'dot-err' : doneEv ? 'dot-done' : ''}`} />
         <span className="rtrace-status">{statusText}</span>
         {running && elapsed != null && <span className="rtrace-timer">{fmtSec(elapsed)}</span>}
-        {model && <span className="rtrace-model">{modelLabel(model)}{level && level !== 'fast' ? ` · ${LEVEL_SHORT[level] ?? level}` : ''}</span>}
+        {model && <span className="rtrace-model">{modelLabel(model)}</span>}
         <IconChevron size={14} />
       </button>
       {!open && running && reasoning && (

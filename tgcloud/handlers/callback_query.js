@@ -19,6 +19,10 @@ export default async function (callbackQuery) {
     await api.answerCallbackQuery({ callback_query_id: callbackQuery.id, text: 'Неизвестный агент' });
     return;
   }
+  if (agent.active === false) {
+    await api.answerCallbackQuery({ callback_query_id: callbackQuery.id, text: `«${agent.name}» скоро появится` });
+    return;
+  }
 
   await ensureUser(from);
   await setAgent(from.id, agent.id);

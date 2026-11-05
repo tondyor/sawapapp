@@ -9,14 +9,14 @@ export async function fetchHistory(agentId = null, conversationId = null) {
   return callEndpoint('getHistory', { agentId, conversationId });
 }
 
-// Ходы агента (отправка/редактирование) на reasoning-уровнях идут минуты.
+// Ходы агента (отправка/редактирование) идут минуты.
 // Таймаут 180с: если сервер не ответил (изолят убит платформой и т.п.), промис
 // отклоняется с понятной ошибкой — ход при этом мог дойти до конца, ответ
 // придёт через события хода (getTurnEvents) даже после отклонения этого вызова.
 export const TURN_TIMEOUT_MS = 180000;
 
-export async function sendUserMessage({ text, agentId, conversationId, reasoning, attachmentIds, turnId }) {
-  return callEndpoint('sendMessage', { text, agentId, conversationId, reasoning, attachmentIds, turnId }, { timeoutMs: TURN_TIMEOUT_MS });
+export async function sendUserMessage({ text, agentId, conversationId, attachmentIds, turnId }) {
+  return callEndpoint('sendMessage', { text, agentId, conversationId, attachmentIds, turnId }, { timeoutMs: TURN_TIMEOUT_MS });
 }
 
 export async function getTurnEvents(turnId, afterId = 0) {
@@ -24,8 +24,13 @@ export async function getTurnEvents(turnId, afterId = 0) {
 }
 
 // ── Пайплайн хода (конечный автомат в БД) ──────────────────────────────────
-export async function startTurn({ text, agentId, conversationId, reasoning, attachmentIds }) {
-  return callEndpoint('startTurn', { text, agentId, conversationId, reasoning, attachmentIds }, { timeoutMs: 45000 });
+export async function startTurn({ text, agentId, conversationId, attachmentIds }) {
+  return callEndpoint('startTurn', { text, agentId, conversationId, attachmentIds }, { timeoutMs: 45000 });
+}
+
+// Перегенерация с сообщения юзера: сервер удаляет всё после него и заводит ход.
+export async function regenerateFrom({ conversationId, messageId, agentId }) {
+  return callEndpoint('regenerate', { conversationId, messageId, agentId }, { timeoutMs: 45000 });
 }
 
 export async function runTurnStep(turnId) {
@@ -45,8 +50,8 @@ export async function stopTurn(turnId) {
   return callEndpoint('stopTurn', { turnId }, { timeoutMs: 30000 });
 }
 
-export async function editMessage({ messageId, content, reasoning, turnId }) {
-  return callEndpoint('editMessage', { messageId, content, reasoning, turnId }, { timeoutMs: TURN_TIMEOUT_MS });
+export async function editMessage({ messageId, content, turnId }) {
+  return callEndpoint('editMessage', { messageId, content, turnId }, { timeoutMs: TURN_TIMEOUT_MS });
 }export async function uploadFileChunk({ uploadId, idx, dataBase64 }) {
   return callEndpoint('uploadFileChunk', { uploadId, idx, dataBase64 });
 }

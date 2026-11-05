@@ -16,11 +16,13 @@ import {
   errorText,
 } from './lib/api.js';
 import Drawer from './components/Drawer.jsx';
+import Intro from './components/Intro.jsx';
 import { eventsFromMeta } from './lib/trace.js';
 import {
   startTurn as apiStartTurn,
   runTurnStep as apiRunTurnStep,
   finishTurn as apiFinishTurn,
+  regenerateFrom as apiRegenerateFrom,
   getTurnState,
   stopTurn as apiStopTurn,
 } from './lib/api.js';
@@ -41,13 +43,14 @@ export default function App() {
   const [error, setError] = useState(null);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [notice, setNotice] = useState(null);
-  const [reasoningLevel, setReasoningLevel] = useState('fast');
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [conversations, setConversations] = useState([]);
   const [editingId, setEditingId] = useState(null);
   const [editContent, setEditContent] = useState('');
   const [liveTurn, setLiveTurn] = useState(null); // { turnId, startedAt, events, pipeline }
   const [resumeTurn, setResumeTurn] = useState(null); // активный ход диалога для баннера возобновления
+  const [introDone, setIntroDone] = useState(false); // интро 5 с поверх интерфейса (ТЗ 13)
+  const [introExit, setIntroExit] = useState(false); // «нырок» начался — чат входит вместе с фейдом
   const lastSent = useRef(null);
   const pollCancel = useRef(null);
 
@@ -66,7 +69,6 @@ export default function App() {
           // Приложение всегда открывается новым пустым чатом; сессия на сервере
           // создаётся только первой отправкой сообщения.
           setAgentId(hist.agentId || 'chat');
-          setReasoningLevel(hist.reasoning || 'fast');
         } catch (_) {}
       } catch (e) {
         setError(errorText(e));
@@ -82,6 +84,19 @@ export default function App() {
       const res = await fetchConversations();
       setConversations(res.conversations ?? []);
     } catch (_) {}
+  }, []);
+
+  // «Нырок» интро начался (4,5 с): под растворяющимся интро открывается
+  // новое окно чата — пустое, с агентом SAWAP по умолчанию (приказ владельца).
+  const handleIntroExit = useCallback(() => {
+    setAgentId('chat');
+    setMessages([]);
+    setConversationId(null);
+    setError(null);
+    setLiveTurn(null);
+    setResumeTurn(null);
+    lastSent.current = null;
+    setIntroExit(true);
   }, []);
 
   const agent = agents.find((a) => a.id === agentId) || agents[0];
@@ -101,6 +116,10 @@ export default function App() {
           if (res.events.length) {
             afterId = res.lastId;
             setLiveTurn((t) => (t && t.turnId === turnId ? { ...t, events: [...t.events, ...res.events] } : t));
+          } else {
+            // Рендер-тик даже без событий: таймер и живой текст обновляются
+            // независимо от троттлинга таймеров WebView.
+            setLiveTurn((t) => (t && t.turnId === turnId ? { ...t, tick: Date.now() } : t));
           }
           if (res.done) return res;
         } catch (_) {
@@ -166,7 +185,7 @@ export default function App() {
   // Обрыв вызова — не ошибка: состояние в БД, повторяем шаг (ход живёт на сервере).
   const driveTurn = useCallback(async (turnId, convId) => {
     let fails = 0;
-    for (let iter = 0; iter < 40; iter++) {
+    for (let iter = 0; iter < 150; iter++) {
       let r = null;
       try {
         r = await apiRunTurnStep(turnId);
@@ -174,7 +193,7 @@ export default function App() {
       } catch (e) {
         fails += 1;
         if (fails >= 8) throw e;
-        setNotice('Ход продолжается…');
+        // Тихий повтор: состояние хода в БД, обрыв вызова — не ошибка.
         await sleep(3000);
         continue;
       }
@@ -187,7 +206,7 @@ export default function App() {
         } catch (e2) {
           fails += 1;
           if (fails >= 8) throw e2;
-          setNotice('Собираю ответ…');
+          // Тихий повтор: синтез продолжается с места обрыва (сервер).
           await sleep(3000);
           continue;
         }
@@ -258,7 +277,6 @@ export default function App() {
         text,
         agentId,
         conversationId,
-        reasoning: reasoningLevel,
         attachmentIds: attachment ? [attachment.fileId] : undefined,
       });
       turnId = st.turnId;
@@ -295,7 +313,7 @@ export default function App() {
       setSending(false);
       refreshConversations();
     }
-  }, [sending, agentId, conversationId, reasoningLevel, refreshConversations, runTurnPolling, stopPolling, applyPipelineMessage, finishPipelineCall]);
+  }, [sending, agentId, conversationId, refreshConversations, runTurnPolling, stopPolling, applyPipelineMessage, finishPipelineCall]);
 
   const handleResumeTurn = useCallback(async () => {
     const t = resumeTurn;
@@ -374,7 +392,6 @@ export default function App() {
       setConversationId(hist.conversationId ?? id);
       setAgentId(hist.agentId || agentId);
       setMessages(hist.messages ?? []);
-      setReasoningLevel(hist.reasoning || 'fast');
       checkResumeTurn(hist.conversationId ?? id);
     } catch (e) {
       setNotice(errorText(e));
@@ -405,7 +422,6 @@ export default function App() {
       setConversationId(hist.conversationId ?? res.conversationId);
       setAgentId(hist.agentId || agentId);
       setMessages(hist.messages ?? []);
-      setReasoningLevel(hist.reasoning || 'fast');
       refreshConversations();
     } catch (e) {
       setNotice(errorText(e));
@@ -421,14 +437,14 @@ export default function App() {
     return res.conversationId ?? null;
   }, [conversationId, agentId, refreshConversations]);
 
-  const handleEditSave = useCallback(async (messageId, content, reasoning) => {
+  const handleEditSave = useCallback(async (messageId, content) => {
     setSending(true);
     setError(null);
     const turnId = newTurnId();
     setLiveTurn({ turnId, startedAt: Date.now(), events: [] });
     const poll = runTurnPolling(turnId);
     try {
-      const res = await editMsg({ messageId, content, reasoning, turnId });
+      const res = await editMsg({ messageId, content, turnId });
       stopPolling();
       setConversationId(res.conversationId ?? conversationId);
       setAgentId(res.agentId ?? agentId);
@@ -463,7 +479,7 @@ export default function App() {
       setSending(false);
       refreshConversations();
     }
-  }, [conversationId, agentId, reasoningLevel, refreshConversations, runTurnPolling, stopPolling]);
+  }, [conversationId, agentId, refreshConversations, runTurnPolling, stopPolling]);
 
   const handleForkMessage = useCallback(async (messageId) => {
     if (!conversationId) return;
@@ -473,12 +489,57 @@ export default function App() {
       setConversationId(hist.conversationId ?? res.conversationId);
       setAgentId(hist.agentId || agentId);
       setMessages(hist.messages ?? []);
-      setReasoningLevel(hist.reasoning || 'fast');
       refreshConversations();
     } catch (e) {
       setNotice(errorText(e));
     }
   }, [conversationId, agentId, refreshConversations]);
+
+  // Перегенерация с сообщения юзера: сервер удаляет всё после него и заводит
+  // ход пайплайна; локально тоже обрезаем, дальше — как обычная отправка.
+  const handleRegenerate = useCallback(async (messageId) => {
+    if (sending || !conversationId) return;
+    setSending(true);
+    setError(null);
+    setLiveTurn({ turnId: null, startedAt: Date.now(), events: [], pipeline: true });
+    let poll = null;
+    let turnId = null;
+    try {
+      const st = await apiRegenerateFrom({ conversationId, messageId, agentId });
+      turnId = st.turnId;
+      setConversationId((cur) => st.conversationId ?? cur);
+      setLiveTurn((t) => (t ? { ...t, turnId } : t));
+      setMessages((prev) => {
+        const cut = prev.findIndex((m) => String(m.id) === String(messageId));
+        return cut >= 0 ? prev.slice(0, cut + 1) : prev;
+      });
+      poll = runTurnPolling(turnId);
+      await finishPipelineCall(turnId, poll, st.conversationId);
+    } catch (e) {
+      const doneRes = poll ? await Promise.race([poll.promise, sleep(20000).then(() => null)]) : null;
+      stopPolling();
+      const doneEv = doneRes?.events?.find?.((ev) => ev.type === 'done');
+      if (doneEv?.payload?.content) {
+        applyPipelineMessage(turnId, { content: doneEv.payload.content, meta: doneEv.payload.meta ?? null }, conversationId);
+      } else if (turnId) {
+        try {
+          const t = await getTurnState({ turnId });
+          if (t?.turn && (t.turn.status === 'executing' || t.turn.status === 'synthesizing')) {
+            setResumeTurn(t.turn);
+          }
+        } catch (_) { /* ignore */ }
+        setError(errorText(e));
+        setLiveTurn(null);
+      } else {
+        setError(errorText(e));
+        setLiveTurn(null);
+      }
+    } finally {
+      stopPolling();
+      setSending(false);
+      refreshConversations();
+    }
+  }, [sending, conversationId, agentId, refreshConversations, runTurnPolling, stopPolling, applyPipelineMessage, finishPipelineCall]);
 
   return (
     <div className="app" style={{ '--accent': agent?.color ?? '#7C8CF8' }}>
@@ -501,14 +562,15 @@ export default function App() {
             <div className="loader">Загрузка…</div>
           ) : (
             <Chat
+              // key на «нырок» интро: пустое состояние входит анимацией rise
+              // ровно в момент растворения интро (0,5 с) — без «второй заставки»
+              key={introExit ? 'chat-ready' : 'chat-loading'}
               agents={agents}
               agentId={agentId}
               conversationId={conversationId}
               messages={messages}
               sending={sending}
               error={error}
-              reasoningLevel={reasoningLevel}
-              onChangeReasoning={setReasoningLevel}
               onSend={handleSend}
               onRetry={handleRetry}
               editingId={editingId}
@@ -521,6 +583,7 @@ export default function App() {
               }}
               onEditMessage={setEditingId}
               onForkMessage={handleForkMessage}
+              onRegenerate={handleRegenerate}
               agentName={agent?.name ?? 'Агент'}
               onSelectAgent={() => { haptic(); setSheetOpen(true); }}
               onNotice={setNotice}
@@ -551,6 +614,10 @@ export default function App() {
             onNewChat={handleNewChat}
             onClose={() => setDrawerOpen(false)}
           />
+
+          {/* Интро-анимация (ТЗ 13): данные грузятся параллельно под ней.
+              onExit — начало «нырка» за 0,5 с до конца: чат собирается под интро */}
+          {!introDone && <Intro onDone={() => setIntroDone(true)} onExit={handleIntroExit} />}
         </>
       </div>
   );

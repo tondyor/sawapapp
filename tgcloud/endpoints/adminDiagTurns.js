@@ -28,7 +28,6 @@ export default async function (input, ctx) {
       turnId: t.turnId,
       conv: t.conversationId,
       status: t.status,
-      level: t.reasoningLevel,
       q: String(t.question ?? '').slice(0, 80),
       plan: (t.plan ?? []).map((s) => s.type + (s.duplicate ? '(dup)' : '')),
       currentStep: t.currentStep,

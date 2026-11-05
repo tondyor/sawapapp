@@ -50,15 +50,15 @@ export function getSkill(id) {
   return SKILLS.find((s) => s.id === id) ?? null;
 }
 
-export function skillsToolFor(agent) {
-  const list = skillsForAgent(agent.id);
+export function skillsToolFor(agent, extraSkills = []) {
+  const list = [...skillsForAgent(agent.id), ...extraSkills];
   if (!list.length) return null;
   return {
     type: 'function',
     function: {
       name: 'read_skill',
       description:
-        'Читать подробную инструкцию по навыку. Перед сложным ответом посмотри на список навыков в системном промпте: если навык релевантен запросу — вызови read_skill с его id, прочитай и строй ответ на его основе. Для простых вопросов навык не нужен.',
+        'Читать подробную инструкцию по навыку. Перед сложным ответом посмотри на список навыков в системном промпте: если навык релевантен запросу — вызови read_skill с его id, прочитай и строй ответ на его основе. Для простых вопросов навык не нужен. Если в теле навыка есть ссылки на файлы (references/…), прочитай нужный файл вторым вызовом, указав его в параметре file.',
       parameters: {
         type: 'object',
         properties: {
@@ -66,6 +66,10 @@ export function skillsToolFor(agent) {
             type: 'string',
             enum: list.map((s) => s.id),
             description: 'ID навыка из списка в системном промпте',
+          },
+          file: {
+            type: 'string',
+            description: 'Опционально: файл навыка по пути из его тела, например references/form.md (файлы есть у навыков маркетолога)',
           },
         },
         required: ['skill'],

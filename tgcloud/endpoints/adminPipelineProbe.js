@@ -7,7 +7,7 @@ import { EndpointError } from 'sdk';
 import { startTurn, runTurnStep, finishTurnSynthesis } from '../lib/agent/turn.js';
 
 // Ф5.1-пробник: ход пайплайна с картинкой (сценарий «хеллоуин»).
-// input: { imageB64, mime, name, text, reasoning } → полный прогон автомата.
+// input: { imageB64, mime, name, text } → полный прогон автомата.
 
 export default async function (input, ctxOuter) {
   const uid = ctxOuter.initData.user?.id;
@@ -17,13 +17,12 @@ export default async function (input, ctxOuter) {
   const mime = String(input.mime ?? 'image/png');
   const name = String(input.name ?? 'probe.png');
   const text = String(input.text ?? 'Что на картинке?');
-  const reasoning = input.reasoning === 'light' || input.reasoning === 'medium' ? input.reasoning : 'fast';
 
   const [conv] = await db.insert(conversations).values({ userId: 0, tgId: uid, agentId: 'chat', title: 'pipeline-vision-probe' }).returning();
   const stored = await storeFile({ tgId: uid, conversationId: conv.id, name, mime, bytes: base64ToBytes(b64) });
 
   try {
-    const started = await startTurn({ tgUser: { id: uid, first_name: 'Probe' }, agentId: 'chat', text, reasoning, conversationId: conv.id, attachmentIds: [stored.fileId] });
+    const started = await startTurn({ tgUser: { id: uid, first_name: 'Probe' }, agentId: 'chat', text, conversationId: conv.id, attachmentIds: [stored.fileId] });
     const steps = [];
     let last = null;
     for (let i = 0; i < 8; i++) {

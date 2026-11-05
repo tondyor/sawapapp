@@ -27,9 +27,8 @@
 
 | Модель | Ответ | Комментарий |
 |---|---|---|
-| `nvidia/nemotron-3.5-bolt-e4b` | ~0.2с | дефолт, **не** возвращает `reasoning_content`, флаг thinking игнорирует |
-| `nvidia/nemotron-3.5-super-vl-120b-a12b` | 0.8–3с (иногда до 20с под нагрузкой) | thinking on/off через `chat_template_kwargs`, **vision** (image_url), NIM отвечает алиасом `private/nvidia/nemotron-3.5-super-120b-a12b` |
-| `deepseek-ai/deepseek-v4.1-flash` | **первый токен 35с+** (6 замеров подряд) | в списке моделей есть, image_url принимает, но холодный старт делает его непригодным дефолтом |
+| `deepseek-ai/deepseek-v4.1-flash` | **первый токен 35с+** (6 замеров подряд) | с 2026-11-05 — единственная модель проекта (все роли); image_url принимает; холодный старт компенсируется кусочным синтезом (~700 токенов/вызов, чекпоинты в БД) |
+| Отклонённые кандидаты (бенчмарк 2026-10, удалены из проекта 2026-11-05 по решению владельца) | 0.2–3с | два варианта семейства nemotron: один быстрый, но без `reasoning_content` и с игнорируемым thinking-флагом; второй с vision (image_url) и thinking on/off, под нагрузкой до 20с; NIM отвечал алиасом с префиксом `private/` |
 
 Причина исходной ошибки «любой уровень кроме Быстро падает»: 10-секундный таймаут `callEndpoint`
 на клиенте + bolt-e4b, у которого thinking-флаг не работает (thinking-уровни давали пустой
@@ -39,10 +38,9 @@
 
 ### 1. Выбор модели (`tgcloud/lib/nvidia.js`, `lib/config.js`)
 
-- «Быстро» (fast) → `DEFAULT_MODEL` (bolt-e4b), thinking off.
-- Лёгкий/Средний/Высокий/Max → `REASONING_MODEL` (super-vl), `chat_template_kwargs.thinking: true`,
-  бюджет completion-токенов `REASONING_BUDGET` (4096/8192/16384/28000).
-- Флаг thinking отправляется только моделям `nvidia/nemotron-3.5*` (`thinkingToggleSupported`).
+- Единственная модель проекта (с 2026-11-05) — `deepseek-ai/deepseek-v4.1-flash`, все роли
+  (планировщик, сжатие, ответы агентов, зрение), thinking off (`chat_template_kwargs`).
+- Флаг thinking отправляется только моделям `deepseek-ai/deepseek*` (`thinkingToggleSupported`).
 - `stream_options.include_usage` — токены в meta приходят и при стриминге.
 - Адрес модели в ответе NIM нормализуется (снимается префикс `private/`).
 - `DEFAULT_MODEL`/`VISION_MODEL` переопределяются через `settings` (таблица settings,
@@ -163,8 +161,9 @@ live-статус, раскрытие трассы, image-шаг, fast-отве�
 
 Дисквалифицированы: `lightning-30b-a3b` (15.6 с, 1000+ reasoning-токенов даже при thinking:false,
 ленивые 1-шаговые планы), `glm-5.3-flash`/`gpt-oss-20b` (холодный старт >30 с), `minimax-m3.1-flash`
-(29 с + обрыв JSON), `nemotron-nano-3-30b-a3b` (404 на аккаунте). bolt стабильно добавляет лишнюю
-`}` после первого шага плана — ремонт детерминированный (`repairJson`), в Ф0 после ремонта 5/5.
+(29 с + обрыв JSON), nano-вариант из отброшенного семейства (404 на аккаунте). Основной кандидат
+стабильно добавляет лишнюю `}` после первого шага плана — ремонт детерминированный (`repairJson`),
+в Ф0 после ремонта 5/5.
 
 ### Протокол клиента (Ф3)
 

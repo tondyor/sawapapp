@@ -47,12 +47,11 @@ async function probe(kind, model) {
   const body = {
     model,
     messages: [{ role: 'user', content: 'Сколько будет 17 * 23? Ответь коротко.' }],
-    max_tokens: kind === 'effort_low' ? 2048 : 1024,
+    max_tokens: 1024,
     stream: false,
   };
   if (kind === 'chat_template_on') body.chat_template_kwargs = { thinking: true };
   if (kind === 'chat_template_off') body.chat_template_kwargs = { thinking: false };
-  if (kind === 'effort_low') body.reasoning_effort = 'low';
   if (kind === 'dump_on') {
     body.chat_template_kwargs = { thinking: true };
     body.max_tokens = 2048;
