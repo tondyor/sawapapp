@@ -133,7 +133,7 @@ function validateCompressRun(content, reasoningLen) {
     reasoningLen,
   };
 }
-async function benchOnce(model, kind, maxTokens) {
+async function benchOnce(model, kind, maxTokens, reasoningEffort) {
   const t0 = Date.now();
   let ttfb = null;
   let content = "";
@@ -151,6 +151,7 @@ async function benchOnce(model, kind, maxTokens) {
       model,
       temperature: 0.2,
       maxTokens,
+      ...(typeof reasoningEffort === "number" ? { reasoningEffort } : {}),
     })) {
       if (
         ttfb === null &&
@@ -206,9 +207,11 @@ export default async function (input, ctx) {
       256,
       Math.min(8e3, Number(input.maxTokens ?? 800)),
     );
+    const reasoningEffort =
+      input?.reasoningEffort != null ? Number(input.reasoningEffort) : undefined;
     const runs = [];
     for (let i = 0; i < attempts; i++)
-      runs.push(await benchOnce(model, kind, maxTokens));
+      runs.push(await benchOnce(model, kind, maxTokens, reasoningEffort));
     const ok = runs.filter((r) =>
       kind === "json" ? r.validJson : r.within2000,
     ).length;
@@ -220,6 +223,7 @@ export default async function (input, ctx) {
       kind,
       ok,
       attempts,
+      reasoningEffort: reasoningEffort ?? null,
       ttfbMinMs: ttfbs.length ? Math.min(...ttfbs) : null,
       ttfbMaxMs: ttfbs.length ? Math.max(...ttfbs) : null,
       runs,
