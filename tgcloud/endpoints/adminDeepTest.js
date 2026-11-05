@@ -7,14 +7,14 @@ export default async function (input, ctx) {
   if (!ADMIN_TG_IDS.includes(uid))
     throw new EndpointError("Forbidden", { code: "FORBIDDEN" });
 
-  const model = "meta/muse-glimmer-30b";
+  const model = input?.model || "nvidia/nemotron-3.5-super-vl-120b-a12b";
   const key = await getApiKey();
   const t0 = Date.now();
 
   const payload = {
     model,
     messages: [
-      { role: "user", content: "Привет! Напиши краткое приветствие." }
+      { role: "user", content: "Привет! Назови одно слово: 'Тест'." }
     ],
     max_tokens: 32,
   };
@@ -39,7 +39,6 @@ export default async function (input, ctx) {
     ms,
     model,
     content: json.choices?.[0]?.message?.content,
-    reasoning: json.choices?.[0]?.message?.reasoning_content,
     raw: text.slice(0, 300)
   };
 }
