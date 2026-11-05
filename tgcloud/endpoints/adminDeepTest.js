@@ -7,14 +7,14 @@ export default async function (input, ctx) {
   if (!ADMIN_TG_IDS.includes(uid))
     throw new EndpointError("Forbidden", { code: "FORBIDDEN" });
 
-  const model = input?.model || "nvidia/nemotron-3.5-super-vl-120b-a12b";
+  const model = "mistralai/mistral-large-4-1t-a52b";
   const key = await getApiKey();
   const t0 = Date.now();
 
   const payload = {
     model,
     messages: [
-      { role: "user", content: "Привет! Назови одно слово: 'Тест'." }
+      { role: "user", content: "Привет! Скажи одно слово: 'Работает'." }
     ],
     max_tokens: 32,
   };
