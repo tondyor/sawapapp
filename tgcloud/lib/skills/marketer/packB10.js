@@ -1,3 +1,1284 @@
-// АВТОГЕНЕРАЦИЯ из C:/Users/Dell/agents/marketer (2026-11-04). Не править руками.
-// Часть 11/23 пака скиллов маркетолога (SKILL.md + references).
-export const PACKB10 = [{"skillId":"content-strategy","path":"references/content-distribution.md","content":"# Content Distribution Spine\r\n\r\nThe \"distribute\" half of content strategy. Creating a great piece is table stakes; the leverage is in getting it seen. This reference expands the **Create Once, Distribute Twice** section of the skill.\r\n\r\nCross-links: ORB channel-type playbook lives in **launch**; atomization/repurposing workflows (podcast → clips, blog → thread) live in **social**. This file consolidates the strategy that ties them together—don't re-derive ORB from scratch here.\r\n\r\n## Create Once, Distribute Twice\r\n\r\nOne exceptional piece, reformatted across channels—not a fresh piece per platform. The math is simple: a flagship piece plus ten repurposed cuts reaches far more people than eleven mediocre native posts, at a fraction of the effort.\r\n\r\nThe discipline is **designing the piece to be distributed**:\r\n- Write subheads that read as standalone social posts.\r\n- Structure sections modularly so they can be lifted out and stand alone.\r\n- Pre-identify the pull quotes, stats, and frames you'll turn into graphics or short clips.\r\n- Know the atomized outputs before you write, so the source piece contains them.\r\n\r\nTreat the flagship as the master; every channel gets a cut derived from it.\r\n\r\n## The ORB Framework as a Funnel\r\n\r\nOwn, Rent, Borrow—read as a discovery → engagement → conversion funnel:\r\n\r\n| Layer | Channels | Funnel role | You control |\r\n|---|---|---|---|\r\n| **Borrowed** | Podcasts, guest posts, partnerships, PR, other people's audiences | Discovery / breakthrough | Nothing—it's a loan |\r\n| **Rented** | Social platforms, ad networks, marketplaces | Engagement / reach | The content, not the audience or algorithm |\r\n| **Owned** | Email list, blog, community, app | Conversion / retention | Everything—the durable asset |\r\n\r\nThe strategic move: use borrowed and rented reach to funnel strangers into owned channels where you can convert and retain them. Borrowed and rented are rented land; owned is the only asset you keep.\r\n\r\n## The Ownership Paradox\r\n\r\nMost teams invert the priority: they spend ~90% of effort on borrowed and rented channels they don't control, and neglect the owned assets that actually convert. The paradox is that the channels getting the least attention (email, blog, community) are the ones that compound and can't be revoked. Rebalance toward owned as the destination for all upstream effort.\r\n\r\n## Failure Modes\r\n\r\n- **Spray-and-pray** — publishing across every platform with no flagship and no repurposing system. Effort scatters; nothing compounds; each post starts from zero.\r\n- **Platform dependency** — building your audience on rented land. Facebook organic reach collapsed from ~20% to under 2% as the platform monetized. Any rented channel can throttle, deprioritize, or de-platform you with no recourse. The lesson isn't \"avoid rented\"—it's \"never let rented be the endpoint.\"\r\n\r\n## Platform Half-Lives\r\n\r\nContent decays at wildly different rates by channel. Match the piece to the channel's shelf life:\r\n\r\n| Channel | Rough half-life | Implication |\r\n|---|---|---|\r\n| Twitter/X post | Minutes–hours | Post often; repost; thread for reach |\r\n| Instagram / Facebook | ~a day | Frequent cadence; stories are ephemeral by design |\r\n| LinkedIn post | ~a day, longer for strong performers | Fewer, higher-effort posts |\r\n| TikTok / Reels / Shorts | Days–weeks (algorithmic resurfacing) | Evergreen hooks can re-surface long after posting |\r\n| YouTube video | Months–years | Search-driven; compounds like a blog post |\r\n| Blog post / SEO | Years | The long tail; the compounding asset |\r\n| Email | Sent once, but archived / repurposable | One-shot attention; harvest into other formats |\r\n\r\nShort half-life channels reward frequency and repetition; long half-life channels reward depth and evergreen framing. Owned, long-half-life formats (blog, YouTube, email archive) are where distribution effort compounds.\r\n\r\n## The Content Distribution Flywheel\r\n\r\nDistribution isn't a linear checklist—it's a loop that feeds itself:\r\n\r\n1. **Create** one exceptional flagship piece (guide, video, podcast, original research), with distribution hooks built in.\r\n2. **Atomize** it into channel-native cuts—clips, threads, carousels, quote graphics, email, subhead-posts.\r\n3. **Distribute** across owned → rented → borrowed, routing everything back to owned.\r\n4. **Engage** with the responses; capture the questions, objections, and reactions.\r\n5. **Feed back** — the engagement surfaces the next flagship topic (what resonated, what got asked), and top-performing atoms signal what to make more of.\r\n\r\nEach turn of the loop lowers the cost of the next piece (you learn what lands) and grows the owned audience that amplifies it. The flywheel is why consistent distributors pull away from one-off publishers over time.\r\n\r\n## Atomization Checklist (per flagship)\r\n\r\nFor each major piece, produce (see **social** for the platform-native execution):\r\n- [ ] 3–5 standalone social posts from the subheads/key points\r\n- [ ] 1 thread (Twitter/X) or carousel (LinkedIn/Instagram) of the core argument\r\n- [ ] 2–4 short-form video clips (if source is video/podcast)\r\n- [ ] 1–2 quote or stat graphics\r\n- [ ] 1 email to the owned list linking the flagship\r\n- [ ] Repost/reshare schedule across the piece's half-life (don't post once and move on)\r\n\r\n## Related\r\n\r\n- **launch** — ORB channel-type playbook and launch-day distribution\r\n- **social** — atomization/repurposing workflows and platform-native execution\r\n- **emails** — the owned channel that converts distributed attention\r\n- **ai-seo** — making owned content citable by LLMs (another distribution surface)\r\n"},{"skillId":"content-strategy","path":"references/headless-cms.md","content":"# Headless CMS Guide\r\n\r\nReference for choosing, modeling, and implementing a headless CMS for marketing content.\r\n\r\n## When to Use This Reference\r\n\r\nUse this when selecting a CMS for a new project, designing content models for marketing sites, setting up editorial workflows, or connecting CMS content to programmatic pages.\r\n\r\n---\r\n\r\n## Headless vs Traditional CMS\r\n\r\nA headless CMS separates content management from presentation. Content is stored in a structured backend and delivered via API to any frontend.\r\n\r\n### When Headless Makes Sense\r\n\r\n- Multiple frontends consume the same content (web, mobile, email)\r\n- Developers want full control over the frontend stack\r\n- Content needs to be reused across channels\r\n- You're building with a modern framework (Next.js, Remix, Astro)\r\n- Marketing needs structured, reusable content blocks\r\n\r\n### When Traditional Works Better\r\n\r\n- Small team with no dedicated developers\r\n- Simple blog or brochure site\r\n- WYSIWYG editing is a hard requirement\r\n- Budget is tight and WordPress/Webflow does the job\r\n\r\n### Decision Checklist\r\n\r\n| Factor | Headless | Traditional |\r\n|--------|----------|-------------|\r\n| Multi-channel delivery | Yes | Limited |\r\n| Developer control | Full | Constrained |\r\n| Non-technical editing | Requires setup | Built-in |\r\n| Time to launch | Longer | Faster |\r\n| Content reuse | Native | Manual |\r\n| Hosting flexibility | Any frontend | Platform-dependent |\r\n\r\n---\r\n\r\n## Content Modeling for Marketing\r\n\r\n### Core Principles\r\n\r\n1. **Think in types, not pages.** A \"Landing Page\" is a content type with fields — not an HTML file. This lets you reuse components across pages.\r\n2. **Separate content from presentation.** Store the headline text, not the styled headline. Presentation belongs in the frontend.\r\n3. **Design for reuse.** If testimonials appear on 5 pages, create a Testimonial type and reference it — don't duplicate.\r\n4. **Keep models flat.** Deeply nested structures are hard to query and maintain. Prefer references over nesting.\r\n\r\n### Common Marketing Content Types\r\n\r\n| Type | Key Fields | Notes |\r\n|------|-----------|-------|\r\n| **Landing Page** | title, slug, hero, sections[], seo | Modular sections for flexibility |\r\n| **Blog Post** | title, slug, body, author, category, tags, publishedAt, seo | Rich text or Portable Text body |\r\n| **Case Study** | title, customer, challenge, solution, results, metrics[], logo | Link to related products/features |\r\n| **Testimonial** | quote, author, role, company, avatar, rating | Reference from landing pages |\r\n| **FAQ** | question, answer, category | Group by category for programmatic pages |\r\n| **Author** | name, bio, avatar, social links | Reference from blog posts |\r\n| **CTA Block** | heading, body, buttonText, buttonUrl, variant | Reusable across pages |\r\n\r\n### SEO Fields Checklist\r\n\r\nEvery page-level content type needs:\r\n\r\n- `metaTitle` — 50-60 characters\r\n- `metaDescription` — 150-160 characters\r\n- `ogImage` — 1200x630px social preview\r\n- `slug` — URL path segment\r\n- `canonicalUrl` — optional override\r\n- `noIndex` — boolean for excluding from search\r\n- `structuredData` — optional JSON-LD override\r\n\r\n---\r\n\r\n## Editorial Workflows\r\n\r\n### Draft → Review → Publish Cycle\r\n\r\n1. **Draft** — Author creates or edits content\r\n2. **Review** — Editor reviews for accuracy, brand voice, SEO\r\n3. **Approve** — Stakeholder signs off\r\n4. **Schedule** — Set publish date/time\r\n5. **Publish** — Content goes live via API\r\n\r\n### Preview APIs\r\n\r\nAll major headless CMS platforms support draft previews:\r\n\r\n- **Sanity**: Real-time preview with `useLiveQuery` or Presentation tool\r\n- **Contentful**: Preview API (`preview.contentful.com`) with separate access token\r\n- **Strapi**: Draft & Publish system with `status=draft` query parameter (v5; replaces v4's `publicationState`)\r\n\r\nSet up a preview route in your frontend (e.g., `/api/preview`) that authenticates and renders draft content.\r\n\r\n### Roles and Permissions\r\n\r\n| Role | Can Create | Can Edit | Can Publish | Can Delete |\r\n|------|:----------:|:--------:|:-----------:|:----------:|\r\n| Author | Yes | Own | No | Own drafts |\r\n| Editor | Yes | All | Yes | Drafts |\r\n| Admin | Yes | All | Yes | All |\r\n\r\nExact permission models vary by platform. Sanity uses role-based access. Contentful has space-level roles. Strapi has granular RBAC.\r\n\r\n---\r\n\r\n## Platform Comparison\r\n\r\n| Feature | Sanity | Contentful | Strapi |\r\n|---------|--------|------------|--------|\r\n| Hosting | Cloud (managed) | Cloud (managed) | Self-hosted or Cloud |\r\n| Query Language | GROQ | REST / GraphQL | REST / GraphQL |\r\n| Free Tier | Generous | Limited | Open source (free) |\r\n| Real-time Collab | Yes (built-in) | Limited | No |\r\n| Best For | Developer flexibility | Enterprise multi-locale | Budget / self-hosted |\r\n| Content Modeling | Schema-as-code | Web UI | Web UI or code |\r\n| Media Handling | Built-in DAM | Built-in | Plugin-based |\r\n\r\n### Sanity\r\n\r\n**Strengths**: GROQ query language is powerful and flexible. Schema defined in code (version-controlled). Real-time collaborative editing. Portable Text for rich content. Generous free tier.\r\n\r\n**Considerations**: Steeper learning curve for non-developers. Studio customization requires React knowledge. Vendor lock-in on GROQ queries.\r\n\r\n**Marketing fit**: Best when developers and marketers collaborate closely. Strong for content-heavy sites with complex models.\r\n\r\n### Contentful\r\n\r\n**Strengths**: Mature enterprise platform. Excellent multi-locale support. Strong ecosystem of integrations. Composable content with Studio. Well-documented APIs.\r\n\r\n**Considerations**: Pricing scales with content types and locales. Two separate APIs (Delivery and Management). Rate limits can be tight on lower plans.\r\n\r\n**Marketing fit**: Best for enterprises with multi-market content needs. Good when you need established vendor reliability.\r\n\r\n### Strapi\r\n\r\n**Strengths**: Open source, self-hosted option. Full control over data. No per-seat pricing. Customizable admin panel. Plugin ecosystem. REST by default, GraphQL via plugin.\r\n\r\n**Considerations**: Self-hosting means you handle infrastructure. Smaller ecosystem than Sanity/Contentful. V5 migration can be significant from V4.\r\n\r\n**Marketing fit**: Best for teams with DevOps capability who want full control and no vendor lock-in. Good for budget-conscious projects.\r\n\r\n### Others Worth Knowing\r\n\r\n- **Hygraph** — GraphQL-native, strong for federation and multi-source content\r\n- **Keystatic** — Git-based, good for developer-content hybrid workflows\r\n- **Payload** — TypeScript-first, self-hosted, code-configured like Sanity\r\n- **Builder.io** — Visual editor with headless backend, good for non-technical marketers\r\n- **Prismic** — Slice-based content modeling, strong Next.js integration\r\n\r\n---\r\n\r\n## Integration with Marketing Skills\r\n\r\n### Programmatic SEO\r\n\r\nUse CMS as the data source for programmatic pages. Store structured data (FAQs, comparisons, city pages) as content types and generate pages from queries. See **programmatic-seo** skill.\r\n\r\n### Copywriting\r\n\r\nCMS content models enforce consistent structure. Define fields that match your copy frameworks (headline, subheadline, social proof, CTA). See **copywriting** skill.\r\n\r\n### Site Architecture\r\n\r\nURL structure, navigation hierarchy, and internal linking all depend on how content is organized in the CMS. Plan your content model and site architecture together. See **site-architecture** skill.\r\n\r\n### Email Sequences\r\n\r\nPull CMS content into email templates for consistent messaging across web and email. Case studies, testimonials, and blog posts can feed email nurture sequences. See **emails** skill.\r\n\r\n---\r\n\r\n## Implementation Checklist\r\n\r\n- [ ] Define content types based on page types and reusable blocks\r\n- [ ] Add SEO fields to every page-level content type\r\n- [ ] Set up preview/draft mode in your frontend\r\n- [ ] Configure roles and permissions for your team\r\n- [ ] Create sample content for each type before building frontend\r\n- [ ] Set up webhook notifications for content changes (rebuild triggers)\r\n- [ ] Document content guidelines for editors (field descriptions, character limits)\r\n- [ ] Test content delivery performance (CDN, caching, ISR)\r\n- [ ] Plan migration strategy if moving from existing CMS\r\n\r\n---\r\n\r\n## Relevant Integration Guides\r\n\r\n- [Sanity](https://github.com/coreyhaines31/marketingskills/blob/main/tools/integrations/sanity.md) — GROQ queries, mutations, CLI\r\n- [Contentful](https://github.com/coreyhaines31/marketingskills/blob/main/tools/integrations/contentful.md) — Delivery/Management APIs, publishing\r\n- [Strapi](https://github.com/coreyhaines31/marketingskills/blob/main/tools/integrations/strapi.md) — REST CRUD, filters, document API\r\n"},{"skillId":"copy-editing","path":"references/checklist.md","content":"# Copy Editing Checklist\r\n\r\nUse this checklist alongside the Seven Sweeps Framework (see SKILL.md) as a final QA pass before delivering edited copy.\r\n\r\n## Pick the Edit Mode\r\n\r\nDecide what you were handed before running any sweep. The mode sets how much you're allowed to change.\r\n\r\n| Mode | Signs | What to do |\r\n|---|---|---|\r\n| **A. Blank or slop** | Generic company-speak, AI mush, no point of view | Run all seven sweeps. You may rebuild sentences from the underlying facts; never invent stats, customers, or results |\r\n| **B. Real voice** | A clear angle or opinion, recognizable word choices, rough execution | Run all seven sweeps as restoration. Keep their argument, vocabulary, and emphasis. Fix the buried lead, vague lines, AI tells, and structure |\r\n| **C. Point edit** | \"Fix this headline,\" \"is this sentence OK?\", \"tighten paragraph two\" | Skip the sweeps. Use point-edit mode below |\r\n\r\n**Point-edit mode**\r\n- [ ] Change only the line, word, or section named, plus the minimum around it needed for the edit to read cleanly (a pronoun, a transition)\r\n- [ ] Check the edit against the AI Tells list and the surrounding voice, so the new line doesn't stand out\r\n- [ ] Return only the changed text with a one-line reason per change, and offer one alternative if the choice is close\r\n- [ ] Mention a serious problem elsewhere in one line at the end (a false claim, a broken CTA) without fixing it unasked\r\n- [ ] Don't rewrite neighboring lines, add sections, or run a full sweep report\r\n\r\n**Reading taste (B and C).** What the author gave you is evidence of their choices. Their vocabulary is a voice decision (\"stuff\" and \"ship\" stay), where they spent words is a priority decision, and what they left out is a scope decision. Match those; don't swap in your own.\r\n\r\n**Leave-it-alone test (all modes).** For each change, ask whether it's measurably better or just different. Revert anything you can't give a reason for.\r\n\r\n*Modes adapted from Profound's `improved-copywriting` and Wispr Flow's `copy-editing` skills ([skills-marketing-library](https://github.com/retieedra-profound/skills-marketing-library), MIT).*\r\n\r\n## Before You Start\r\n\r\n- [ ] Pick the edit mode (above); for a point edit, stop here and use point-edit mode\r\n- [ ] Understand the goal of this copy\r\n- [ ] Know the target audience\r\n- [ ] Identify the desired action\r\n- [ ] Read through once without editing\r\n\r\n## Clarity (Sweep 1)\r\n\r\n- [ ] Every sentence is immediately understandable\r\n- [ ] No jargon without explanation\r\n- [ ] Pronouns have clear references\r\n- [ ] No sentences trying to do too much\r\n\r\n## Voice & Tone (Sweep 2)\r\n\r\n- [ ] Consistent formality level throughout\r\n- [ ] Brand personality maintained\r\n- [ ] No jarring shifts in mood\r\n- [ ] Reads well aloud\r\n\r\n## So What (Sweep 3)\r\n\r\n- [ ] Every feature connects to a benefit\r\n- [ ] Claims answer \"why should I care?\"\r\n- [ ] Benefits connect to real desires\r\n- [ ] No impressive-but-empty statements\r\n\r\n## Prove It (Sweep 4)\r\n\r\n- [ ] Claims are substantiated\r\n- [ ] Social proof is specific and attributed\r\n- [ ] Numbers and stats have sources\r\n- [ ] No unearned superlatives\r\n\r\n## Specificity (Sweep 5)\r\n\r\n- [ ] Vague words replaced with concrete ones\r\n- [ ] Numbers and timeframes included\r\n- [ ] Generic statements made specific\r\n- [ ] Filler content removed\r\n\r\n## Heightened Emotion (Sweep 6)\r\n\r\n- [ ] Copy evokes feeling, not just information\r\n- [ ] Pain points feel real\r\n- [ ] Aspirations feel achievable\r\n- [ ] Emotion serves the message authentically\r\n\r\n## Zero Risk (Sweep 7)\r\n\r\n- [ ] Objections addressed near CTA\r\n- [ ] Trust signals present\r\n- [ ] Next steps are crystal clear\r\n- [ ] Risk reversals stated (guarantee, trial, etc.)\r\n\r\n## AI Tells\r\n\r\n- [ ] No \"it's not X, it's Y\" or \"not because X, because Y\" reveals\r\n- [ ] No \"no X, no Y, no Z\" negation lists\r\n- [ ] No sentences that trail restating comma clauses after the main claim (a clause adding a new fact is fine)\r\n- [ ] No self-answered questions or colon reveals (FAQ questions and a reader's own question are fine)\r\n- [ ] No stock openers or phrases (\"In today's...\", \"Whether you're...\", \"Say goodbye to...\")\r\n- [ ] No em dashes in headlines, subheads, CTAs, ads, social posts, or subject lines; 1–2 per page max in long copy\r\n- [ ] At most one fragment and one list of three per section (CTA microcopy and real three-feature lists don't count)\r\n- [ ] Every vague adjective replaced with the fact it stood for\r\n\r\n## Final Checks\r\n\r\n- [ ] No typos or grammatical errors\r\n- [ ] Consistent formatting\r\n- [ ] Links work (if applicable)\r\n- [ ] Core message preserved through all edits\r\n"},{"skillId":"copy-editing","path":"references/content-refresh.md","content":"# Content Refresh Editing\r\n\r\nCopy editing isn't just for new content. Existing pages and posts decay over time — outdated stats, stale examples, drifted brand voice, and missed SEO opportunities. A content refresh applies the same editing rigor to content that's already published.\r\n\r\n## When to Refresh\r\n\r\n- **Traffic declining** on a page that used to perform well\r\n- **Stats or data** are more than 12 months old\r\n- **Product has changed** — features, pricing, or positioning no longer match\r\n- **Competitors updated** their version of the same content\r\n- **AI search visibility** matters — outdated content gets cited less (see ai-seo skill)\r\n\r\n## Content Refresh Checklist\r\n\r\n1. **Freshness pass** — Update all dates, stats, and examples. Replace \"in 2024\" with current data. Remove references to deprecated features or tools.\r\n2. **Accuracy pass** — Verify all claims are still true. Check that linked resources still exist. Confirm pricing and feature descriptions match current state.\r\n3. **Voice pass** — Does the tone match your current brand voice? Older content often reflects an earlier stage of the company.\r\n4. **SEO pass** — Has search intent shifted for this topic? Are there new keywords or questions to address? Add \"Last updated: [date]\" prominently.\r\n5. **Proof pass** — Can you add newer testimonials, case studies, or data points that didn't exist when this was first published?\r\n6. **Structure pass** — Add comparison tables, FAQ sections, or other scannable formats that make the content easier to consume.\r\n\r\n## Before You Edit: Find the Gap\r\n\r\nA refresh aimed at a ranking page should start from the results page. The first question to answer is why the pages above yours are winning.\r\n\r\n1. **Read the results page for the post's main query.** Note the dominant format (list, guide, tool, comparison), the featured snippet and how it's formatted, People Also Ask questions, and related searches.\r\n2. **Pick five competitors**: the top three results, plus any direct competitor or recently updated page ranking near you.\r\n3. **Map coverage.** List the subtopics each page covers in a simple grid, with your post as the first column:\r\n\r\n| Subtopic / element | Your post | Comp 1 | Comp 2 | Comp 3 | Comp 4 | Comp 5 |\r\n|--------------------|:---------:|:------:|:------:|:------:|:------:|:------:|\r\n| [Subtopic A] | ✗ | ✓ | ✓ | ✓ | ✓ | — |\r\n| Comparison table | ✗ | ✓ | — | ✓ | — | — |\r\n| Current-year data | ✗ | ✓ | ✓ | — | ✓ | ✓ |\r\n\r\n4. **Rank what's missing** by how many competitors cover it:\r\n   - **Expected** (4–5 of 5): searchers assume it's there. Add it.\r\n   - **Common** (2–3): add it if it serves your reader.\r\n   - **Distinctive** (1): add it only if it's genuinely useful, not to copy one page.\r\n   - **Uncovered** (0): the angle nobody has. Your best chance to be the result worth citing.\r\n5. **Match coverage.** Ignore competitors' word counts. Close the gaps that matter, and stop when the reader's question is answered.\r\n\r\nPresent the gap grid and a proposed outline before rewriting. Mark each section **Keep**, **Revise**, or **New**, propose 2–3 title options (see the `seo-audit` skill's title-tags reference), and wait for approval. Don't promise a ranking or traffic outcome.\r\n\r\n## Keep What Already Works\r\n\r\nA page that ranks has signals worth protecting:\r\n- **Keep the URL.** If it must change, 301 the old one.\r\n- **Keep heading anchors** other pages link to, and the sections that rank for their own queries (check Search Console's query list for the page).\r\n- **Keep the voice.** A refresh shouldn't read like a different author wrote it.\r\n- **Show the update**: a visible \"Last updated\" date, with the year next to every statistic.\r\n\r\nWhen handing the refresh to whoever publishes it, include the new meta description, schema types to add, internal links to add to and from the post, images or screenshots needed, and the URL plan.\r\n\r\n## Refresh vs. Rewrite\r\n\r\n| Signal | Action |\r\n|--------|--------|\r\n| Core message still valid, details outdated | Refresh (update facts, stats, examples) |\r\n| Brand voice has evolved significantly | Refresh + voice rewrite |\r\n| Topic angle or audience has shifted | Full rewrite |\r\n| Page structure doesn't match current search intent | Full rewrite |\r\n| Just needs updated stats and links | Light refresh |\r\n\r\n## Refresh Cadence\r\n\r\n- **Pricing and product pages**: Every quarter, or when pricing/features change\r\n- **High-traffic blog posts**: Every 6 months\r\n- **Comparison and alternatives pages**: Every 3-6 months (competitors change fast)\r\n- **Evergreen guides**: Annually, unless traffic drops sooner\r\n- **Low-traffic pages**: Only when traffic data suggests an opportunity\r\n"},{"skillId":"copy-editing","path":"references/plain-english-alternatives.md","content":"# Plain English Alternatives\r\n\r\nReplace complex or pompous words with plain English alternatives.\r\n\r\nSource: Plain English Campaign A-Z of Alternative Words (2001), Australian Government Style Manual (2024), plainlanguage.gov\r\n\r\n---\r\n\r\n## Contents\r\n- A\r\n- B\r\n- C\r\n- D\r\n- E\r\n- F\r\n- G-H\r\n- I\r\n- L-M\r\n- N-O\r\n- P\r\n- R\r\n- S\r\n- T-U\r\n- V-Z\r\n- Phrases to Remove Entirely\r\n\r\n## A\r\n\r\n| Complex | Plain Alternative |\r\n|---------|-------------------|\r\n| (an) absence of | no, none |\r\n| abundance | enough, plenty, many |\r\n| accede to | allow, agree to |\r\n| accelerate | speed up |\r\n| accommodate | meet, hold, house |\r\n| accomplish | do, finish, complete |\r\n| accordingly | so, therefore |\r\n| acknowledge | thank you for, confirm |\r\n| acquire | get, buy, obtain |\r\n| additional | extra, more |\r\n| adjacent | next to |\r\n| advantageous | useful, helpful |\r\n| advise | tell, say, inform |\r\n| aforesaid | this, earlier |\r\n| aggregate | total |\r\n| alleviate | ease, reduce |\r\n| allocate | give, share, assign |\r\n| alternative | other, choice |\r\n| ameliorate | improve |\r\n| anticipate | expect |\r\n| apparent | clear, obvious |\r\n| appreciable | large, noticeable |\r\n| appropriate | proper, right, suitable |\r\n| approximately | about, roughly |\r\n| ascertain | find out |\r\n| assistance | help |\r\n| at the present time | now |\r\n| attempt | try |\r\n| authorise | allow, let |\r\n\r\n---\r\n\r\n## B\r\n\r\n| Complex | Plain Alternative |\r\n|---------|-------------------|\r\n| belated | late |\r\n| beneficial | helpful, useful |\r\n| bestow | give |\r\n| by means of | by |\r\n\r\n---\r\n\r\n## C\r\n\r\n| Complex | Plain Alternative |\r\n|---------|-------------------|\r\n| calculate | work out |\r\n| cease | stop, end |\r\n| circumvent | avoid, get around |\r\n| clarification | explanation |\r\n| commence | start, begin |\r\n| communicate | tell, talk, write |\r\n| competent | able |\r\n| compile | collect, make |\r\n| complete | fill in, finish |\r\n| component | part |\r\n| comprise | include, make up |\r\n| (it is) compulsory | (you) must |\r\n| conceal | hide |\r\n| concerning | about |\r\n| consequently | so |\r\n| considerable | large, great, much |\r\n| constitute | make up, form |\r\n| consult | ask, talk to |\r\n| consumption | use |\r\n| currently | now |\r\n\r\n---\r\n\r\n## D\r\n\r\n| Complex | Plain Alternative |\r\n|---------|-------------------|\r\n| deduct | take off |\r\n| deem | treat as, consider |\r\n| defer | delay, put off |\r\n| deficiency | lack |\r\n| delete | remove, cross out |\r\n| demonstrate | show, prove |\r\n| denote | show, mean |\r\n| designate | name, appoint |\r\n| despatch/dispatch | send |\r\n| determine | decide, find out |\r\n| detrimental | harmful |\r\n| diminish | reduce, lessen |\r\n| discontinue | stop |\r\n| disseminate | spread, distribute |\r\n| documentation | papers, documents |\r\n| due to the fact that | because |\r\n| duration | time, length |\r\n| dwelling | home |\r\n\r\n---\r\n\r\n## E\r\n\r\n| Complex | Plain Alternative |\r\n|---------|-------------------|\r\n| economical | cheap, good value |\r\n| eligible | allowed, qualified |\r\n| elucidate | explain |\r\n| enable | allow |\r\n| encounter | meet |\r\n| endeavour | try |\r\n| enquire | ask |\r\n| ensure | make sure |\r\n| entitlement | right |\r\n| envisage | expect |\r\n| equivalent | equal, the same |\r\n| erroneous | wrong |\r\n| establish | set up, show |\r\n| evaluate | assess, test |\r\n| excessive | too much |\r\n| exclusively | only |\r\n| exempt | free from |\r\n| expedite | speed up |\r\n| expenditure | spending |\r\n| expire | run out |\r\n\r\n---\r\n\r\n## F\r\n\r\n| Complex | Plain Alternative |\r\n|---------|-------------------|\r\n| fabricate | make |\r\n| facilitate | help, make possible |\r\n| finalise | finish, complete |\r\n| following | after |\r\n| for the purpose of | to, for |\r\n| for the reason that | because |\r\n| forthwith | now, at once |\r\n| forward | send |\r\n| frequently | often |\r\n| furnish | give, provide |\r\n| furthermore | also, and |\r\n\r\n---\r\n\r\n## G-H\r\n\r\n| Complex | Plain Alternative |\r\n|---------|-------------------|\r\n| generate | produce, create |\r\n| henceforth | from now on |\r\n| hitherto | until now |\r\n\r\n---\r\n\r\n## I\r\n\r\n| Complex | Plain Alternative |\r\n|---------|-------------------|\r\n| if and when | if, when |\r\n| illustrate | show |\r\n| immediately | at once, now |\r\n| implement | carry out, do |\r\n| imply | suggest |\r\n| in accordance with | under, following |\r\n| in addition to | and, also |\r\n| in conjunction with | with |\r\n| in excess of | more than |\r\n| in lieu of | instead of |\r\n| in order to | to |\r\n| in receipt of | receive |\r\n| in relation to | about |\r\n| in respect of | about, for |\r\n| in the event of | if |\r\n| in the majority of instances | most, usually |\r\n| in the near future | soon |\r\n| in view of the fact that | because |\r\n| inception | start |\r\n| indicate | show, suggest |\r\n| inform | tell |\r\n| initiate | start, begin |\r\n| insert | put in |\r\n| instances | cases |\r\n| irrespective of | despite |\r\n| issue | give, send |\r\n\r\n---\r\n\r\n## L-M\r\n\r\n| Complex | Plain Alternative |\r\n|---------|-------------------|\r\n| (a) large number of | many |\r\n| liaise with | work with, talk to |\r\n| locality | place, area |\r\n| locate | find |\r\n| magnitude | size |\r\n| (it is) mandatory | (you) must |\r\n| manner | way |\r\n| modification | change |\r\n| moreover | also, and |\r\n\r\n---\r\n\r\n## N-O\r\n\r\n| Complex | Plain Alternative |\r\n|---------|-------------------|\r\n| negligible | small |\r\n| nevertheless | but, however |\r\n| notify | tell |\r\n| notwithstanding | despite, even if |\r\n| numerous | many |\r\n| objective | aim, goal |\r\n| (it is) obligatory | (you) must |\r\n| obtain | get |\r\n| occasioned by | caused by |\r\n| on behalf of | for |\r\n| on numerous occasions | often |\r\n| on receipt of | when you get |\r\n| on the grounds that | because |\r\n| operate | work, run |\r\n| optimum | best |\r\n| option | choice |\r\n| otherwise | or |\r\n| outstanding | unpaid |\r\n| owing to | because |\r\n\r\n---\r\n\r\n## P\r\n\r\n| Complex | Plain Alternative |\r\n|---------|-------------------|\r\n| partially | partly |\r\n| participate | take part |\r\n| particulars | details |\r\n| per annum | a year |\r\n| perform | do |\r\n| permit | let, allow |\r\n| personnel | staff, people |\r\n| peruse | read |\r\n| possess | have, own |\r\n| practically | almost |\r\n| predominant | main |\r\n| prescribe | set |\r\n| preserve | keep |\r\n| previous | earlier, before |\r\n| principal | main |\r\n| prior to | before |\r\n| proceed | go ahead |\r\n| procure | get |\r\n| prohibit | ban, stop |\r\n| promptly | quickly |\r\n| provide | give |\r\n| provided that | if |\r\n| provisions | rules, terms |\r\n| proximity | nearness |\r\n| purchase | buy |\r\n| pursuant to | under |\r\n\r\n---\r\n\r\n## R\r\n\r\n| Complex | Plain Alternative |\r\n|---------|-------------------|\r\n| reconsider | think again |\r\n| reduction | cut |\r\n| referred to as | called |\r\n| regarding | about |\r\n| reimburse | repay |\r\n| reiterate | repeat |\r\n| relating to | about |\r\n| remain | stay |\r\n| remainder | rest |\r\n| remuneration | pay |\r\n| render | make, give |\r\n| represent | stand for |\r\n| request | ask |\r\n| require | need |\r\n| residence | home |\r\n| retain | keep |\r\n| revised | changed, new |\r\n\r\n---\r\n\r\n## S\r\n\r\n| Complex | Plain Alternative |\r\n|---------|-------------------|\r\n| scrutinise | examine, check |\r\n| select | choose |\r\n| solely | only |\r\n| specified | given, stated |\r\n| state | say |\r\n| statutory | legal, by law |\r\n| subject to | depending on |\r\n| submit | send, give |\r\n| subsequent to | after |\r\n| subsequently | later |\r\n| substantial | large, much |\r\n| sufficient | enough |\r\n| supplement | add to |\r\n| supplementary | extra |\r\n\r\n---\r\n\r\n## T-U\r\n\r\n| Complex | Plain Alternative |\r\n|---------|-------------------|\r\n| terminate | end, stop |\r\n| thereafter | then |\r\n| thereby | by this |\r\n| thus | so |\r\n| to date | so far |\r\n| transfer | move |\r\n| transmit | send |\r\n| ultimately | in the end |\r\n| undertake | agree, do |\r\n| uniform | same |\r\n| utilise | use |\r\n\r\n---\r\n\r\n## V-Z\r\n\r\n| Complex | Plain Alternative |\r\n|---------|-------------------|\r\n| variation | change |\r\n| virtually | almost |\r\n| visualise | imagine, see |\r\n| ways and means | ways |\r\n| whatsoever | any |\r\n| with a view to | to |\r\n| with effect from | from |\r\n| with reference to | about |\r\n| with regard to | about |\r\n| with respect to | about |\r\n| zone | area |\r\n\r\n---\r\n\r\n## Phrases to Remove Entirely\r\n\r\nThese phrases often add nothing. Delete them:\r\n\r\n- a total of\r\n- absolutely\r\n- actually\r\n- all things being equal\r\n- as a matter of fact\r\n- at the end of the day\r\n- at this moment in time\r\n- basically\r\n- currently (when \"now\" or nothing works)\r\n- I am of the opinion that (use: I think)\r\n- in due course (use: soon, or say when)\r\n- in the final analysis\r\n- it should be understood\r\n- last but not least\r\n- obviously\r\n- of course\r\n- quite\r\n- really\r\n- the fact of the matter is\r\n- to all intents and purposes\r\n- very\r\n"},{"skillId":"copywriting","path":"references/ai-tells.md","content":"# AI Tells: The Copy Blacklist\r\n\r\nPatterns that make marketing copy read as machine-written. Clients and buyers spot these fast, and a reader who decides a page was generated starts doubting its claims too.\r\n\r\nMost of these are old human rhetoric. AI copy gives itself away by using them **by default**, **stacked**, and **with nothing specific behind them**. So the rules below are a mix of hard bans (for patterns that are tells even once) and frequency caps (for devices that are fine when chosen on purpose).\r\n\r\n**Confidence key**\r\n- **Ban**: a tell even once. Don't write it.\r\n- **Cap**: fine once, a tell when repeated or stacked. Stay under the cap.\r\n\r\n**What the scopes mean**\r\n- **Short copy**: headlines, subheads, the hero, CTAs, ads, social posts, email subject lines.\r\n- **Long copy**: body sections of a page, articles, long emails.\r\n- **Section**: one hero, one page section, or one whole short post.\r\n- CTA microcopy (\"No card required\") doesn't count toward the fragment cap.\r\n\r\n**Still fine:** FAQ questions, a single \"No card required,\" a list of three when there really are three features, a single \"without\" headline, and a formal brand voice that makes specific claims.\r\n\r\n---\r\n\r\n## Contents\r\n- Structural Patterns (the worst offenders)\r\n- Openers, Closers, and Setups\r\n- Marketing Phrases\r\n- Vocabulary\r\n- Hedges, Puffery, and Weasels\r\n- Tone\r\n- Formatting\r\n- Second-Generation Tells\r\n- Build a Writer\r\n- Rewrite Rules\r\n- The Self-Check\r\n- Sources\r\n\r\n---\r\n\r\n## Structural Patterns\r\n\r\nThese matter more than any word list. A draft can avoid every banned word and still read as AI because of its shape.\r\n\r\n### 1. The contrast reveal: \"Not X. Y.\" (Ban)\r\n\r\nSets up an assumption nobody stated, denies it, then gives the \"real\" answer.\r\n\r\nVariants: \"It's not X, it's Y.\" \"Not because X. Because Y.\" \"This isn't X. This is Y.\" \"Not just X, but Y.\" \"Less X, more Y.\" \"The question isn't X, it's Y.\" \"X? Think again.\"\r\n\r\n- ✗ Most marketing teams have a list of campaign ideas that never launch. Not because they're bad. Because each one needs a developer.\r\n- ✓ Most marketing teams have a list of campaign ideas that never launch, because each one needs a developer they can't get.\r\n\r\n**Why it's a tell:** It's one of the most frequently cited AI patterns. Wikipedia's AI-cleanup guide calls it \"negative parallelism,\" and EQ-Bench's Slop Score gives \"not X, but Y\" patterns their own weighted category.\r\n\r\n**Rewrite:** State Y directly and attach the concrete reason or cost. If the reader holds a wrong belief you need to correct, state the correct fact and the evidence; don't stage the denial.\r\n\r\n### 2. The negation list: \"No X, no Y, no Z.\" (Ban)\r\n\r\nDefines the product by what's absent, usually in threes, often with a fragment tacked on.\r\n\r\nVariants: \"No X. No Y. Just Z.\" \"Without X, without Y.\" \"Zero X, zero Y.\"\r\n\r\n- ✗ No setup call, no templates to fill in, no waiting on IT. No contract.\r\n- ✓ Install it from the app store and it's running on your data in five minutes.\r\n\r\n**Rewrite:** Say what does happen, in the order it happens. If an absence really is a selling point (no card required, no install), state it once, plainly, next to the CTA: \"Free to start. No card required.\" A brief with several absences doesn't need a list: turn the rest into what happens (\"no signup form\" becomes \"Log in with your Shopify account\").\r\n\r\nA single \"without\" or \"Never X again\" headline is fine. Don't follow it with a negation list in the subhead.\r\n\r\n### 3. The trailing pile-on (Ban)\r\n\r\nA complete claim, then a comma, then a run of add-ons: a negation list, an \"-ing\" clause, or a string of extra benefits.\r\n\r\n- ✗ Reports pull directly from the data you already have, no exports, no spreadsheets, no second copy to keep updated.\r\n- ✗ It syncs your calendar automatically, ensuring nothing slips through the cracks.\r\n- ✓ Reports pull from the data you already have. There's nothing to export.\r\n\r\n**Rewrite:** End the sentence when the main claim ends. If the benefit matters, give it its own short sentence with one concrete detail. Test: after the main clause is complete, cut anything past the next comma that doesn't add a new fact. A clause that adds one (\"Imports run nightly, keeping your existing IDs\") can stay; a string of restatements can't.\r\n\r\n### 4. Rhetorical question, then answer (Ban)\r\n\r\n\"The result? 3x faster onboarding.\" \"The catch? There isn't one.\" \"Why does this matter? Because...\"\r\n\r\n- ✗ The result? Onboarding that takes minutes, not weeks.\r\n- ✓ New hires finish onboarding on day one.\r\n\r\n**Rewrite:** Delete the question and keep the answer.\r\n\r\nStill fine: FAQ questions (\"Does it work with Shopify?\"), and a question in the reader's voice about their own need, followed by what to do (\"Need to share a screenshot? Drop it in the thread.\"). The tell is a question that labels your own claim (\"The result?\" \"The catch?\" \"Why does this matter?\").\r\n\r\n### 5. The colon reveal (Ban)\r\n\r\n\"The best part: it learns.\" \"Here's the secret: consistency.\" \"One word: speed.\"\r\n\r\n**Rewrite:** Write it as a normal sentence (\"It learns from every correction\"). Save colons for lists, labels, and quotes.\r\n\r\n### 6. Fragment drumbeat (Cap: one per section)\r\n\r\nStacked fragments or one-line paragraphs for manufactured punch. \"Simple. Fast. Done.\" \"That's it. That's the whole thing.\"\r\n\r\n**Rewrite:** Merge them into one full sentence that carries a fact. One fragment that lands a real payoff is a copywriting device. A paragraph of them is a tic.\r\n\r\n### 7. Reflexive threes (Cap: one per section)\r\n\r\nEverything comes in threes: adjectives, benefits, clauses, bullets. \"Fast, secure, and scalable.\" \"Save time, cut costs, and grow revenue.\"\r\n\r\n**Rewrite:** Use as many items as the facts support: one, two, or four. Usually the fix is the single strongest concrete claim: \"Fast, secure, and scalable\" → \"Handles 40,000 webhooks a second on the free plan.\"\r\n\r\n### 8. Em dashes (Ban in short copy; cap at 1–2 per page in long copy)\r\n\r\nThe dash as the default pause, several per paragraph, often carrying a contrast reveal (\"It's not a tool — it's a teammate\").\r\n\r\n**Rewrite:** Use a period, a comma, a colon, or parentheses. In heroes, ads, subject lines, and social posts, use none.\r\n\r\n### 9. Uniform rhythm (Cap)\r\n\r\nEvery sentence 12–18 words. Every paragraph is topic sentence → elaboration → wrap-up. Every section the same length. Three pros, three cons, every time.\r\n\r\n**Rewrite:** Vary on purpose. A long sentence, then a short one. Let a section be two lines if that's all it needs. Put the payoff first sometimes.\r\n\r\n### 10. Dodging \"is\" and \"has\" (Cap)\r\n\r\n\"Serves as a central hub.\" \"Stands as a testament.\" \"Boasts a library of 200 templates.\" \"Represents a new approach.\"\r\n\r\n**Rewrite:** Use \"is\" and \"has\", or better, the actual verb: \"Tracks every contract, renewal date, and owner in one place.\"\r\n\r\n### 11. Abstract subjects (Cap)\r\n\r\n\"The platform empowers teams to...\" \"Our solution enables...\" Nobody does anything.\r\n\r\n**Rewrite:** Make the customer the subject. \"Your team ships experiments without filing a ticket.\"\r\n\r\n### 12. False ranges (Cap)\r\n\r\n\"From startups to enterprises.\" \"From onboarding to renewal.\" The two ends don't describe a real span.\r\n\r\n**Rewrite:** Name the segment you actually serve, or the steps you actually cover.\r\n\r\n### 13. Synonym cycling (Cap)\r\n\r\nCalling the same thing a dashboard, an interface, a portal, and a hub in one page to avoid repeating a word.\r\n\r\n**Rewrite:** Pick the word your customer uses and repeat it.\r\n\r\n---\r\n\r\n## Openers, Closers, and Setups (Ban)\r\n\r\n| Pattern | Example | Instead |\r\n|---------|---------|---------|\r\n| Era opener | \"In today's fast-paced world...\" | Open with the customer's problem |\r\n| False-choice opener | \"Whether you're a solo founder or a Fortune 500...\" | Name who the page is for |\r\n| \"Imagine...\" | \"Imagine never chasing an invoice again.\" | Show the actual before and after |\r\n| \"When it comes to...\" | \"When it comes to billing, ...\" | Start with the subject |\r\n| Throat-clearing | \"Here's the thing:\" \"The truth is\" \"Let me be clear\" \"Here's what nobody tells you\" | Cut it. If the claim can't stand alone, it needs evidence, not a drumroll |\r\n| Announcing | \"In this guide, we'll explore...\" \"Let's dive in\" | Start with the content |\r\n| Recap ending | \"In conclusion\" \"Ultimately\" \"At the end of the day\" | End on the last concrete point or the CTA |\r\n| Fake-profound kicker | \"Because growth shouldn't wait.\" \"And that changes everything.\" | Cut it. End on a concrete sentence |\r\n| Filler transitions | \"It's worth noting\" \"Moreover\" \"Additionally\" \"Importantly\" | Delete. The sentence usually works without it |\r\n\r\n---\r\n\r\n## Marketing Phrases (Ban)\r\n\r\n| Phrase | Instead |\r\n|--------|---------|\r\n| \"Say goodbye to X\" / \"Say hello to Y\" | Show the new workflow: \"Reconciliation runs nightly. You review the exceptions.\" |\r\n| \"Unlock / unleash the power of X\" | Name the outcome and the number |\r\n| \"X, reimagined\" / \"X, redefined\" | Say what's actually different: \"Billing that retries on payday\" |\r\n| \"Take X to the next level\" | Name the level: the metric and the target |\r\n| \"Transform the way you work\" | A before and after with numbers |\r\n| \"The X you deserve\" | The specific gap you close |\r\n| \"The future of X is here\" | What ships today |\r\n| \"Built for teams who move fast\" | The real customer and trigger: \"For subscription teams past $1M ARR fighting failed payments\" |\r\n| \"Everything you need to X\" / \"all-in-one\" | The 2–3 things buyers actually check for |\r\n| \"Effortless\" / \"in just a few clicks\" | The real step count or time: \"3 steps, about 4 minutes\" |\r\n| \"Join thousands of happy customers\" | The real count, logos, or a named quote |\r\n| \"Game-changer\" / \"this changes everything\" | What changes, for whom, by how much |\r\n\r\n---\r\n\r\n## Vocabulary\r\n\r\nSwapping a banned word for a synonym just creates a new tell. Replace the word with the fact it was standing in for: \"robust\" → \"99.99% uptime over two years\"; \"seamless\" → \"imports your Stripe data in about 90 seconds.\"\r\n\r\n**Ban:** delve, tapestry, testament to, realm, embark, beacon, multifaceted, paradigm, synergy, myriad, plethora, meticulous, intricate, utilize, leverage (as a verb), supercharge, turbocharge, game-changer, \"ever-evolving landscape,\" \"plays a crucial role\"\r\n\r\n**Cap (two in a paragraph means rewrite it):** seamless, robust, streamline, empower, elevate, unlock, unleash, harness, foster, enhance, optimize, cutting-edge, innovative, revolutionary, transformative, holistic, comprehensive, pivotal, crucial, vital, powerful, next-level, world-class, best-in-class, landscape, navigate, ecosystem, journey (unless literal)\r\n\r\n**Cap (empty intensifiers):** truly, genuinely, incredibly, deeply, fundamentally, significantly, simply, actually, literally, quietly\r\n\r\nFavored words drift as models change (\"delve\" peaked in 2024; \"enhance,\" \"showcase,\" \"foster,\" and \"align with\" rose after). Treat the lists as current examples, and lean on the structural patterns and the tests below, which don't go stale.\r\n\r\n---\r\n\r\n## Hedges, Puffery, and Weasels\r\n\r\n- **Hedge stacks** (Cap): \"can help you potentially reduce...\" State what you know, or scope the claim honestly.\r\n- **Importance puffery** (Ban): \"marks a pivotal moment,\" \"redefines the category.\" State the fact; let the reader judge.\r\n- **Weasel sources** (Ban): \"experts agree,\" \"studies show,\" \"trusted by industry leaders.\" Name the source or the customer, or cut it.\r\n- **Invented labels** (Cap): \"the integration tax,\" \"the growth trap.\" Only coin a term you'll define and use across the site.\r\n\r\n---\r\n\r\n## Tone\r\n\r\n- **Chummy openers** (Ban in email and social): \"Great question!\" \"Let's be honest...\" \"We get it.\"\r\n- **Fake vulnerability** (Ban): \"I'll be honest, I was skeptical too...\" with no real story behind it.\r\n- **Over-explaining** (Cap): \"Let's break this down,\" \"Think of it as...\" Give the explanation directly.\r\n- **Hype punctuation** (Ban): \"Ready to level up?!\" Exclamation points and interrobangs in body copy.\r\n\r\n---\r\n\r\n## Formatting\r\n\r\n- **Emoji as structure** (Ban in B2B): 🚀 ✨ ✅ leading bullets or headings.\r\n- **Bold label on every bullet** (Cap): \"**Seamless integration:** ...\" Keep it for reference tables, not every list.\r\n- **Parallel bullet openers** (Cap): every bullet starting \"Ensures... / Provides... / Enables...\" Start bullets with the customer outcome and vary the grammar.\r\n- **Title Case Everywhere** (Cap): use sentence case unless the brand style guide says otherwise.\r\n- **Unicode decoration** (Ban): arrows, ×, 𝗯𝗼𝗹𝗱 letters in body copy.\r\n- **Label headings** (Cap): \"What / Why / How\" sections. Write headings that make a claim.\r\n\r\n---\r\n\r\n## Second-Generation Tells\r\n\r\nThese show up in copy that has already been de-slopped. The banned words and contrast reveals are gone, but the draft still reads as generated because the model swapped one set of habits for another. Check for them after the patterns above are fixed.\r\n\r\n| Tell | Example (✗) | Fix |\r\n|---|---|---|\r\n| **Wisdom-shaped sentences** (Ban) | \"Great tools get out of the way.\" \"Speed is a feature.\" | A sentence with the shape of an insight that nobody would disagree with. Replace it with the specific fact it gestures at, or cut it |\r\n| **Performed cleverness** (Cap) | \"Your inbox, minus the noise.\" \"Spreadsheets with a pulse.\" | Unexpected word pairings built to sound witty. Keep one if the brand is playful and it says something true; otherwise say the plain thing |\r\n| **Staccato bursts** (Cap) | \"It's fast. It's simple. And it just works.\" | Three or more short sentences in a row, then a longer one, as a rhythm device. Merge them into a sentence that carries a fact (see Fragment drumbeat) |\r\n| **Perfect balance** (Cap) | Every section has a heading, two sentences, and three bullets; every benefit gets the same weight | Real writers spend more words on what they care about. Let the strongest section run long and the weakest shrink or go |\r\n| **Omniscient casual** (Cap) | A relaxed, chatty voice that knows every answer and never admits a limit | Casual tone plus total certainty reads as generated. Scope claims honestly and say who the product isn't for |\r\n| **Self-narration** (Ban) | \"Here's why this matters.\" \"This is where it gets interesting.\" \"The takeaway is simple.\" | Sentences that comment on the copy itself. Delete them; if the point needs help, add a detail |\r\n| **Tidy closers** (Ban) | \"Because your team deserves better.\" \"The future of billing starts now.\" | A balanced, quotable last line that could close any page. End on a number, a named customer, the offer, or the CTA |\r\n| **Reflexive specificity** (Cap) | Every claim has a suspiciously round stat or a too-neat customer anecdote | Specificity copied as a style. Every number and story must be real and sourced; mark gaps `[NEED: proof]` instead of filling them |\r\n\r\n---\r\n\r\n## Build a Writer\r\n\r\nRemoving patterns leaves copy that's clean and flat. Human-sounding copy comes from a specific person with uneven knowledge and real opinions. Before a full rewrite of Situation A copy (see the Diagnosis section in SKILL.md), answer these silently:\r\n\r\n1. **Who is writing?** Name the person and role: the founder, the head of support, the engineer who built the feature. Say why they're writing this page.\r\n2. **What do they know cold?** Those parts get the most words and the most specific detail.\r\n3. **What do they find boring or not know well?** Those parts get compressed, or cut.\r\n4. **What's their honest, arguable opinion** about the problem, the category, or the old way of doing it?\r\n5. **If they had to cut a third, what goes first?** Cut it now.\r\n\r\nThe answers produce traits that generated copy lacks:\r\n\r\n- **Uneven density.** The section the writer cares about runs longest. Equal coverage of everything is a tell.\r\n- **Mixed register.** A precise technical term in one sentence, plain words in the next. Don't polish every word to the same level.\r\n- **Honest limits.** When the writer doesn't know something, the copy skips it or says so. Saying who the product isn't for is a strong version of this.\r\n- **Lopsided structure.** At least one section is noticeably longer, and at least one is short, because that's how much there was to say.\r\n- **Sentence length from the thought.** Write each sentence as long as its idea needs. Don't plan short-short-long rhythms.\r\n- **Opinions that cost something.** A real opinion is specific and someone could disagree with it (\"Most onboarding checklists are busywork. Ours has three steps.\"). \"We believe in quality\" costs nothing.\r\n- **First person only when it means something.** \"I built this after losing a client to a missed invoice\" earns the \"I.\" First person that adds no fact is decoration.\r\n\r\n**Rules that override the persona:**\r\n- **Never invent experience.** The writer's opinions and emphasis can be constructed; their anecdotes, customers, and results cannot. A made-up \"when I ran my agency...\" story is fabrication, and so is a fake customer quote. Use what the user gave you or mark `[NEED: founder story]`.\r\n- **In Situation B, the writer already exists.** Match the real voice from the draft or sample; don't build a new one.\r\n- **Keep the brand's register.** A persona for an enterprise security product is still formal. Uneven density and real opinions work in a formal voice too.\r\n\r\n---\r\n\r\n## Rewrite Rules\r\n\r\n1. **Rewrite from the facts.** Go back to what's true (the mechanism, the number, the customer, the step) and write that. Synonym swaps and \"humanizer\" substitutions produce new tells.\r\n2. **Specificity test.** Every claim sentence needs a number, a name, a mechanism, or a concrete action.\r\n3. **Swap test.** If the line would work unchanged on a competitor's site, rewrite it.\r\n4. **Stacking test.** Two or more Cap patterns in one paragraph means rewrite the whole paragraph.\r\n5. **Don't invent to de-slop.** Replacing \"industry-leading\" with a made-up stat is worse. Mark it `[NEED: proof]` and ask.\r\n6. **Choose devices on purpose.** A fragment you picked once, for a reason, is copywriting. The same device on every line is slop.\r\n7. **Keep the brand's register.** A formal sentence that makes a specific claim is fine. Don't flatten an enterprise voice into clipped startup copy, which is its own tell.\r\n8. **Vary the fixes.** The ✓ examples show one way out. Don't reuse them as templates. If every reveal becomes \", because...\" and every negation list becomes \"There's nothing to X,\" those are the new tics.\r\n9. **Flag a missing differentiator.** If no headline can pass the swap test with what you have, write the best one and mark `[NEED: differentiator vs. named competitors]`.\r\n\r\n---\r\n\r\n## The Self-Check\r\n\r\nRun this on every draft before delivering it:\r\n\r\n1. **Search for the bans.** Look for \"not \", \"isn't\", \"no \", \"without\", \"?\", \":\" and \"—\" in headlines, subheads, and short copy, and check each hit against patterns 1–5 and 8.\r\n2. **Read every sentence over 20 words.** If it has more than two commas, check for a trailing pile-on (pattern 3).\r\n3. **Count the caps.** Fragments, threes, and Cap vocabulary per section.\r\n4. **Read it aloud.** Mark anywhere you'd sound like a press release or a LinkedIn post.\r\n5. **Apply the swap test** to the headline, subhead, and every section heading.\r\n6. **Scan for second-generation tells.** Check the last line of every section for a tidy closer, look for wisdom-shaped sentences, and compare section lengths. If they're all about the same, the draft has perfect balance.\r\n\r\nIf a fix needs information you don't have (a number, a customer, a mechanism), flag it rather than writing around it.\r\n\r\n---\r\n\r\n## Sources\r\n\r\nPatterns and evidence drawn from, and rewritten in our own words:\r\n\r\n- Wikipedia, [Signs of AI writing](https://en.wikipedia.org/wiki/Wikipedia:Signs_of_AI_writing) (WikiProject AI Cleanup)\r\n- Kobak et al., excess vocabulary in 15M+ PubMed abstracts ([arXiv 2406.07016](https://arxiv.org/abs/2406.07016))\r\n- Juzek & Ward, [Why Does ChatGPT \"Delve\" So Much?](https://aclanthology.org/2025.coling-main.426/) (COLING 2025)\r\n- Paech et al., Antislop ([arXiv 2510.15061](https://arxiv.org/abs/2510.15061)) and [EQ-Bench Slop Score](https://eqbench.com/slop-score.html)\r\n- [tropes.fyi](https://tropes.fyi/tropes-md) catalog of AI writing tropes\r\n- Charlie Guo, [The Field Guide to AI Slop](https://www.ignorance.ai/p/the-field-guide-to-ai-slop)\r\n- Blake Stockton, [Don't write like AI: negation](https://www.blakestockton.com/p/dont-write-like-ai-1-101-negation)\r\n- Profound's `humanizer` and `improved-copywriting` skills and Wispr Flow's `writing` skill, published in [skills-marketing-library](https://github.com/retieedra-profound/skills-marketing-library) (MIT): the build-a-writer questions, human-writing traits, and second-generation tells\r\n- Counter-view: [A case for the defense](https://robotsatemyhomework.substack.com/p/ai-writing-patterns) (devices are fine when chosen, not defaulted)\r\n\r\nFor a broader word-level list used in content audits, see the seo-audit skill's `references/ai-writing-detection.md`.\r\n"},{"skillId":"copywriting","path":"references/copy-frameworks.md","content":"# Copy Frameworks Reference\r\n\r\nHeadline formulas, page section types, and structural templates.\r\n\r\n## Contents\r\n- Headline Formulas (outcome-focused, problem-focused, audience-focused, differentiation-focused, proof-focused, additional formulas)\r\n- Landing Page Section Types (core sections, supporting sections)\r\n- Page Structure Templates (feature-heavy page, varied engaging page, compact landing page, enterprise/B2B landing page, product launch page)\r\n- Section Writing Tips (problem section, benefits section, how it works section, testimonial selection)\r\n- Clarity & Message-Market Fit (the \"Now you can\" test, Human Action Model, the Perception Gap, the SavvyCal case, clarity metrics)\r\n\r\n## Headline Formulas\r\n\r\nThese are starting points. Fill every slot with specifics, and check the result against [ai-tells.md](ai-tells.md): a \"without\" or \"Never X again\" headline is fine once, but don't follow it with a negation list.\r\n\r\n### Outcome-Focused\r\n\r\n**{Achieve desirable outcome} without {pain point}**\r\n> Understand how users are really experiencing your site without drowning in numbers\r\n\r\n**{Achieve desirable outcome} by {how product makes it possible}**\r\n> Generate more leads by seeing which companies visit your site\r\n\r\n**Turn {input} into {outcome}**\r\n> Turn your hard-earned sales into repeat customers\r\n\r\n**[Achieve outcome] in [timeframe]**\r\n> Get your tax refund in 10 days\r\n\r\n---\r\n\r\n### Problem-Focused\r\n\r\n**Never {unpleasant event} again**\r\n> Never miss a sales opportunity again\r\n\r\n**{Question highlighting the main pain point}**\r\n> Hate returning stuff to Amazon?\r\n\r\n**Stop [pain]. Start [pleasure].**\r\n> Stop chasing invoices. Start getting paid on time.\r\n\r\n---\r\n\r\n### Audience-Focused\r\n\r\n**{Key feature/product type} for {target audience}**\r\n> Advanced analytics for Shopify e-commerce\r\n\r\n**{Key feature/product type} for {target audience} to {what it's used for}**\r\n> An online whiteboard for teams to ideate and brainstorm together\r\n\r\n**You don't have to {skills or resources} to {achieve desirable outcome}**\r\n> With Ahrefs, you don't have to be an SEO pro to rank higher and get more traffic\r\n\r\n---\r\n\r\n### Differentiation-Focused\r\n\r\n**The {opposite of usual process} way to {achieve desirable outcome}**\r\n> The easiest way to turn your passion into income\r\n\r\n**The [category] that [key differentiator]**\r\n> The CRM that updates itself\r\n\r\n---\r\n\r\n### Proof-Focused\r\n\r\n**[Number] [people] use [product] to [outcome]**\r\n> 50,000 marketers use Drip to send better emails\r\n\r\n**{Key benefit of your product}**\r\n> Sound clear in online meetings\r\n\r\n---\r\n\r\n### Additional Formulas\r\n\r\n**The simple way to {outcome}**\r\n> The simple way to track your time\r\n\r\n**Finally, {category} that {benefit}**\r\n> Finally, accounting software that doesn't suck\r\n\r\n**{Outcome} without {common pain}**\r\n> Build your website without writing code\r\n\r\n**Get {benefit} from your {thing}**\r\n> Get more revenue from your existing traffic\r\n\r\n**{Action verb} your {thing} like {admirable example}**\r\n> Market your SaaS like a Fortune 500\r\n\r\n**What if you could {desirable outcome}?**\r\n> What if you could close deals 30% faster?\r\n\r\n**The {adjective} {category} built for {audience}**\r\n> The lightweight CRM built for startups\r\n\r\n---\r\n\r\n## Landing Page Section Types\r\n\r\n### Core Sections\r\n\r\n**Hero (Above the Fold)**\r\n- Headline + subheadline\r\n- Primary CTA\r\n- Supporting visual (product screenshot, hero image)\r\n- Optional: Social proof bar\r\n\r\n**Social Proof Bar**\r\n- Customer logos (recognizable > many)\r\n- Key metric (\"10,000+ teams\")\r\n- Star rating with review count\r\n- Short testimonial snippet\r\n\r\n**Problem/Pain Section**\r\n- Articulate their problem better than they can\r\n- Create recognition (\"that's exactly my situation\")\r\n- Hint at cost of not solving it\r\n\r\n**Solution/Benefits Section**\r\n- Bridge from problem to your solution\r\n- 3-5 key benefits (not 10)\r\n- Each: headline + explanation + proof if available\r\n\r\n**How It Works**\r\n- 3-4 numbered steps\r\n- Reduces perceived complexity\r\n- Each step: action + outcome\r\n\r\n**Final CTA Section**\r\n- Recap value proposition\r\n- Repeat primary CTA\r\n- Risk reversal (guarantee, free trial)\r\n\r\n---\r\n\r\n### Supporting Sections\r\n\r\n**Testimonials**\r\n- Full quotes with names, roles, companies\r\n- Photos when possible\r\n- Specific results over vague praise\r\n- Formats: quote cards, video, tweet embeds\r\n\r\n**Case Studies**\r\n- Problem → Solution → Results\r\n- Specific metrics and outcomes\r\n- Customer name and context\r\n- Can be snippets with \"Read more\" links\r\n\r\n**Use Cases**\r\n- Different ways product is used\r\n- Helps visitors self-identify\r\n- \"For marketers who need X\" format\r\n\r\n**Personas / \"Built For\" Sections**\r\n- Explicitly call out target audience\r\n- \"Perfect for [role]\" blocks\r\n- Addresses \"Is this for me?\" question\r\n\r\n**FAQ Section**\r\n- Address common objections\r\n- Good for SEO\r\n- Reduces support burden\r\n- 5-10 most common questions\r\n\r\n**Comparison Section**\r\n- vs. competitors (name them or don't)\r\n- vs. status quo (spreadsheets, manual processes)\r\n- Tables or side-by-side format\r\n\r\n**Integrations / Partners**\r\n- Logos of tools you connect with\r\n- \"Works with your stack\" messaging\r\n- Builds credibility\r\n\r\n**Founder Story / Manifesto**\r\n- Why you built this\r\n- What you believe\r\n- Emotional connection\r\n- Differentiates from faceless competitors\r\n\r\n**Demo / Product Tour**\r\n- Interactive demos\r\n- Video walkthroughs\r\n- GIF previews\r\n- Shows product in action\r\n\r\n**Pricing Preview**\r\n- Teaser even on non-pricing pages\r\n- Starting price or \"from $X/mo\"\r\n- Moves decision-makers forward\r\n\r\n**Guarantee / Risk Reversal**\r\n- Money-back guarantee\r\n- Free trial terms\r\n- \"Cancel anytime\"\r\n- Reduces friction\r\n\r\n**Stats Section**\r\n- Key metrics that build credibility\r\n- \"10,000+ customers\"\r\n- \"4.9/5 rating\"\r\n- \"$2M saved for customers\"\r\n\r\n---\r\n\r\n## Page Structure Templates\r\n\r\n### Feature-Heavy Page (Weak)\r\n\r\n```\r\n1. Hero\r\n2. Feature 1\r\n3. Feature 2\r\n4. Feature 3\r\n5. Feature 4\r\n6. CTA\r\n```\r\n\r\nThis is a list, not a persuasive narrative.\r\n\r\n---\r\n\r\n### Varied, Engaging Page (Strong)\r\n\r\n```\r\n1. Hero with clear value prop\r\n2. Social proof bar (logos or stats)\r\n3. Problem/pain section\r\n4. How it works (3 steps)\r\n5. Key benefits (2-3, not 10)\r\n6. Testimonial\r\n7. Use cases or personas\r\n8. Comparison to alternatives\r\n9. Case study snippet\r\n10. FAQ\r\n11. Final CTA with guarantee\r\n```\r\n\r\nThis tells a story and addresses objections.\r\n\r\n---\r\n\r\n### Compact Landing Page\r\n\r\n```\r\n1. Hero (headline, subhead, CTA, image)\r\n2. Social proof bar\r\n3. 3 key benefits with icons\r\n4. Testimonial\r\n5. How it works (3 steps)\r\n6. Final CTA with guarantee\r\n```\r\n\r\nGood for ad landing pages where brevity matters.\r\n\r\n---\r\n\r\n### Enterprise/B2B Landing Page\r\n\r\n```\r\n1. Hero (outcome-focused headline)\r\n2. Logo bar (recognizable companies)\r\n3. Problem section (business pain)\r\n4. Solution overview\r\n5. Use cases by role/department\r\n6. Security/compliance section\r\n7. Integration logos\r\n8. Case study with metrics\r\n9. ROI/value section\r\n10. Contact/demo CTA\r\n```\r\n\r\nAddresses enterprise buyer concerns.\r\n\r\n---\r\n\r\n### Product Launch Page\r\n\r\n```\r\n1. Hero with launch announcement\r\n2. Video demo or walkthrough\r\n3. Feature highlights (3-5)\r\n4. Before/after comparison\r\n5. Early testimonials\r\n6. Launch pricing or early access offer\r\n7. CTA with urgency\r\n```\r\n\r\nGood for ProductHunt, launches, or announcements.\r\n\r\n---\r\n\r\n## Section Writing Tips\r\n\r\n### Problem Section\r\n\r\nStart with phrases like:\r\n- \"You know the feeling...\"\r\n- \"If you're like most [role]...\"\r\n- \"Every day, [audience] struggles with...\"\r\n- \"We've all been there...\"\r\n\r\nThen describe:\r\n- The specific frustration\r\n- The time/money wasted\r\n- The impact on their work/life\r\n\r\n### Benefits Section\r\n\r\nFor each benefit, include:\r\n- **Headline**: The outcome they get\r\n- **Body**: How it works (1-2 sentences)\r\n- **Proof**: Number, testimonial, or example (optional)\r\n\r\n### How It Works Section\r\n\r\nEach step should be:\r\n- **Numbered**: Creates sense of progress\r\n- **Simple verb**: \"Connect,\" \"Set up,\" \"Get\"\r\n- **Outcome-oriented**: What they get from this step\r\n\r\nExample:\r\n1. Connect your tools (takes 2 minutes)\r\n2. Set your preferences\r\n3. Get automated reports every Monday\r\n\r\n### Testimonial Selection\r\n\r\nBest testimonials include:\r\n- Specific results (\"increased conversions by 32%\")\r\n- Before/after context (\"We used to spend hours...\")\r\n- Role + company for credibility\r\n- Something quotable and specific\r\n\r\nAvoid testimonials that just say:\r\n- \"Great product!\"\r\n- \"Love it!\"\r\n- \"Easy to use!\"\r\n\r\n---\r\n\r\n## Clarity & Message-Market Fit\r\n\r\nHeadline formulas give you the shape of a line. These tools tell you whether the line is actually *working*: whether it's clear, whether it maps to how the reader already thinks, and whether it lands with the right person. Positioning is the prologue to your novel: it sets up everything that follows. Get it clear and the rest of the page writes itself.\r\n\r\n### The \"Now you can\" Test\r\n\r\nA fast gut-check for any headline or benefit line. Mentally prefix it with **\"Now you can…\"**. If the result is both **compelling** and **true**, the line is doing its job. If it reads as vague, obvious, or a stretch, rewrite it.\r\n\r\nThe test works because \"Now you can…\" forces the copy into the reader's world. It has to name a concrete new ability they didn't have before. Feature-speak and buzzwords collapse under it.\r\n\r\n| Original line | \"Now you can…\" version | Verdict |\r\n|---------------|------------------------|---------|\r\n| \"Powerful analytics platform\" | Now you can… have a powerful analytics platform | Fails. not a new ability, just a description |\r\n| \"See which companies visit your site\" | Now you can… see which companies visit your site | Works. compelling + true |\r\n| \"Streamline your workflow\" | Now you can… streamline your workflow | Fails. vague, unfalsifiable |\r\n| \"Send unlimited docs, images, and audio in one place\" | Now you can… send unlimited docs, images, and audio in one place | Works. concrete + true |\r\n\r\nUse it as a filter, not a formula: draft with the headline formulas above, then run each candidate through \"Now you can…\" and keep the survivors.\r\n\r\n### The Human Action Model (landing-page narrative spine)\r\n\r\nLudwig von Mises' Human Action Model explains *why* anyone acts: a person acts only when three things line up. Every above-the-fold that converts follows the same three-beat spine:\r\n\r\n1. **Current discomfort**: the felt problem, named in the reader's own words. They have to recognize their situation (\"that's exactly me\").\r\n2. **Better vision**: a clearly imagined, more satisfying state. What life looks like once the discomfort is gone.\r\n3. **Path to action**: the belief that *this specific step* closes the gap between the two. The product is the bridge, and the CTA is how they cross it.\r\n\r\nMiss any beat and the reader stalls. No discomfort = no reason to move. No vision = no destination. No path = no reason to believe *you're* the way there.\r\n\r\n**Mapping it onto the hero:**\r\n\r\n| Beat | Where it usually lives | Example |\r\n|------|------------------------|---------|\r\n| Current discomfort | Eyebrow, subhead, or problem-framed headline | \"You shouldn't have to feel awkward sending out your scheduling link\" |\r\n| Better vision | Headline or subhead | \"Scheduling that feels considerate, not one-sided\" |\r\n| Path to action | CTA + supporting proof | \"Start scheduling free\" |\r\n\r\nThis is the transformation spine underneath the \"6 essential sections\" of a landing page (hero, social proof, problem, solution, how-it-works, and final CTA). The hero states the transformation; the rest of the page substantiates each beat.\r\n\r\n### The Perception Gap\r\n\r\nThe same benefit can read as a **selling point to one segment and a red flag to another**. The gap is between what *you* think you're saying and what a given reader hears through their own risk tolerance.\r\n\r\nThe fix is **matching the value prop to the reader's risk tolerance**. Segment first, then swap the framing.\r\n\r\n| Benefit as written | Startup / early-adopter hears | Enterprise / risk-averse hears |\r\n|--------------------|-------------------------------|--------------------------------|\r\n| \"Move fast. Ship in a weekend.\" | Speed, momentum (✅) | Immature, unstable (🚩) |\r\n| \"Brand-new approach\" | Innovative edge (✅) | Unproven, risky (🚩) |\r\n| \"Enterprise-grade security & SLAs\" | Bloated, slow, expensive (🚩) | Safe, trustworthy (✅) |\r\n| \"Trusted by the Fortune 500\" | Not built for me (🚩) | Proven, de-risked (✅) |\r\n\r\n**Value-prop swap in practice** (same product, two audiences):\r\n\r\n- *Startup landing page:* \"Ship your first integration this afternoon. Pay by card and skip the sales call.\"\r\n- *Enterprise landing page:* \"SOC 2 Type II, 99.99% uptime SLA, and a named implementation lead. Roll out with confidence.\"\r\n\r\nWhen a page has to serve both, don't average them into mush. Segment the traffic (separate pages, or a persona split) and let each read its own version of the truth.\r\n\r\n### Worked Example: SavvyCal (message-market fit)\r\n\r\nSavvyCal (a scheduling tool) originally led with feature-forward copy. They rewrote the hero around a single felt discomfort:\r\n\r\n> **\"You shouldn't have to feel awkward sending out your scheduling link.\"**\r\n\r\nThat one line **roughly tripled (3×) conversions**. It works because it hits all three beats of the Human Action Model at once:\r\n\r\n- **Discomfort:** the small social awkwardness of \"here's my link, pick a time,\" named exactly as users feel it.\r\n- **Vision:** scheduling that feels considerate to *both* people.\r\n- **Path:** SavvyCal's overlay-your-calendar mechanic is the bridge, so the CTA feels like the obvious next step.\r\n\r\nThe lesson: message-market fit beats feature lists. The winning line named a real feeling the reader hadn't heard a scheduling tool acknowledge before. Run your own hero through \"Now you can…\" and the Human Action Model to find that line.\r\n\r\n### Clarity Beats Cleverness (the metrics)\r\n\r\nWhen teams measure it, clarity is what moves the numbers. Clearer positioning and copy is associated with:\r\n\r\n- **+81% conversions**\r\n- **−38% sales cycle** (shorter time to close)\r\n- **−28% CAC** (lower customer acquisition cost)\r\n- **+175% referrals**\r\n\r\nThe mechanism: clear copy lets the *right* buyer self-qualify fast and the wrong one bounce early, so every downstream metric improves. Clever copy that requires decoding does the opposite. It adds a comprehension tax at the exact moment attention is scarcest.\r\n\r\n**Practical rule:** if a reader has to pause to figure out what you mean, you've already lost. When forced to choose between a clever line and a clear one, ship the clear one, then use the tests above (\"Now you can…\", the Human Action Model, the Perception Gap) to make the clear line compelling too.\r\n"},{"skillId":"copywriting","path":"references/natural-transitions.md","content":"# Natural Transitions\r\n\r\nTransitional phrases to guide readers through your content. Good signposting improves readability, user engagement, and helps search engines understand content structure.\r\n\r\nAdapted from: University of Manchester Academic Phrasebank (2023), Plain English Campaign, web content best practices\r\n\r\n---\r\n\r\n## Contents\r\n- Previewing Content Structure\r\n- Introducing a New Topic\r\n- Referring Back\r\n- Moving Between Sections\r\n- Indicating Addition\r\n- Indicating Contrast\r\n- Indicating Similarity\r\n- Indicating Cause and Effect\r\n- Giving Examples\r\n- Emphasising Key Points\r\n- Providing Evidence (neutral attribution, expert quotes, supporting claims)\r\n- Summarising Sections\r\n- Concluding Content\r\n- Question-Based Transitions\r\n- List Introductions\r\n- Hedging Language\r\n- Best Practice Guidelines\r\n- Transitions to Avoid (AI Tells)\r\n\r\n## Previewing Content Structure\r\n\r\nUse in long guides to orient readers. On marketing pages, start with the content instead.\r\n\r\n- Here's what we'll cover...\r\n- This guide walks you through...\r\n- Below, you'll find...\r\n- We'll start with X, then move to Y...\r\n- First, let's look at...\r\n- The sections below explain...\r\n\r\n---\r\n\r\n## Introducing a New Topic\r\n\r\n- Regarding X,...\r\n- Speaking of X,...\r\n- Now let's talk about X.\r\n- Another key factor is...\r\n- X is worth exploring because...\r\n\r\n---\r\n\r\n## Referring Back\r\n\r\nUse to connect ideas and reinforce key points:\r\n\r\n- As mentioned earlier,...\r\n- As we covered above,...\r\n- Remember when we discussed X?\r\n- Building on that point,...\r\n- Going back to X,...\r\n- Earlier, we explained that...\r\n\r\n---\r\n\r\n## Moving Between Sections\r\n\r\n- Now let's look at...\r\n- Next up:...\r\n- Moving on to...\r\n- With that covered, let's turn to...\r\n- Now that you understand X, here's Y.\r\n- That brings us to...\r\n\r\n---\r\n\r\n## Indicating Addition\r\n\r\n- Also,...\r\n- Plus,...\r\n- On top of that,...\r\n- What's more,...\r\n- Another benefit is...\r\n- Beyond that,...\r\n- In addition,...\r\n- There's also...\r\n\r\n**Note:** Avoid \"moreover\" and \"furthermore\" in marketing copy. They read as AI-generated.\r\n\r\n---\r\n\r\n## Indicating Contrast\r\n\r\n- However,...\r\n- But,...\r\n- That said,...\r\n- On the flip side,...\r\n- In contrast,...\r\n- Unlike X, Y...\r\n- While X is true, Y...\r\n- Despite this,...\r\n\r\n---\r\n\r\n## Indicating Similarity\r\n\r\n- Similarly,...\r\n- Likewise,...\r\n- In the same way,...\r\n- Just like X, Y also...\r\n- This mirrors...\r\n- The same applies to...\r\n\r\n---\r\n\r\n## Indicating Cause and Effect\r\n\r\n- So,...\r\n- This means...\r\n- As a result,...\r\n- That's why...\r\n- Because of this,...\r\n- This leads to...\r\n\r\n---\r\n\r\n## Giving Examples\r\n\r\n- For example,...\r\n- For instance,...\r\n- Here's an example:...\r\n- Take X, for instance.\r\n- Consider this:...\r\n- A good example is...\r\n- To illustrate,...\r\n- Like when...\r\n- Say you want to...\r\n\r\n---\r\n\r\n## Emphasising Key Points\r\n\r\n- Here's the key takeaway:...\r\n- The important thing is...\r\n- What matters most is...\r\n- Pay attention to...\r\n\r\n---\r\n\r\n## Providing Evidence\r\n\r\nUse when citing sources, data, or expert opinions:\r\n\r\n### Neutral attribution\r\n- According to [Source],...\r\n- [Source] reports that...\r\n- Research shows that...\r\n- Data from [Source] indicates...\r\n- A study by [Source] found...\r\n\r\n### Expert quotes\r\n- As [Expert] puts it,...\r\n- [Expert] explains,...\r\n- In the words of [Expert],...\r\n- [Expert] notes that...\r\n\r\n### Supporting claims\r\n- This is backed by...\r\n- Evidence suggests...\r\n- The numbers confirm...\r\n- This aligns with findings from...\r\n\r\n---\r\n\r\n## Summarising Sections\r\n\r\n- To recap,...\r\n- In short,...\r\n- Quick summary:...\r\n\r\n---\r\n\r\n## Concluding Content\r\n\r\n- Wrapping up,...\r\n- The bottom line is...\r\n- Here's what to do next:...\r\n- To sum up,...\r\n- Final thoughts:...\r\n- Ready to get started?...\r\n- Now it's your turn.\r\n\r\n**Note:** Avoid \"In conclusion\" at the start of a paragraph. It's overused and signals AI writing.\r\n\r\n---\r\n\r\n## Question-Based Transitions\r\n\r\nUseful in long-form content for conversational tone and featured snippet optimization. Use them as headings or questions the reader would really ask, then answer with substance. Don't use them as a setup for your own punchline, and keep them out of landing-page copy (see [ai-tells.md](ai-tells.md)).\r\n\r\n- So what does this mean for you?\r\n- How do you actually do this?\r\n- Wondering where to start?\r\n\r\n---\r\n\r\n## List Introductions\r\n\r\nFor numbered lists and step-by-step content:\r\n\r\n- Here's how to do it:\r\n- Follow these steps:\r\n- The process is straightforward:\r\n- Here's what you need to know:\r\n- Key things to consider:\r\n- The main factors are:\r\n\r\n---\r\n\r\n## Hedging Language\r\n\r\nFor claims that need qualification or aren't absolute:\r\n\r\n- may, might, could\r\n- tends to, generally\r\n- often, usually, typically\r\n- in most cases\r\n- it appears that\r\n- evidence suggests\r\n- this can help\r\n\r\n---\r\n\r\n## Best Practice Guidelines\r\n\r\n1. **Match tone to audience**: B2B content can be slightly more formal; B2C often benefits from conversational transitions\r\n2. **Vary your transitions**: Repeating the same phrase gets noticed (and not in a good way)\r\n3. **Don't over-signpost**: Trust your reader; every sentence doesn't need a transition\r\n4. **Use for scannability**: Transitions at paragraph starts help skimmers navigate\r\n5. **Keep it natural**: Read aloud; if it sounds forced, simplify\r\n6. **Front-load key info**: Put the important word or phrase early in the transition\r\n\r\n---\r\n\r\n## Transitions to Avoid (AI Tells)\r\n\r\nThese phrases are overused in AI-generated content:\r\n\r\n- \"That being said,...\"\r\n- \"It's worth noting that...\"\r\n- \"At its core,...\"\r\n- \"In today's digital landscape,...\"\r\n- \"When it comes to the realm of...\"\r\n- \"This begs the question...\"\r\n- \"Let's delve into...\"\r\n\r\nSee [ai-tells.md](ai-tells.md) for the full copy blacklist, including structural patterns like contrast reveals and negation lists.\r\n"},{"skillId":"cro","path":"references/experiments.md","content":"# Page CRO Experiment Ideas\r\n\r\nComprehensive list of A/B tests and experiments organized by page type.\r\n\r\n## Contents\r\n- Homepage Experiments (Hero Section, Trust & Social Proof, Features & Content, Navigation & UX)\r\n- Pricing Page Experiments (Price Presentation, Pricing UX, Objection Handling, Trust Signals)\r\n- Demo Request Page Experiments (Form Optimization, Page Content, CTA & Routing)\r\n- Resource/Blog Page Experiments (Content CTAs, Resource Section)\r\n- Landing Page Experiments (Message Match, Conversion Focus, Page Length)\r\n- Feature Page Experiments (Feature Presentation, Conversion Path)\r\n- Cross-Page Experiments (Site-Wide Tests, Navigation Tests)\r\n\r\n## Homepage Experiments\r\n\r\n### Hero Section\r\n\r\n| Test | Hypothesis |\r\n|------|------------|\r\n| Headline variations | Specific vs. abstract messaging |\r\n| Subheadline clarity | Add/refine to support headline |\r\n| CTA above fold | Include or exclude prominent CTA |\r\n| Hero visual format | Screenshot vs. GIF vs. illustration vs. video |\r\n| CTA button color | Test contrast and visibility |\r\n| CTA button text | \"Start Free Trial\" vs. \"Get Started\" vs. \"See Demo\" |\r\n| Interactive demo | Engage visitors immediately with product |\r\n\r\n### Trust & Social Proof\r\n\r\n| Test | Hypothesis |\r\n|------|------------|\r\n| Logo placement | Hero section vs. below fold |\r\n| Case study in hero | Show results immediately |\r\n| Trust badges | Add security, compliance, awards |\r\n| Social proof in headline | \"Join 10,000+ teams\" messaging |\r\n| Testimonial placement | Above fold vs. dedicated section |\r\n| Video testimonials | More engaging than text quotes |\r\n\r\n### Features & Content\r\n\r\n| Test | Hypothesis |\r\n|------|------------|\r\n| Feature presentation | Icons + descriptions vs. detailed sections |\r\n| Section ordering | Move high-value features up |\r\n| Secondary CTAs | Add/remove throughout page |\r\n| Benefit vs. feature focus | Lead with outcomes |\r\n| Comparison section | Show vs. competitors or status quo |\r\n\r\n### Navigation & UX\r\n\r\n| Test | Hypothesis |\r\n|------|------------|\r\n| Sticky navigation | Persistent nav with CTA |\r\n| Nav menu order | High-priority items at edges |\r\n| Nav CTA button | Add prominent button in nav |\r\n| Support widget | Live chat vs. AI chatbot |\r\n| Footer optimization | Clearer secondary conversions |\r\n| Exit intent popup | Capture abandoning visitors |\r\n\r\n---\r\n\r\n## Pricing Page Experiments\r\n\r\n### Price Presentation\r\n\r\n| Test | Hypothesis |\r\n|------|------------|\r\n| Annual vs. monthly display | Highlight savings or simplify |\r\n| Price points | $99 vs. $100 vs. $97 psychology |\r\n| \"Most Popular\" badge | Highlight target plan |\r\n| Number of tiers | 3 vs. 4 vs. 2 visible options |\r\n| Price anchoring | Order plans to anchor expectations |\r\n| Custom enterprise tier | Show vs. \"Contact Sales\" |\r\n\r\n### Pricing UX\r\n\r\n| Test | Hypothesis |\r\n|------|------------|\r\n| Pricing calculator | For usage-based pricing clarity |\r\n| Guided pricing flow | Multistep wizard vs. comparison table |\r\n| Feature comparison format | Table vs. expandable sections |\r\n| Monthly/annual toggle | With savings highlighted |\r\n| Plan recommendation quiz | Help visitors choose |\r\n| Checkout flow length | Steps required after plan selection |\r\n\r\n### Objection Handling\r\n\r\n| Test | Hypothesis |\r\n|------|------------|\r\n| FAQ section | Address pricing objections |\r\n| ROI calculator | Demonstrate value vs. cost |\r\n| Money-back guarantee | Prominent placement |\r\n| Per-user breakdowns | Clarity for team plans |\r\n| Feature inclusion clarity | What's in each tier |\r\n| Competitor comparison | Side-by-side value comparison |\r\n\r\n### Trust Signals\r\n\r\n| Test | Hypothesis |\r\n|------|------------|\r\n| Value testimonials | Quotes about ROI specifically |\r\n| Customer logos | Near pricing section |\r\n| Review scores | G2/Capterra ratings |\r\n| Case study snippet | Specific pricing/value results |\r\n\r\n---\r\n\r\n## Demo Request Page Experiments\r\n\r\n### Form Optimization\r\n\r\n| Test | Hypothesis |\r\n|------|------------|\r\n| Field count | Fewer fields, higher completion |\r\n| Multi-step vs. single | Progress bar encouragement |\r\n| Form placement | Above fold vs. after content |\r\n| Phone field | Include vs. exclude |\r\n| Field enrichment | Hide fields you can auto-fill |\r\n| Form labels | Inside field vs. above |\r\n\r\n### Page Content\r\n\r\n| Test | Hypothesis |\r\n|------|------------|\r\n| Benefits above form | Reinforce value before ask |\r\n| Demo preview | Video/GIF showing demo experience |\r\n| \"What You'll Learn\" | Set expectations clearly |\r\n| Testimonials near form | Reduce friction at decision point |\r\n| FAQ below form | Address common objections |\r\n| Video vs. text | Format for explaining value |\r\n\r\n### CTA & Routing\r\n\r\n| Test | Hypothesis |\r\n|------|------------|\r\n| CTA text | \"Book Your Demo\" vs. \"Schedule 15-Min Call\" |\r\n| On-demand option | Instant demo alongside live option |\r\n| Personalized messaging | Based on visitor data/source |\r\n| Navigation removal | Reduce page distractions |\r\n| Calendar integration | Inline booking vs. external link |\r\n| Qualification routing | Self-serve for some, sales for others |\r\n\r\n---\r\n\r\n## Resource/Blog Page Experiments\r\n\r\n### Content CTAs\r\n\r\n| Test | Hypothesis |\r\n|------|------------|\r\n| Floating CTAs | Sticky CTA on blog posts |\r\n| CTA placement | Inline vs. end-of-post only |\r\n| Reading time display | Estimated reading time |\r\n| Related resources | End-of-article recommendations |\r\n| Gated vs. free | Content access strategy |\r\n| Content upgrades | Specific to article topic |\r\n\r\n### Resource Section\r\n\r\n| Test | Hypothesis |\r\n|------|------------|\r\n| Navigation/filtering | Easier to find relevant content |\r\n| Search functionality | Find specific resources |\r\n| Featured resources | Highlight best content |\r\n| Layout format | Grid vs. list view |\r\n| Topic bundles | Grouped resources by theme |\r\n| Download tracking | Gate some, track engagement |\r\n\r\n---\r\n\r\n## Landing Page Experiments\r\n\r\n### Message Match\r\n\r\n| Test | Hypothesis |\r\n|------|------------|\r\n| Headline matching | Match ad copy exactly |\r\n| Visual matching | Match ad creative |\r\n| Offer alignment | Same offer as ad promised |\r\n| Audience-specific pages | Different pages per segment |\r\n\r\n### Conversion Focus\r\n\r\n| Test | Hypothesis |\r\n|------|------------|\r\n| Navigation removal | Single-focus page |\r\n| CTA repetition | Multiple CTAs throughout |\r\n| Form vs. button | Direct capture vs. click-through |\r\n| Urgency/scarcity | If genuine, test messaging |\r\n| Social proof density | Amount and placement |\r\n| Video inclusion | Explain offer with video |\r\n\r\n### Page Length\r\n\r\n| Test | Hypothesis |\r\n|------|------------|\r\n| Short vs. long | Quick conversion vs. complete argument |\r\n| Above-fold only | Minimal scroll required |\r\n| Section ordering | Most important content first |\r\n| Footer removal | Eliminate navigation |\r\n\r\n---\r\n\r\n## Feature Page Experiments\r\n\r\n### Feature Presentation\r\n\r\n| Test | Hypothesis |\r\n|------|------------|\r\n| Demo/screenshot | Show feature in action |\r\n| Use case examples | How customers use it |\r\n| Before/after | Impact visualization |\r\n| Video walkthrough | Feature tour |\r\n| Interactive demo | Try feature without signup |\r\n\r\n### Conversion Path\r\n\r\n| Test | Hypothesis |\r\n|------|------------|\r\n| Trial CTA | Feature-specific trial offer |\r\n| Related features | Cross-link to other features |\r\n| Comparison | vs. competitors' version |\r\n| Pricing mention | Connect to relevant plan |\r\n| Case study link | Feature-specific success story |\r\n\r\n---\r\n\r\n## Cross-Page Experiments\r\n\r\n### Site-Wide Tests\r\n\r\n| Test | Hypothesis |\r\n|------|------------|\r\n| Chat widget | Impact on conversions |\r\n| Cookie consent UX | Minimize friction |\r\n| Page load speed | Performance vs. features |\r\n| Mobile experience | Responsive optimization |\r\n| Accessibility | Impact on conversion |\r\n| Personalization | Dynamic content by segment |\r\n\r\n### Navigation Tests\r\n\r\n| Test | Hypothesis |\r\n|------|------------|\r\n| Menu structure | Information architecture |\r\n| Search placement | Help visitors find content |\r\n| CTA in nav | Always-visible conversion path |\r\n| Breadcrumbs | Navigation clarity |\r\n"},{"skillId":"cro","path":"references/form.md","content":"# Form CRO\r\n\r\nYou are an expert in form optimization. Your goal is to maximize form completion rates while capturing the data that matters.\r\n\r\n## Initial Assessment\r\n\r\n**Check for product marketing context first:**\r\nIf `.agents/product-marketing.md` exists (or `.claude/product-marketing.md` in older setups), read it before asking questions. Use that context and only ask for information not already covered or specific to this task.\r\n\r\nBefore providing recommendations, identify:\r\n\r\n1. **Form Type**\r\n   - Lead capture (gated content, newsletter)\r\n   - Contact form\r\n   - Demo/sales request\r\n   - Application form\r\n   - Survey/feedback\r\n   - Checkout form\r\n   - Quote request\r\n\r\n2. **Current State**\r\n   - How many fields?\r\n   - What's the current completion rate?\r\n   - Mobile vs. desktop split?\r\n   - Where do users abandon?\r\n\r\n3. **Business Context**\r\n   - What happens with form submissions?\r\n   - Which fields are actually used in follow-up?\r\n   - Are there compliance/legal requirements?\r\n\r\n---\r\n\r\n## Core Principles\r\n\r\n### 1. Every Field Has a Cost\r\nEach field reduces completion rate. Rule of thumb:\r\n- 3 fields: Baseline\r\n- 4-6 fields: 10-25% reduction\r\n- 7+ fields: 25-50%+ reduction\r\n\r\nFor each field, ask:\r\n- Is this absolutely necessary before we can help them?\r\n- Can we get this information another way?\r\n- Can we ask this later?\r\n\r\n### 2. Value Must Exceed Effort\r\n- Clear value proposition above form\r\n- Make what they get obvious\r\n- Reduce perceived effort (field count, labels)\r\n\r\n### 3. Reduce Cognitive Load\r\n- One question per field\r\n- Clear, conversational labels\r\n- Logical grouping and order\r\n- Smart defaults where possible\r\n\r\n---\r\n\r\n## Field-by-Field Optimization\r\n\r\n### Email Field\r\n- Single field, no confirmation\r\n- Inline validation\r\n- Typo detection (did you mean gmail.com?)\r\n- Proper mobile keyboard\r\n\r\n### Name Fields\r\n- Single \"Name\" vs. First/Last — test this\r\n- Single field reduces friction\r\n- Split needed only if personalization requires it\r\n\r\n### Phone Number\r\n- Make optional if possible\r\n- If required, explain why\r\n- Auto-format as they type\r\n- Country code handling\r\n\r\n### Company/Organization\r\n- Auto-suggest for faster entry\r\n- Enrichment after submission (HubSpot Breeze, Clay, Apollo, etc.)\r\n- Consider inferring from email domain\r\n\r\n### Job Title/Role\r\n- Dropdown if categories matter\r\n- Free text if wide variation\r\n- Consider making optional\r\n\r\n### Message/Comments (Free Text)\r\n- Make optional\r\n- Reasonable character guidance\r\n- Expand on focus\r\n\r\n### Dropdown Selects\r\n- \"Select one...\" placeholder\r\n- Searchable if many options\r\n- Consider radio buttons if < 5 options\r\n- \"Other\" option with text field\r\n\r\n### Checkboxes (Multi-select)\r\n- Clear, parallel labels\r\n- Reasonable number of options\r\n- Consider \"Select all that apply\" instruction\r\n\r\n---\r\n\r\n## Form Layout Optimization\r\n\r\n### Field Order\r\n1. Start with easiest fields (name, email)\r\n2. Build commitment before asking more\r\n3. Sensitive fields last (phone, company size)\r\n4. Logical grouping if many fields\r\n\r\n### Labels and Placeholders\r\n- Labels: Keep visible (not just placeholder) — placeholders disappear when typing, leaving users unsure what they're filling in\r\n- Placeholders: Examples, not labels\r\n- Help text: Only when genuinely helpful\r\n\r\n**Good:**\r\n```\r\nEmail\r\n[name@company.com]\r\n```\r\n\r\n**Bad:**\r\n```\r\n[Enter your email address]  ← Disappears on focus\r\n```\r\n\r\n### Visual Design\r\n- Sufficient spacing between fields\r\n- Clear visual hierarchy\r\n- CTA button stands out\r\n- Mobile-friendly tap targets (44px+)\r\n\r\n### Single Column vs. Multi-Column\r\n- Single column: Higher completion, mobile-friendly\r\n- Multi-column: Only for short related fields (First/Last name)\r\n- When in doubt, single column\r\n\r\n---\r\n\r\n## Multi-Step Forms\r\n\r\n### When to Use Multi-Step\r\n- More than 5-6 fields\r\n- Logically distinct sections\r\n- Conditional paths based on answers\r\n- Complex forms (applications, quotes)\r\n\r\n### Multi-Step Best Practices\r\n- Progress indicator (step X of Y)\r\n- Start with easy, end with sensitive\r\n- One topic per step\r\n- Allow back navigation\r\n- Save progress (don't lose data on refresh)\r\n- Clear indication of required vs. optional\r\n\r\n### Progressive Commitment Pattern\r\n1. Low-friction start (just email)\r\n2. More detail (name, company)\r\n3. Qualifying questions\r\n4. Contact preferences\r\n\r\n---\r\n\r\n## Error Handling\r\n\r\n### Inline Validation\r\n- Validate as they move to next field\r\n- Don't validate too aggressively while typing\r\n- Clear visual indicators (green check, red border)\r\n\r\n### Error Messages\r\n- Specific to the problem\r\n- Suggest how to fix\r\n- Positioned near the field\r\n- Don't clear their input\r\n\r\n**Good:** \"Please enter a valid email address (e.g., name@company.com)\"\r\n**Bad:** \"Invalid input\"\r\n\r\n### On Submit\r\n- Focus on first error field\r\n- Summarize errors if multiple\r\n- Preserve all entered data\r\n- Don't clear form on error\r\n\r\n---\r\n\r\n## Submit Button Optimization\r\n\r\n### Button Copy\r\nWeak: \"Submit\" | \"Send\"\r\nStrong: \"[Action] + [What they get]\"\r\n\r\nExamples:\r\n- \"Get My Free Quote\"\r\n- \"Download the Guide\"\r\n- \"Request Demo\"\r\n- \"Send Message\"\r\n- \"Start Free Trial\"\r\n\r\n### Button Placement\r\n- Immediately after last field\r\n- Left-aligned with fields\r\n- Sufficient size and contrast\r\n- Mobile: Sticky or clearly visible\r\n\r\n### Post-Submit States\r\n- Loading state (disable button, show spinner)\r\n- Success confirmation (clear next steps)\r\n- Error handling (clear message, focus on issue)\r\n\r\n---\r\n\r\n## Trust and Friction Reduction\r\n\r\n### Near the Form\r\n- Privacy statement: \"We'll never share your info\"\r\n- Security badges if collecting sensitive data\r\n- Testimonial or social proof\r\n- Expected response time\r\n\r\n### Reducing Perceived Effort\r\n- \"Takes 30 seconds\"\r\n- Field count indicator\r\n- Remove visual clutter\r\n- Generous white space\r\n\r\n### Addressing Objections\r\n- \"No spam, unsubscribe anytime\"\r\n- \"We won't share your number\"\r\n- \"No credit card required\"\r\n\r\n---\r\n\r\n## Form Types: Specific Guidance\r\n\r\n### Lead Capture (Gated Content)\r\n- Minimum viable fields (often just email)\r\n- Clear value proposition for what they get\r\n- Consider asking enrichment questions post-download\r\n- Test email-only vs. email + name\r\n\r\n### Contact Form\r\n- Essential: Email/Name + Message\r\n- Phone optional\r\n- Set response time expectations\r\n- Offer alternatives (chat, phone)\r\n\r\n### Demo Request\r\n- Name, Email, Company required\r\n- Phone: Optional with \"preferred contact\" choice\r\n- Use case/goal question helps personalize\r\n- Calendar embed can increase show rate\r\n\r\n### Quote/Estimate Request\r\n- Multi-step often works well\r\n- Start with easy questions\r\n- Technical details later\r\n- Save progress for complex forms\r\n\r\n### Survey Forms\r\n- Progress bar essential\r\n- One question per screen for engagement\r\n- Skip logic for relevance\r\n- Consider incentive for completion\r\n\r\n---\r\n\r\n## Mobile Optimization\r\n\r\n- Larger touch targets (44px minimum height)\r\n- Appropriate keyboard types (email, tel, number)\r\n- Autofill support\r\n- Single column only\r\n- Sticky submit button\r\n- Minimal typing (dropdowns, buttons)\r\n\r\n---\r\n\r\n## Measurement\r\n\r\n### Key Metrics\r\n- **Form start rate**: Page views → Started form\r\n- **Completion rate**: Started → Submitted\r\n- **Field drop-off**: Which fields lose people\r\n- **Error rate**: By field\r\n- **Time to complete**: Total and by field\r\n- **Mobile vs. desktop**: Completion by device\r\n\r\n### What to Track\r\n- Form views\r\n- First field focus\r\n- Each field completion\r\n- Errors by field\r\n- Submit attempts\r\n- Successful submissions\r\n\r\n---\r\n\r\n## Output Format\r\n\r\n### Form Audit\r\nFor each issue:\r\n- **Issue**: What's wrong\r\n- **Impact**: Estimated effect on conversions\r\n- **Fix**: Specific recommendation\r\n- **Priority**: High/Medium/Low\r\n\r\n### Recommended Form Design\r\n- **Required fields**: Justified list\r\n- **Optional fields**: With rationale\r\n- **Field order**: Recommended sequence\r\n- **Copy**: Labels, placeholders, button\r\n- **Error messages**: For each field\r\n- **Layout**: Visual guidance\r\n\r\n### Test Hypotheses\r\nIdeas to A/B test with expected outcomes\r\n\r\n---\r\n\r\n## Experiment Ideas\r\n\r\n### Form Structure Experiments\r\n\r\n**Layout & Flow**\r\n- Single-step form vs. multi-step with progress bar\r\n- 1-column vs. 2-column field layout\r\n- Form embedded on page vs. separate page\r\n- Vertical vs. horizontal field alignment\r\n- Form above fold vs. after content\r\n\r\n**Field Optimization**\r\n- Reduce to minimum viable fields\r\n- Add or remove phone number field\r\n- Add or remove company/organization field\r\n- Test required vs. optional field balance\r\n- Use field enrichment to auto-fill known data\r\n- Hide fields for returning/known visitors\r\n\r\n**Smart Forms**\r\n- Add real-time validation for emails and phone numbers\r\n- Progressive profiling (ask more over time)\r\n- Conditional fields based on earlier answers\r\n- Auto-suggest for company names\r\n\r\n---\r\n\r\n### Copy & Design Experiments\r\n\r\n**Labels & Microcopy**\r\n- Test field label clarity and length\r\n- Placeholder text optimization\r\n- Help text: show vs. hide vs. on-hover\r\n- Error message tone (friendly vs. direct)\r\n\r\n**CTAs & Buttons**\r\n- Button text variations (\"Submit\" vs. \"Get My Quote\" vs. specific action)\r\n- Button color and size testing\r\n- Button placement relative to fields\r\n\r\n**Trust Elements**\r\n- Add privacy assurance near form\r\n- Show trust badges next to submit\r\n- Add testimonial near form\r\n- Display expected response time\r\n\r\n---\r\n\r\n### Form Type-Specific Experiments\r\n\r\n**Demo Request Forms**\r\n- Test with/without phone number requirement\r\n- Add \"preferred contact method\" choice\r\n- Include \"What's your biggest challenge?\" question\r\n- Test calendar embed vs. form submission\r\n\r\n**Lead Capture Forms**\r\n- Email-only vs. email + name\r\n- Test value proposition messaging above form\r\n- Gated vs. ungated content strategies\r\n- Post-submission enrichment questions\r\n\r\n**Contact Forms**\r\n- Add department/topic routing dropdown\r\n- Test with/without message field requirement\r\n- Show alternative contact methods (chat, phone)\r\n- Expected response time messaging\r\n\r\n---\r\n\r\n### Mobile & UX Experiments\r\n\r\n- Larger touch targets for mobile\r\n- Test appropriate keyboard types by field\r\n- Sticky submit button on mobile\r\n- Auto-focus first field on page load\r\n- Test form container styling (card vs. minimal)\r\n\r\n---\r\n\r\n## Task-Specific Questions\r\n\r\n1. What's your current form completion rate?\r\n2. Do you have field-level analytics?\r\n3. What happens with the data after submission?\r\n4. Which fields are actually used in follow-up?\r\n5. Are there compliance/legal requirements?\r\n6. What's the mobile vs. desktop split?\r\n\r\n---\r\n\r\n## Related Skills\r\n\r\n- **signup**: For account creation forms\r\n- **popups**: For forms inside popups/modals\r\n- **cro**: For the page containing the form\r\n- **ab-testing**: For testing form changes\r\n"},{"skillId":"customer-research","path":"references/interviews-and-surveys.md","content":"# Customer Research — Interviews & Surveys (Primary Research)\r\n\r\nGoing to the source. Mode 2 mines what customers already said in public; this is Mode 3 — you *ask*. Customer research is your marketing cheat code, and the highest-signal version is talking to customers directly.\r\n\r\nThree primary-research pillars, best used together:\r\n1. **Video calls** — deep, unstructured, follow-the-thread (this file)\r\n2. **Surveys** — broad, quantified, benchmarkable (this file)\r\n3. **Online sleuthing** — Sales Safari and watering-hole mining (see `references/source-guides.md`)\r\n\r\n---\r\n\r\n## The First Rule of Customer Research\r\n\r\n> The first rule of customer research: you do not talk about customer research.\r\n\r\nKeep it casual. The moment a customer thinks they're in \"a research study\" they perform — they give you the polished, socially-acceptable answer instead of the real one. Frame calls as a chat, not an interview. Don't lead. Don't pitch. Don't defend the product. You're there to listen and learn how they actually think, talk, and decide.\r\n\r\n**Prove yourself wrong, not right.** The point of research is not validation — it's disconfirmation. Go in trying to *break* your assumptions, not confirm them. If you only look for evidence you're right, you'll find it, and it'll be worthless.\r\n\r\n- **Dropbox example**: the team assumed users would care most about sync *speed*. Research aimed at disproving the assumption revealed users cared more that files were *reliably there and safe* than about raw speed. Chasing the confirmation would have optimized the wrong thing.\r\n- Ask questions that could return an answer you don't want to hear. If none of your questions can prove you wrong, rewrite them.\r\n\r\n---\r\n\r\n## Sales Safari (Amy Hoy)\r\n\r\nAmy Hoy's **Sales Safari**: go where your audience already congregates and observe them in the wild, without interrupting. It's structured online sleuthing — read threads, reviews, comments, and forum posts to mine four things:\r\n\r\n| Mine for | What you're capturing |\r\n|----------|-----------------------|\r\n| **Pains** | The problems, frustrations, and workarounds they describe unprompted |\r\n| **Jargon** | The exact words, phrases, and shorthand they use — copy gold |\r\n| **Recommendations** | What they tell each other to buy, try, or avoid |\r\n| **Worldview** | Their beliefs, biases, and how they see themselves and the problem |\r\n\r\nSafari is passive (you observe) where interviews are active (you ask). Run it first: it tells you what to ask about, and in whose words. For per-platform search operators and extraction tips, see `references/source-guides.md`.\r\n\r\n---\r\n\r\n## Customer Interviews (Video Calls)\r\n\r\n### Recruit your best customers\r\n\r\nDon't interview whoever answers first. Interview the customers you want *more of*. Segment your CRM and prioritize by:\r\n\r\n- **High deal size** — the accounts worth the most\r\n- **Short sales cycle** — they \"got it\" fast; their language converts fast\r\n- **Low churn / high retention** — they got real, lasting value\r\n\r\nRecruitment methods, in order of leverage:\r\n1. **Segment the CRM** by the three signals above and pull a shortlist\r\n2. **Ask sales and CS for referrals** — they know who loves the product and who articulates why\r\n3. **Always close every call with**: *\"Who else should we talk to?\"* — the single most reliable way to compound your interview pipeline\r\n\r\n### Incentives\r\n\r\n- **$50 per call** (~30 min); **$5 per survey response**\r\n- Aim for **10 calls, be happy with 5.** Signal saturates fast — by call 5-6 you'll hear the same themes repeat. Don't stall the project waiting for a perfect sample.\r\n- Offer the incentive up front; it dramatically lifts response rate and shows you value their time. Gift cards work fine.\r\n\r\n### Outreach email template\r\n\r\nKeep it short, casual, specific, and low-commitment. Not a \"research study.\"\r\n\r\n```\r\nSubject: Quick favor — 30 min, on us\r\n\r\nHi [First name],\r\n\r\nI'm [name] from [company]. I'm trying to get better at helping customers\r\nlike you, and I'd love to steal 30 minutes to hear how [product area] is\r\nactually working for you — what's good, what's annoying, what you wish\r\nwere different. No pitch, no agenda.\r\n\r\nAs a thank you I'll send you a $50 [Amazon/Visa] gift card.\r\n\r\nAre you free [day] or [day] this week? Here's my calendar: [link]\r\n\r\nThanks either way,\r\n[Name]\r\n```\r\n\r\nNotes:\r\n- \"No pitch, no agenda\" and \"what's annoying\" signal you actually want the truth.\r\n- One clear ask, two concrete time options, a booking link. Remove friction.\r\n- Never say \"customer research study.\"\r\n\r\n---\r\n\r\n## Keep Asking Why (5-Why Laddering)\r\n\r\nThe first answer is never the real answer. **Keep Asking Why** — ladder each response down 3-5 levels until you hit the root motivation, the business outcome, or the emotional driver. Surface answers are features; the bottom of the ladder is why they pay and why they stay.\r\n\r\n**Worked example** — laddering a churn signal to NRR:\r\n\r\n- **Q: Why did you downgrade your plan last quarter?**\r\n  - \"We weren't using the advanced reports.\"\r\n- **Why weren't you using them?**\r\n  - \"Nobody on the team knew how to build one.\"\r\n- **Why didn't anyone learn?**\r\n  - \"The person who set us up left, and onboarding never got re-run for the new hires.\"\r\n- **Why did that matter enough to downgrade?**\r\n  - \"Without the reports, my boss couldn't see the ROI, so at renewal it looked like an easy cost to cut.\"\r\n- **Why is that the real risk?**\r\n  - \"If leadership can't see value, we churn — and if we *had* seen it, we'd probably have added seats, not cut them.\"\r\n\r\nThe surface answer was \"we don't use reports.\" The root is an **onboarding gap that quietly converts an expansion (NRR up) into a contraction or churn (NRR down)**. You can't fix \"they don't use reports.\" You can fix re-onboarding new hires and surfacing ROI to the buyer — which is the difference between contraction and net revenue retention.\r\n\r\n**Pain points vs. passion points.** Ladder for both. Pain points are what's broken and what they'll pay to escape. Passion points are what they love, brag about, and would be \"very disappointed\" to lose. Passion points drive retention and referrals; pains drive acquisition. Capture both in their words.\r\n\r\n---\r\n\r\n## Surveys\r\n\r\n### The PMF Survey (Sean Ellis / Superhuman)\r\n\r\nThe single most useful survey question, from Sean Ellis and popularized by Superhuman's Rahul Vohra:\r\n\r\n> **\"How would you feel if you could no longer use [product]?\"**\r\n> - Very disappointed\r\n> - Somewhat disappointed\r\n> - Not disappointed\r\n> - N/A — I no longer use it\r\n\r\n**The 40% benchmark**: if **40% or more** of users answer **\"very disappointed,\"** you likely have product/market fit. Below 40%, keep iterating. **Superhuman reached 58%** by engineering their roadmap around this metric — segmenting on the \"very disappointed\" cohort, doubling down on what that cohort loved, and converting the \"somewhat disappointed\" fence-sitters.\r\n\r\nRun it as a recurring pulse, not once. Follow the core question with:\r\n- *\"What type of person do you think would most benefit from [product]?\"* (sharpens ICP)\r\n- *\"What is the main benefit you receive from [product]?\"* (your positioning, in their words)\r\n- *\"How can we improve [product] for you?\"* (roadmap fuel from fence-sitters)\r\n\r\nSegment every answer by the \"very disappointed\" cohort vs. the rest — that cohort is your true market.\r\n\r\n### Survey design guardrails\r\n\r\n- Keep it short — every extra question drops completion.\r\n- Prefer open-ended for language mining; multiple-choice answers are artifacts of the options you gave.\r\n- Don't lead. A question that telegraphs the answer you want returns the answer you want, not the truth.\r\n- $5/response incentive lifts completion; deliver it on submit.\r\n\r\n---\r\n\r\n## Case Anchors\r\n\r\n- **Airbnb (host photography)**: research revealed listings failed because the *photos* were bad, not the pricing or copy. Airbnb sent photographers to shoot host homes — a fix nobody would have guessed without talking to the market. Research points at problems you can't see from inside.\r\n- **Dropbox (confirmation bias)**: assumed sync speed mattered most; disconfirming research showed reliability/safety of files mattered more. Prove yourself wrong.\r\n- **Superhuman (PMF survey)**: engineered the roadmap around the \"very disappointed\" metric, 40% → 58%.\r\n\r\n---\r\n\r\n## Where This Fits\r\n\r\n- **Analyze what you gather** with the Mode 1 extraction framework in `SKILL.md` (jobs to be done, pains, triggers, outcomes, language, alternatives) and the confidence guardrails.\r\n- **Mine public sources** (the passive Safari half) via `references/source-guides.md`.\r\n- Interview + survey signal is **first-party and high-confidence** — weight it above scraped online sources when they conflict.\r\n"}];
+export const PACKB10 = [
+  {
+    skillId: "content-strategy",
+    path: "references/content-distribution.md",
+    content: `# Content Distribution Spine\r
+\r
+The "distribute" half of content strategy. Creating a great piece is table stakes; the leverage is in getting it seen. This reference expands the **Create Once, Distribute Twice** section of the skill.\r
+\r
+Cross-links: ORB channel-type playbook lives in **launch**; atomization/repurposing workflows (podcast → clips, blog → thread) live in **social**. This file consolidates the strategy that ties them together—don't re-derive ORB from scratch here.\r
+\r
+## Create Once, Distribute Twice\r
+\r
+One exceptional piece, reformatted across channels—not a fresh piece per platform. The math is simple: a flagship piece plus ten repurposed cuts reaches far more people than eleven mediocre native posts, at a fraction of the effort.\r
+\r
+The discipline is **designing the piece to be distributed**:\r
+- Write subheads that read as standalone social posts.\r
+- Structure sections modularly so they can be lifted out and stand alone.\r
+- Pre-identify the pull quotes, stats, and frames you'll turn into graphics or short clips.\r
+- Know the atomized outputs before you write, so the source piece contains them.\r
+\r
+Treat the flagship as the master; every channel gets a cut derived from it.\r
+\r
+## The ORB Framework as a Funnel\r
+\r
+Own, Rent, Borrow—read as a discovery → engagement → conversion funnel:\r
+\r
+| Layer | Channels | Funnel role | You control |\r
+|---|---|---|---|\r
+| **Borrowed** | Podcasts, guest posts, partnerships, PR, other people's audiences | Discovery / breakthrough | Nothing—it's a loan |\r
+| **Rented** | Social platforms, ad networks, marketplaces | Engagement / reach | The content, not the audience or algorithm |\r
+| **Owned** | Email list, blog, community, app | Conversion / retention | Everything—the durable asset |\r
+\r
+The strategic move: use borrowed and rented reach to funnel strangers into owned channels where you can convert and retain them. Borrowed and rented are rented land; owned is the only asset you keep.\r
+\r
+## The Ownership Paradox\r
+\r
+Most teams invert the priority: they spend ~90% of effort on borrowed and rented channels they don't control, and neglect the owned assets that actually convert. The paradox is that the channels getting the least attention (email, blog, community) are the ones that compound and can't be revoked. Rebalance toward owned as the destination for all upstream effort.\r
+\r
+## Failure Modes\r
+\r
+- **Spray-and-pray** — publishing across every platform with no flagship and no repurposing system. Effort scatters; nothing compounds; each post starts from zero.\r
+- **Platform dependency** — building your audience on rented land. Facebook organic reach collapsed from ~20% to under 2% as the platform monetized. Any rented channel can throttle, deprioritize, or de-platform you with no recourse. The lesson isn't "avoid rented"—it's "never let rented be the endpoint."\r
+\r
+## Platform Half-Lives\r
+\r
+Content decays at wildly different rates by channel. Match the piece to the channel's shelf life:\r
+\r
+| Channel | Rough half-life | Implication |\r
+|---|---|---|\r
+| Twitter/X post | Minutes–hours | Post often; repost; thread for reach |\r
+| Instagram / Facebook | ~a day | Frequent cadence; stories are ephemeral by design |\r
+| LinkedIn post | ~a day, longer for strong performers | Fewer, higher-effort posts |\r
+| TikTok / Reels / Shorts | Days–weeks (algorithmic resurfacing) | Evergreen hooks can re-surface long after posting |\r
+| YouTube video | Months–years | Search-driven; compounds like a blog post |\r
+| Blog post / SEO | Years | The long tail; the compounding asset |\r
+| Email | Sent once, but archived / repurposable | One-shot attention; harvest into other formats |\r
+\r
+Short half-life channels reward frequency and repetition; long half-life channels reward depth and evergreen framing. Owned, long-half-life formats (blog, YouTube, email archive) are where distribution effort compounds.\r
+\r
+## The Content Distribution Flywheel\r
+\r
+Distribution isn't a linear checklist—it's a loop that feeds itself:\r
+\r
+1. **Create** one exceptional flagship piece (guide, video, podcast, original research), with distribution hooks built in.\r
+2. **Atomize** it into channel-native cuts—clips, threads, carousels, quote graphics, email, subhead-posts.\r
+3. **Distribute** across owned → rented → borrowed, routing everything back to owned.\r
+4. **Engage** with the responses; capture the questions, objections, and reactions.\r
+5. **Feed back** — the engagement surfaces the next flagship topic (what resonated, what got asked), and top-performing atoms signal what to make more of.\r
+\r
+Each turn of the loop lowers the cost of the next piece (you learn what lands) and grows the owned audience that amplifies it. The flywheel is why consistent distributors pull away from one-off publishers over time.\r
+\r
+## Atomization Checklist (per flagship)\r
+\r
+For each major piece, produce (see **social** for the platform-native execution):\r
+- [ ] 3–5 standalone social posts from the subheads/key points\r
+- [ ] 1 thread (Twitter/X) or carousel (LinkedIn/Instagram) of the core argument\r
+- [ ] 2–4 short-form video clips (if source is video/podcast)\r
+- [ ] 1–2 quote or stat graphics\r
+- [ ] 1 email to the owned list linking the flagship\r
+- [ ] Repost/reshare schedule across the piece's half-life (don't post once and move on)\r
+\r
+## Related\r
+\r
+- **launch** — ORB channel-type playbook and launch-day distribution\r
+- **social** — atomization/repurposing workflows and platform-native execution\r
+- **emails** — the owned channel that converts distributed attention\r
+- **ai-seo** — making owned content citable by LLMs (another distribution surface)\r
+`,
+  },
+  {
+    skillId: "content-strategy",
+    path: "references/headless-cms.md",
+    content:
+      "# Headless CMS Guide\r\n\r\nReference for choosing, modeling, and implementing a headless CMS for marketing content.\r\n\r\n## When to Use This Reference\r\n\r\nUse this when selecting a CMS for a new project, designing content models for marketing sites, setting up editorial workflows, or connecting CMS content to programmatic pages.\r\n\r\n---\r\n\r\n## Headless vs Traditional CMS\r\n\r\nA headless CMS separates content management from presentation. Content is stored in a structured backend and delivered via API to any frontend.\r\n\r\n### When Headless Makes Sense\r\n\r\n- Multiple frontends consume the same content (web, mobile, email)\r\n- Developers want full control over the frontend stack\r\n- Content needs to be reused across channels\r\n- You're building with a modern framework (Next.js, Remix, Astro)\r\n- Marketing needs structured, reusable content blocks\r\n\r\n### When Traditional Works Better\r\n\r\n- Small team with no dedicated developers\r\n- Simple blog or brochure site\r\n- WYSIWYG editing is a hard requirement\r\n- Budget is tight and WordPress/Webflow does the job\r\n\r\n### Decision Checklist\r\n\r\n| Factor | Headless | Traditional |\r\n|--------|----------|-------------|\r\n| Multi-channel delivery | Yes | Limited |\r\n| Developer control | Full | Constrained |\r\n| Non-technical editing | Requires setup | Built-in |\r\n| Time to launch | Longer | Faster |\r\n| Content reuse | Native | Manual |\r\n| Hosting flexibility | Any frontend | Platform-dependent |\r\n\r\n---\r\n\r\n## Content Modeling for Marketing\r\n\r\n### Core Principles\r\n\r\n1. **Think in types, not pages.** A \"Landing Page\" is a content type with fields — not an HTML file. This lets you reuse components across pages.\r\n2. **Separate content from presentation.** Store the headline text, not the styled headline. Presentation belongs in the frontend.\r\n3. **Design for reuse.** If testimonials appear on 5 pages, create a Testimonial type and reference it — don't duplicate.\r\n4. **Keep models flat.** Deeply nested structures are hard to query and maintain. Prefer references over nesting.\r\n\r\n### Common Marketing Content Types\r\n\r\n| Type | Key Fields | Notes |\r\n|------|-----------|-------|\r\n| **Landing Page** | title, slug, hero, sections[], seo | Modular sections for flexibility |\r\n| **Blog Post** | title, slug, body, author, category, tags, publishedAt, seo | Rich text or Portable Text body |\r\n| **Case Study** | title, customer, challenge, solution, results, metrics[], logo | Link to related products/features |\r\n| **Testimonial** | quote, author, role, company, avatar, rating | Reference from landing pages |\r\n| **FAQ** | question, answer, category | Group by category for programmatic pages |\r\n| **Author** | name, bio, avatar, social links | Reference from blog posts |\r\n| **CTA Block** | heading, body, buttonText, buttonUrl, variant | Reusable across pages |\r\n\r\n### SEO Fields Checklist\r\n\r\nEvery page-level content type needs:\r\n\r\n- `metaTitle` — 50-60 characters\r\n- `metaDescription` — 150-160 characters\r\n- `ogImage` — 1200x630px social preview\r\n- `slug` — URL path segment\r\n- `canonicalUrl` — optional override\r\n- `noIndex` — boolean for excluding from search\r\n- `structuredData` — optional JSON-LD override\r\n\r\n---\r\n\r\n## Editorial Workflows\r\n\r\n### Draft → Review → Publish Cycle\r\n\r\n1. **Draft** — Author creates or edits content\r\n2. **Review** — Editor reviews for accuracy, brand voice, SEO\r\n3. **Approve** — Stakeholder signs off\r\n4. **Schedule** — Set publish date/time\r\n5. **Publish** — Content goes live via API\r\n\r\n### Preview APIs\r\n\r\nAll major headless CMS platforms support draft previews:\r\n\r\n- **Sanity**: Real-time preview with `useLiveQuery` or Presentation tool\r\n- **Contentful**: Preview API (`preview.contentful.com`) with separate access token\r\n- **Strapi**: Draft & Publish system with `status=draft` query parameter (v5; replaces v4's `publicationState`)\r\n\r\nSet up a preview route in your frontend (e.g., `/api/preview`) that authenticates and renders draft content.\r\n\r\n### Roles and Permissions\r\n\r\n| Role | Can Create | Can Edit | Can Publish | Can Delete |\r\n|------|:----------:|:--------:|:-----------:|:----------:|\r\n| Author | Yes | Own | No | Own drafts |\r\n| Editor | Yes | All | Yes | Drafts |\r\n| Admin | Yes | All | Yes | All |\r\n\r\nExact permission models vary by platform. Sanity uses role-based access. Contentful has space-level roles. Strapi has granular RBAC.\r\n\r\n---\r\n\r\n## Platform Comparison\r\n\r\n| Feature | Sanity | Contentful | Strapi |\r\n|---------|--------|------------|--------|\r\n| Hosting | Cloud (managed) | Cloud (managed) | Self-hosted or Cloud |\r\n| Query Language | GROQ | REST / GraphQL | REST / GraphQL |\r\n| Free Tier | Generous | Limited | Open source (free) |\r\n| Real-time Collab | Yes (built-in) | Limited | No |\r\n| Best For | Developer flexibility | Enterprise multi-locale | Budget / self-hosted |\r\n| Content Modeling | Schema-as-code | Web UI | Web UI or code |\r\n| Media Handling | Built-in DAM | Built-in | Plugin-based |\r\n\r\n### Sanity\r\n\r\n**Strengths**: GROQ query language is powerful and flexible. Schema defined in code (version-controlled). Real-time collaborative editing. Portable Text for rich content. Generous free tier.\r\n\r\n**Considerations**: Steeper learning curve for non-developers. Studio customization requires React knowledge. Vendor lock-in on GROQ queries.\r\n\r\n**Marketing fit**: Best when developers and marketers collaborate closely. Strong for content-heavy sites with complex models.\r\n\r\n### Contentful\r\n\r\n**Strengths**: Mature enterprise platform. Excellent multi-locale support. Strong ecosystem of integrations. Composable content with Studio. Well-documented APIs.\r\n\r\n**Considerations**: Pricing scales with content types and locales. Two separate APIs (Delivery and Management). Rate limits can be tight on lower plans.\r\n\r\n**Marketing fit**: Best for enterprises with multi-market content needs. Good when you need established vendor reliability.\r\n\r\n### Strapi\r\n\r\n**Strengths**: Open source, self-hosted option. Full control over data. No per-seat pricing. Customizable admin panel. Plugin ecosystem. REST by default, GraphQL via plugin.\r\n\r\n**Considerations**: Self-hosting means you handle infrastructure. Smaller ecosystem than Sanity/Contentful. V5 migration can be significant from V4.\r\n\r\n**Marketing fit**: Best for teams with DevOps capability who want full control and no vendor lock-in. Good for budget-conscious projects.\r\n\r\n### Others Worth Knowing\r\n\r\n- **Hygraph** — GraphQL-native, strong for federation and multi-source content\r\n- **Keystatic** — Git-based, good for developer-content hybrid workflows\r\n- **Payload** — TypeScript-first, self-hosted, code-configured like Sanity\r\n- **Builder.io** — Visual editor with headless backend, good for non-technical marketers\r\n- **Prismic** — Slice-based content modeling, strong Next.js integration\r\n\r\n---\r\n\r\n## Integration with Marketing Skills\r\n\r\n### Programmatic SEO\r\n\r\nUse CMS as the data source for programmatic pages. Store structured data (FAQs, comparisons, city pages) as content types and generate pages from queries. See **programmatic-seo** skill.\r\n\r\n### Copywriting\r\n\r\nCMS content models enforce consistent structure. Define fields that match your copy frameworks (headline, subheadline, social proof, CTA). See **copywriting** skill.\r\n\r\n### Site Architecture\r\n\r\nURL structure, navigation hierarchy, and internal linking all depend on how content is organized in the CMS. Plan your content model and site architecture together. See **site-architecture** skill.\r\n\r\n### Email Sequences\r\n\r\nPull CMS content into email templates for consistent messaging across web and email. Case studies, testimonials, and blog posts can feed email nurture sequences. See **emails** skill.\r\n\r\n---\r\n\r\n## Implementation Checklist\r\n\r\n- [ ] Define content types based on page types and reusable blocks\r\n- [ ] Add SEO fields to every page-level content type\r\n- [ ] Set up preview/draft mode in your frontend\r\n- [ ] Configure roles and permissions for your team\r\n- [ ] Create sample content for each type before building frontend\r\n- [ ] Set up webhook notifications for content changes (rebuild triggers)\r\n- [ ] Document content guidelines for editors (field descriptions, character limits)\r\n- [ ] Test content delivery performance (CDN, caching, ISR)\r\n- [ ] Plan migration strategy if moving from existing CMS\r\n\r\n---\r\n\r\n## Relevant Integration Guides\r\n\r\n- [Sanity](https://github.com/coreyhaines31/marketingskills/blob/main/tools/integrations/sanity.md) — GROQ queries, mutations, CLI\r\n- [Contentful](https://github.com/coreyhaines31/marketingskills/blob/main/tools/integrations/contentful.md) — Delivery/Management APIs, publishing\r\n- [Strapi](https://github.com/coreyhaines31/marketingskills/blob/main/tools/integrations/strapi.md) — REST CRUD, filters, document API\r\n",
+  },
+  {
+    skillId: "copy-editing",
+    path: "references/checklist.md",
+    content: `# Copy Editing Checklist\r
+\r
+Use this checklist alongside the Seven Sweeps Framework (see SKILL.md) as a final QA pass before delivering edited copy.\r
+\r
+## Pick the Edit Mode\r
+\r
+Decide what you were handed before running any sweep. The mode sets how much you're allowed to change.\r
+\r
+| Mode | Signs | What to do |\r
+|---|---|---|\r
+| **A. Blank or slop** | Generic company-speak, AI mush, no point of view | Run all seven sweeps. You may rebuild sentences from the underlying facts; never invent stats, customers, or results |\r
+| **B. Real voice** | A clear angle or opinion, recognizable word choices, rough execution | Run all seven sweeps as restoration. Keep their argument, vocabulary, and emphasis. Fix the buried lead, vague lines, AI tells, and structure |\r
+| **C. Point edit** | "Fix this headline," "is this sentence OK?", "tighten paragraph two" | Skip the sweeps. Use point-edit mode below |\r
+\r
+**Point-edit mode**\r
+- [ ] Change only the line, word, or section named, plus the minimum around it needed for the edit to read cleanly (a pronoun, a transition)\r
+- [ ] Check the edit against the AI Tells list and the surrounding voice, so the new line doesn't stand out\r
+- [ ] Return only the changed text with a one-line reason per change, and offer one alternative if the choice is close\r
+- [ ] Mention a serious problem elsewhere in one line at the end (a false claim, a broken CTA) without fixing it unasked\r
+- [ ] Don't rewrite neighboring lines, add sections, or run a full sweep report\r
+\r
+**Reading taste (B and C).** What the author gave you is evidence of their choices. Their vocabulary is a voice decision ("stuff" and "ship" stay), where they spent words is a priority decision, and what they left out is a scope decision. Match those; don't swap in your own.\r
+\r
+**Leave-it-alone test (all modes).** For each change, ask whether it's measurably better or just different. Revert anything you can't give a reason for.\r
+\r
+*Modes adapted from Profound's \`improved-copywriting\` and Wispr Flow's \`copy-editing\` skills ([skills-marketing-library](https://github.com/retieedra-profound/skills-marketing-library), MIT).*\r
+\r
+## Before You Start\r
+\r
+- [ ] Pick the edit mode (above); for a point edit, stop here and use point-edit mode\r
+- [ ] Understand the goal of this copy\r
+- [ ] Know the target audience\r
+- [ ] Identify the desired action\r
+- [ ] Read through once without editing\r
+\r
+## Clarity (Sweep 1)\r
+\r
+- [ ] Every sentence is immediately understandable\r
+- [ ] No jargon without explanation\r
+- [ ] Pronouns have clear references\r
+- [ ] No sentences trying to do too much\r
+\r
+## Voice & Tone (Sweep 2)\r
+\r
+- [ ] Consistent formality level throughout\r
+- [ ] Brand personality maintained\r
+- [ ] No jarring shifts in mood\r
+- [ ] Reads well aloud\r
+\r
+## So What (Sweep 3)\r
+\r
+- [ ] Every feature connects to a benefit\r
+- [ ] Claims answer "why should I care?"\r
+- [ ] Benefits connect to real desires\r
+- [ ] No impressive-but-empty statements\r
+\r
+## Prove It (Sweep 4)\r
+\r
+- [ ] Claims are substantiated\r
+- [ ] Social proof is specific and attributed\r
+- [ ] Numbers and stats have sources\r
+- [ ] No unearned superlatives\r
+\r
+## Specificity (Sweep 5)\r
+\r
+- [ ] Vague words replaced with concrete ones\r
+- [ ] Numbers and timeframes included\r
+- [ ] Generic statements made specific\r
+- [ ] Filler content removed\r
+\r
+## Heightened Emotion (Sweep 6)\r
+\r
+- [ ] Copy evokes feeling, not just information\r
+- [ ] Pain points feel real\r
+- [ ] Aspirations feel achievable\r
+- [ ] Emotion serves the message authentically\r
+\r
+## Zero Risk (Sweep 7)\r
+\r
+- [ ] Objections addressed near CTA\r
+- [ ] Trust signals present\r
+- [ ] Next steps are crystal clear\r
+- [ ] Risk reversals stated (guarantee, trial, etc.)\r
+\r
+## AI Tells\r
+\r
+- [ ] No "it's not X, it's Y" or "not because X, because Y" reveals\r
+- [ ] No "no X, no Y, no Z" negation lists\r
+- [ ] No sentences that trail restating comma clauses after the main claim (a clause adding a new fact is fine)\r
+- [ ] No self-answered questions or colon reveals (FAQ questions and a reader's own question are fine)\r
+- [ ] No stock openers or phrases ("In today's...", "Whether you're...", "Say goodbye to...")\r
+- [ ] No em dashes in headlines, subheads, CTAs, ads, social posts, or subject lines; 1–2 per page max in long copy\r
+- [ ] At most one fragment and one list of three per section (CTA microcopy and real three-feature lists don't count)\r
+- [ ] Every vague adjective replaced with the fact it stood for\r
+\r
+## Final Checks\r
+\r
+- [ ] No typos or grammatical errors\r
+- [ ] Consistent formatting\r
+- [ ] Links work (if applicable)\r
+- [ ] Core message preserved through all edits\r
+`,
+  },
+  {
+    skillId: "copy-editing",
+    path: "references/content-refresh.md",
+    content: `# Content Refresh Editing\r
+\r
+Copy editing isn't just for new content. Existing pages and posts decay over time — outdated stats, stale examples, drifted brand voice, and missed SEO opportunities. A content refresh applies the same editing rigor to content that's already published.\r
+\r
+## When to Refresh\r
+\r
+- **Traffic declining** on a page that used to perform well\r
+- **Stats or data** are more than 12 months old\r
+- **Product has changed** — features, pricing, or positioning no longer match\r
+- **Competitors updated** their version of the same content\r
+- **AI search visibility** matters — outdated content gets cited less (see ai-seo skill)\r
+\r
+## Content Refresh Checklist\r
+\r
+1. **Freshness pass** — Update all dates, stats, and examples. Replace "in 2024" with current data. Remove references to deprecated features or tools.\r
+2. **Accuracy pass** — Verify all claims are still true. Check that linked resources still exist. Confirm pricing and feature descriptions match current state.\r
+3. **Voice pass** — Does the tone match your current brand voice? Older content often reflects an earlier stage of the company.\r
+4. **SEO pass** — Has search intent shifted for this topic? Are there new keywords or questions to address? Add "Last updated: [date]" prominently.\r
+5. **Proof pass** — Can you add newer testimonials, case studies, or data points that didn't exist when this was first published?\r
+6. **Structure pass** — Add comparison tables, FAQ sections, or other scannable formats that make the content easier to consume.\r
+\r
+## Before You Edit: Find the Gap\r
+\r
+A refresh aimed at a ranking page should start from the results page. The first question to answer is why the pages above yours are winning.\r
+\r
+1. **Read the results page for the post's main query.** Note the dominant format (list, guide, tool, comparison), the featured snippet and how it's formatted, People Also Ask questions, and related searches.\r
+2. **Pick five competitors**: the top three results, plus any direct competitor or recently updated page ranking near you.\r
+3. **Map coverage.** List the subtopics each page covers in a simple grid, with your post as the first column:\r
+\r
+| Subtopic / element | Your post | Comp 1 | Comp 2 | Comp 3 | Comp 4 | Comp 5 |\r
+|--------------------|:---------:|:------:|:------:|:------:|:------:|:------:|\r
+| [Subtopic A] | ✗ | ✓ | ✓ | ✓ | ✓ | — |\r
+| Comparison table | ✗ | ✓ | — | ✓ | — | — |\r
+| Current-year data | ✗ | ✓ | ✓ | — | ✓ | ✓ |\r
+\r
+4. **Rank what's missing** by how many competitors cover it:\r
+   - **Expected** (4–5 of 5): searchers assume it's there. Add it.\r
+   - **Common** (2–3): add it if it serves your reader.\r
+   - **Distinctive** (1): add it only if it's genuinely useful, not to copy one page.\r
+   - **Uncovered** (0): the angle nobody has. Your best chance to be the result worth citing.\r
+5. **Match coverage.** Ignore competitors' word counts. Close the gaps that matter, and stop when the reader's question is answered.\r
+\r
+Present the gap grid and a proposed outline before rewriting. Mark each section **Keep**, **Revise**, or **New**, propose 2–3 title options (see the \`seo-audit\` skill's title-tags reference), and wait for approval. Don't promise a ranking or traffic outcome.\r
+\r
+## Keep What Already Works\r
+\r
+A page that ranks has signals worth protecting:\r
+- **Keep the URL.** If it must change, 301 the old one.\r
+- **Keep heading anchors** other pages link to, and the sections that rank for their own queries (check Search Console's query list for the page).\r
+- **Keep the voice.** A refresh shouldn't read like a different author wrote it.\r
+- **Show the update**: a visible "Last updated" date, with the year next to every statistic.\r
+\r
+When handing the refresh to whoever publishes it, include the new meta description, schema types to add, internal links to add to and from the post, images or screenshots needed, and the URL plan.\r
+\r
+## Refresh vs. Rewrite\r
+\r
+| Signal | Action |\r
+|--------|--------|\r
+| Core message still valid, details outdated | Refresh (update facts, stats, examples) |\r
+| Brand voice has evolved significantly | Refresh + voice rewrite |\r
+| Topic angle or audience has shifted | Full rewrite |\r
+| Page structure doesn't match current search intent | Full rewrite |\r
+| Just needs updated stats and links | Light refresh |\r
+\r
+## Refresh Cadence\r
+\r
+- **Pricing and product pages**: Every quarter, or when pricing/features change\r
+- **High-traffic blog posts**: Every 6 months\r
+- **Comparison and alternatives pages**: Every 3-6 months (competitors change fast)\r
+- **Evergreen guides**: Annually, unless traffic drops sooner\r
+- **Low-traffic pages**: Only when traffic data suggests an opportunity\r
+`,
+  },
+  {
+    skillId: "copy-editing",
+    path: "references/plain-english-alternatives.md",
+    content:
+      '# Plain English Alternatives\r\n\r\nReplace complex or pompous words with plain English alternatives.\r\n\r\nSource: Plain English Campaign A-Z of Alternative Words (2001), Australian Government Style Manual (2024), plainlanguage.gov\r\n\r\n---\r\n\r\n## Contents\r\n- A\r\n- B\r\n- C\r\n- D\r\n- E\r\n- F\r\n- G-H\r\n- I\r\n- L-M\r\n- N-O\r\n- P\r\n- R\r\n- S\r\n- T-U\r\n- V-Z\r\n- Phrases to Remove Entirely\r\n\r\n## A\r\n\r\n| Complex | Plain Alternative |\r\n|---------|-------------------|\r\n| (an) absence of | no, none |\r\n| abundance | enough, plenty, many |\r\n| accede to | allow, agree to |\r\n| accelerate | speed up |\r\n| accommodate | meet, hold, house |\r\n| accomplish | do, finish, complete |\r\n| accordingly | so, therefore |\r\n| acknowledge | thank you for, confirm |\r\n| acquire | get, buy, obtain |\r\n| additional | extra, more |\r\n| adjacent | next to |\r\n| advantageous | useful, helpful |\r\n| advise | tell, say, inform |\r\n| aforesaid | this, earlier |\r\n| aggregate | total |\r\n| alleviate | ease, reduce |\r\n| allocate | give, share, assign |\r\n| alternative | other, choice |\r\n| ameliorate | improve |\r\n| anticipate | expect |\r\n| apparent | clear, obvious |\r\n| appreciable | large, noticeable |\r\n| appropriate | proper, right, suitable |\r\n| approximately | about, roughly |\r\n| ascertain | find out |\r\n| assistance | help |\r\n| at the present time | now |\r\n| attempt | try |\r\n| authorise | allow, let |\r\n\r\n---\r\n\r\n## B\r\n\r\n| Complex | Plain Alternative |\r\n|---------|-------------------|\r\n| belated | late |\r\n| beneficial | helpful, useful |\r\n| bestow | give |\r\n| by means of | by |\r\n\r\n---\r\n\r\n## C\r\n\r\n| Complex | Plain Alternative |\r\n|---------|-------------------|\r\n| calculate | work out |\r\n| cease | stop, end |\r\n| circumvent | avoid, get around |\r\n| clarification | explanation |\r\n| commence | start, begin |\r\n| communicate | tell, talk, write |\r\n| competent | able |\r\n| compile | collect, make |\r\n| complete | fill in, finish |\r\n| component | part |\r\n| comprise | include, make up |\r\n| (it is) compulsory | (you) must |\r\n| conceal | hide |\r\n| concerning | about |\r\n| consequently | so |\r\n| considerable | large, great, much |\r\n| constitute | make up, form |\r\n| consult | ask, talk to |\r\n| consumption | use |\r\n| currently | now |\r\n\r\n---\r\n\r\n## D\r\n\r\n| Complex | Plain Alternative |\r\n|---------|-------------------|\r\n| deduct | take off |\r\n| deem | treat as, consider |\r\n| defer | delay, put off |\r\n| deficiency | lack |\r\n| delete | remove, cross out |\r\n| demonstrate | show, prove |\r\n| denote | show, mean |\r\n| designate | name, appoint |\r\n| despatch/dispatch | send |\r\n| determine | decide, find out |\r\n| detrimental | harmful |\r\n| diminish | reduce, lessen |\r\n| discontinue | stop |\r\n| disseminate | spread, distribute |\r\n| documentation | papers, documents |\r\n| due to the fact that | because |\r\n| duration | time, length |\r\n| dwelling | home |\r\n\r\n---\r\n\r\n## E\r\n\r\n| Complex | Plain Alternative |\r\n|---------|-------------------|\r\n| economical | cheap, good value |\r\n| eligible | allowed, qualified |\r\n| elucidate | explain |\r\n| enable | allow |\r\n| encounter | meet |\r\n| endeavour | try |\r\n| enquire | ask |\r\n| ensure | make sure |\r\n| entitlement | right |\r\n| envisage | expect |\r\n| equivalent | equal, the same |\r\n| erroneous | wrong |\r\n| establish | set up, show |\r\n| evaluate | assess, test |\r\n| excessive | too much |\r\n| exclusively | only |\r\n| exempt | free from |\r\n| expedite | speed up |\r\n| expenditure | spending |\r\n| expire | run out |\r\n\r\n---\r\n\r\n## F\r\n\r\n| Complex | Plain Alternative |\r\n|---------|-------------------|\r\n| fabricate | make |\r\n| facilitate | help, make possible |\r\n| finalise | finish, complete |\r\n| following | after |\r\n| for the purpose of | to, for |\r\n| for the reason that | because |\r\n| forthwith | now, at once |\r\n| forward | send |\r\n| frequently | often |\r\n| furnish | give, provide |\r\n| furthermore | also, and |\r\n\r\n---\r\n\r\n## G-H\r\n\r\n| Complex | Plain Alternative |\r\n|---------|-------------------|\r\n| generate | produce, create |\r\n| henceforth | from now on |\r\n| hitherto | until now |\r\n\r\n---\r\n\r\n## I\r\n\r\n| Complex | Plain Alternative |\r\n|---------|-------------------|\r\n| if and when | if, when |\r\n| illustrate | show |\r\n| immediately | at once, now |\r\n| implement | carry out, do |\r\n| imply | suggest |\r\n| in accordance with | under, following |\r\n| in addition to | and, also |\r\n| in conjunction with | with |\r\n| in excess of | more than |\r\n| in lieu of | instead of |\r\n| in order to | to |\r\n| in receipt of | receive |\r\n| in relation to | about |\r\n| in respect of | about, for |\r\n| in the event of | if |\r\n| in the majority of instances | most, usually |\r\n| in the near future | soon |\r\n| in view of the fact that | because |\r\n| inception | start |\r\n| indicate | show, suggest |\r\n| inform | tell |\r\n| initiate | start, begin |\r\n| insert | put in |\r\n| instances | cases |\r\n| irrespective of | despite |\r\n| issue | give, send |\r\n\r\n---\r\n\r\n## L-M\r\n\r\n| Complex | Plain Alternative |\r\n|---------|-------------------|\r\n| (a) large number of | many |\r\n| liaise with | work with, talk to |\r\n| locality | place, area |\r\n| locate | find |\r\n| magnitude | size |\r\n| (it is) mandatory | (you) must |\r\n| manner | way |\r\n| modification | change |\r\n| moreover | also, and |\r\n\r\n---\r\n\r\n## N-O\r\n\r\n| Complex | Plain Alternative |\r\n|---------|-------------------|\r\n| negligible | small |\r\n| nevertheless | but, however |\r\n| notify | tell |\r\n| notwithstanding | despite, even if |\r\n| numerous | many |\r\n| objective | aim, goal |\r\n| (it is) obligatory | (you) must |\r\n| obtain | get |\r\n| occasioned by | caused by |\r\n| on behalf of | for |\r\n| on numerous occasions | often |\r\n| on receipt of | when you get |\r\n| on the grounds that | because |\r\n| operate | work, run |\r\n| optimum | best |\r\n| option | choice |\r\n| otherwise | or |\r\n| outstanding | unpaid |\r\n| owing to | because |\r\n\r\n---\r\n\r\n## P\r\n\r\n| Complex | Plain Alternative |\r\n|---------|-------------------|\r\n| partially | partly |\r\n| participate | take part |\r\n| particulars | details |\r\n| per annum | a year |\r\n| perform | do |\r\n| permit | let, allow |\r\n| personnel | staff, people |\r\n| peruse | read |\r\n| possess | have, own |\r\n| practically | almost |\r\n| predominant | main |\r\n| prescribe | set |\r\n| preserve | keep |\r\n| previous | earlier, before |\r\n| principal | main |\r\n| prior to | before |\r\n| proceed | go ahead |\r\n| procure | get |\r\n| prohibit | ban, stop |\r\n| promptly | quickly |\r\n| provide | give |\r\n| provided that | if |\r\n| provisions | rules, terms |\r\n| proximity | nearness |\r\n| purchase | buy |\r\n| pursuant to | under |\r\n\r\n---\r\n\r\n## R\r\n\r\n| Complex | Plain Alternative |\r\n|---------|-------------------|\r\n| reconsider | think again |\r\n| reduction | cut |\r\n| referred to as | called |\r\n| regarding | about |\r\n| reimburse | repay |\r\n| reiterate | repeat |\r\n| relating to | about |\r\n| remain | stay |\r\n| remainder | rest |\r\n| remuneration | pay |\r\n| render | make, give |\r\n| represent | stand for |\r\n| request | ask |\r\n| require | need |\r\n| residence | home |\r\n| retain | keep |\r\n| revised | changed, new |\r\n\r\n---\r\n\r\n## S\r\n\r\n| Complex | Plain Alternative |\r\n|---------|-------------------|\r\n| scrutinise | examine, check |\r\n| select | choose |\r\n| solely | only |\r\n| specified | given, stated |\r\n| state | say |\r\n| statutory | legal, by law |\r\n| subject to | depending on |\r\n| submit | send, give |\r\n| subsequent to | after |\r\n| subsequently | later |\r\n| substantial | large, much |\r\n| sufficient | enough |\r\n| supplement | add to |\r\n| supplementary | extra |\r\n\r\n---\r\n\r\n## T-U\r\n\r\n| Complex | Plain Alternative |\r\n|---------|-------------------|\r\n| terminate | end, stop |\r\n| thereafter | then |\r\n| thereby | by this |\r\n| thus | so |\r\n| to date | so far |\r\n| transfer | move |\r\n| transmit | send |\r\n| ultimately | in the end |\r\n| undertake | agree, do |\r\n| uniform | same |\r\n| utilise | use |\r\n\r\n---\r\n\r\n## V-Z\r\n\r\n| Complex | Plain Alternative |\r\n|---------|-------------------|\r\n| variation | change |\r\n| virtually | almost |\r\n| visualise | imagine, see |\r\n| ways and means | ways |\r\n| whatsoever | any |\r\n| with a view to | to |\r\n| with effect from | from |\r\n| with reference to | about |\r\n| with regard to | about |\r\n| with respect to | about |\r\n| zone | area |\r\n\r\n---\r\n\r\n## Phrases to Remove Entirely\r\n\r\nThese phrases often add nothing. Delete them:\r\n\r\n- a total of\r\n- absolutely\r\n- actually\r\n- all things being equal\r\n- as a matter of fact\r\n- at the end of the day\r\n- at this moment in time\r\n- basically\r\n- currently (when "now" or nothing works)\r\n- I am of the opinion that (use: I think)\r\n- in due course (use: soon, or say when)\r\n- in the final analysis\r\n- it should be understood\r\n- last but not least\r\n- obviously\r\n- of course\r\n- quite\r\n- really\r\n- the fact of the matter is\r\n- to all intents and purposes\r\n- very\r\n',
+  },
+  {
+    skillId: "copywriting",
+    path: "references/ai-tells.md",
+    content: `# AI Tells: The Copy Blacklist\r
+\r
+Patterns that make marketing copy read as machine-written. Clients and buyers spot these fast, and a reader who decides a page was generated starts doubting its claims too.\r
+\r
+Most of these are old human rhetoric. AI copy gives itself away by using them **by default**, **stacked**, and **with nothing specific behind them**. So the rules below are a mix of hard bans (for patterns that are tells even once) and frequency caps (for devices that are fine when chosen on purpose).\r
+\r
+**Confidence key**\r
+- **Ban**: a tell even once. Don't write it.\r
+- **Cap**: fine once, a tell when repeated or stacked. Stay under the cap.\r
+\r
+**What the scopes mean**\r
+- **Short copy**: headlines, subheads, the hero, CTAs, ads, social posts, email subject lines.\r
+- **Long copy**: body sections of a page, articles, long emails.\r
+- **Section**: one hero, one page section, or one whole short post.\r
+- CTA microcopy ("No card required") doesn't count toward the fragment cap.\r
+\r
+**Still fine:** FAQ questions, a single "No card required," a list of three when there really are three features, a single "without" headline, and a formal brand voice that makes specific claims.\r
+\r
+---\r
+\r
+## Contents\r
+- Structural Patterns (the worst offenders)\r
+- Openers, Closers, and Setups\r
+- Marketing Phrases\r
+- Vocabulary\r
+- Hedges, Puffery, and Weasels\r
+- Tone\r
+- Formatting\r
+- Second-Generation Tells\r
+- Build a Writer\r
+- Rewrite Rules\r
+- The Self-Check\r
+- Sources\r
+\r
+---\r
+\r
+## Structural Patterns\r
+\r
+These matter more than any word list. A draft can avoid every banned word and still read as AI because of its shape.\r
+\r
+### 1. The contrast reveal: "Not X. Y." (Ban)\r
+\r
+Sets up an assumption nobody stated, denies it, then gives the "real" answer.\r
+\r
+Variants: "It's not X, it's Y." "Not because X. Because Y." "This isn't X. This is Y." "Not just X, but Y." "Less X, more Y." "The question isn't X, it's Y." "X? Think again."\r
+\r
+- ✗ Most marketing teams have a list of campaign ideas that never launch. Not because they're bad. Because each one needs a developer.\r
+- ✓ Most marketing teams have a list of campaign ideas that never launch, because each one needs a developer they can't get.\r
+\r
+**Why it's a tell:** It's one of the most frequently cited AI patterns. Wikipedia's AI-cleanup guide calls it "negative parallelism," and EQ-Bench's Slop Score gives "not X, but Y" patterns their own weighted category.\r
+\r
+**Rewrite:** State Y directly and attach the concrete reason or cost. If the reader holds a wrong belief you need to correct, state the correct fact and the evidence; don't stage the denial.\r
+\r
+### 2. The negation list: "No X, no Y, no Z." (Ban)\r
+\r
+Defines the product by what's absent, usually in threes, often with a fragment tacked on.\r
+\r
+Variants: "No X. No Y. Just Z." "Without X, without Y." "Zero X, zero Y."\r
+\r
+- ✗ No setup call, no templates to fill in, no waiting on IT. No contract.\r
+- ✓ Install it from the app store and it's running on your data in five minutes.\r
+\r
+**Rewrite:** Say what does happen, in the order it happens. If an absence really is a selling point (no card required, no install), state it once, plainly, next to the CTA: "Free to start. No card required." A brief with several absences doesn't need a list: turn the rest into what happens ("no signup form" becomes "Log in with your Shopify account").\r
+\r
+A single "without" or "Never X again" headline is fine. Don't follow it with a negation list in the subhead.\r
+\r
+### 3. The trailing pile-on (Ban)\r
+\r
+A complete claim, then a comma, then a run of add-ons: a negation list, an "-ing" clause, or a string of extra benefits.\r
+\r
+- ✗ Reports pull directly from the data you already have, no exports, no spreadsheets, no second copy to keep updated.\r
+- ✗ It syncs your calendar automatically, ensuring nothing slips through the cracks.\r
+- ✓ Reports pull from the data you already have. There's nothing to export.\r
+\r
+**Rewrite:** End the sentence when the main claim ends. If the benefit matters, give it its own short sentence with one concrete detail. Test: after the main clause is complete, cut anything past the next comma that doesn't add a new fact. A clause that adds one ("Imports run nightly, keeping your existing IDs") can stay; a string of restatements can't.\r
+\r
+### 4. Rhetorical question, then answer (Ban)\r
+\r
+"The result? 3x faster onboarding." "The catch? There isn't one." "Why does this matter? Because..."\r
+\r
+- ✗ The result? Onboarding that takes minutes, not weeks.\r
+- ✓ New hires finish onboarding on day one.\r
+\r
+**Rewrite:** Delete the question and keep the answer.\r
+\r
+Still fine: FAQ questions ("Does it work with Shopify?"), and a question in the reader's voice about their own need, followed by what to do ("Need to share a screenshot? Drop it in the thread."). The tell is a question that labels your own claim ("The result?" "The catch?" "Why does this matter?").\r
+\r
+### 5. The colon reveal (Ban)\r
+\r
+"The best part: it learns." "Here's the secret: consistency." "One word: speed."\r
+\r
+**Rewrite:** Write it as a normal sentence ("It learns from every correction"). Save colons for lists, labels, and quotes.\r
+\r
+### 6. Fragment drumbeat (Cap: one per section)\r
+\r
+Stacked fragments or one-line paragraphs for manufactured punch. "Simple. Fast. Done." "That's it. That's the whole thing."\r
+\r
+**Rewrite:** Merge them into one full sentence that carries a fact. One fragment that lands a real payoff is a copywriting device. A paragraph of them is a tic.\r
+\r
+### 7. Reflexive threes (Cap: one per section)\r
+\r
+Everything comes in threes: adjectives, benefits, clauses, bullets. "Fast, secure, and scalable." "Save time, cut costs, and grow revenue."\r
+\r
+**Rewrite:** Use as many items as the facts support: one, two, or four. Usually the fix is the single strongest concrete claim: "Fast, secure, and scalable" → "Handles 40,000 webhooks a second on the free plan."\r
+\r
+### 8. Em dashes (Ban in short copy; cap at 1–2 per page in long copy)\r
+\r
+The dash as the default pause, several per paragraph, often carrying a contrast reveal ("It's not a tool — it's a teammate").\r
+\r
+**Rewrite:** Use a period, a comma, a colon, or parentheses. In heroes, ads, subject lines, and social posts, use none.\r
+\r
+### 9. Uniform rhythm (Cap)\r
+\r
+Every sentence 12–18 words. Every paragraph is topic sentence → elaboration → wrap-up. Every section the same length. Three pros, three cons, every time.\r
+\r
+**Rewrite:** Vary on purpose. A long sentence, then a short one. Let a section be two lines if that's all it needs. Put the payoff first sometimes.\r
+\r
+### 10. Dodging "is" and "has" (Cap)\r
+\r
+"Serves as a central hub." "Stands as a testament." "Boasts a library of 200 templates." "Represents a new approach."\r
+\r
+**Rewrite:** Use "is" and "has", or better, the actual verb: "Tracks every contract, renewal date, and owner in one place."\r
+\r
+### 11. Abstract subjects (Cap)\r
+\r
+"The platform empowers teams to..." "Our solution enables..." Nobody does anything.\r
+\r
+**Rewrite:** Make the customer the subject. "Your team ships experiments without filing a ticket."\r
+\r
+### 12. False ranges (Cap)\r
+\r
+"From startups to enterprises." "From onboarding to renewal." The two ends don't describe a real span.\r
+\r
+**Rewrite:** Name the segment you actually serve, or the steps you actually cover.\r
+\r
+### 13. Synonym cycling (Cap)\r
+\r
+Calling the same thing a dashboard, an interface, a portal, and a hub in one page to avoid repeating a word.\r
+\r
+**Rewrite:** Pick the word your customer uses and repeat it.\r
+\r
+---\r
+\r
+## Openers, Closers, and Setups (Ban)\r
+\r
+| Pattern | Example | Instead |\r
+|---------|---------|---------|\r
+| Era opener | "In today's fast-paced world..." | Open with the customer's problem |\r
+| False-choice opener | "Whether you're a solo founder or a Fortune 500..." | Name who the page is for |\r
+| "Imagine..." | "Imagine never chasing an invoice again." | Show the actual before and after |\r
+| "When it comes to..." | "When it comes to billing, ..." | Start with the subject |\r
+| Throat-clearing | "Here's the thing:" "The truth is" "Let me be clear" "Here's what nobody tells you" | Cut it. If the claim can't stand alone, it needs evidence, not a drumroll |\r
+| Announcing | "In this guide, we'll explore..." "Let's dive in" | Start with the content |\r
+| Recap ending | "In conclusion" "Ultimately" "At the end of the day" | End on the last concrete point or the CTA |\r
+| Fake-profound kicker | "Because growth shouldn't wait." "And that changes everything." | Cut it. End on a concrete sentence |\r
+| Filler transitions | "It's worth noting" "Moreover" "Additionally" "Importantly" | Delete. The sentence usually works without it |\r
+\r
+---\r
+\r
+## Marketing Phrases (Ban)\r
+\r
+| Phrase | Instead |\r
+|--------|---------|\r
+| "Say goodbye to X" / "Say hello to Y" | Show the new workflow: "Reconciliation runs nightly. You review the exceptions." |\r
+| "Unlock / unleash the power of X" | Name the outcome and the number |\r
+| "X, reimagined" / "X, redefined" | Say what's actually different: "Billing that retries on payday" |\r
+| "Take X to the next level" | Name the level: the metric and the target |\r
+| "Transform the way you work" | A before and after with numbers |\r
+| "The X you deserve" | The specific gap you close |\r
+| "The future of X is here" | What ships today |\r
+| "Built for teams who move fast" | The real customer and trigger: "For subscription teams past $1M ARR fighting failed payments" |\r
+| "Everything you need to X" / "all-in-one" | The 2–3 things buyers actually check for |\r
+| "Effortless" / "in just a few clicks" | The real step count or time: "3 steps, about 4 minutes" |\r
+| "Join thousands of happy customers" | The real count, logos, or a named quote |\r
+| "Game-changer" / "this changes everything" | What changes, for whom, by how much |\r
+\r
+---\r
+\r
+## Vocabulary\r
+\r
+Swapping a banned word for a synonym just creates a new tell. Replace the word with the fact it was standing in for: "robust" → "99.99% uptime over two years"; "seamless" → "imports your Stripe data in about 90 seconds."\r
+\r
+**Ban:** delve, tapestry, testament to, realm, embark, beacon, multifaceted, paradigm, synergy, myriad, plethora, meticulous, intricate, utilize, leverage (as a verb), supercharge, turbocharge, game-changer, "ever-evolving landscape," "plays a crucial role"\r
+\r
+**Cap (two in a paragraph means rewrite it):** seamless, robust, streamline, empower, elevate, unlock, unleash, harness, foster, enhance, optimize, cutting-edge, innovative, revolutionary, transformative, holistic, comprehensive, pivotal, crucial, vital, powerful, next-level, world-class, best-in-class, landscape, navigate, ecosystem, journey (unless literal)\r
+\r
+**Cap (empty intensifiers):** truly, genuinely, incredibly, deeply, fundamentally, significantly, simply, actually, literally, quietly\r
+\r
+Favored words drift as models change ("delve" peaked in 2024; "enhance," "showcase," "foster," and "align with" rose after). Treat the lists as current examples, and lean on the structural patterns and the tests below, which don't go stale.\r
+\r
+---\r
+\r
+## Hedges, Puffery, and Weasels\r
+\r
+- **Hedge stacks** (Cap): "can help you potentially reduce..." State what you know, or scope the claim honestly.\r
+- **Importance puffery** (Ban): "marks a pivotal moment," "redefines the category." State the fact; let the reader judge.\r
+- **Weasel sources** (Ban): "experts agree," "studies show," "trusted by industry leaders." Name the source or the customer, or cut it.\r
+- **Invented labels** (Cap): "the integration tax," "the growth trap." Only coin a term you'll define and use across the site.\r
+\r
+---\r
+\r
+## Tone\r
+\r
+- **Chummy openers** (Ban in email and social): "Great question!" "Let's be honest..." "We get it."\r
+- **Fake vulnerability** (Ban): "I'll be honest, I was skeptical too..." with no real story behind it.\r
+- **Over-explaining** (Cap): "Let's break this down," "Think of it as..." Give the explanation directly.\r
+- **Hype punctuation** (Ban): "Ready to level up?!" Exclamation points and interrobangs in body copy.\r
+\r
+---\r
+\r
+## Formatting\r
+\r
+- **Emoji as structure** (Ban in B2B): 🚀 ✨ ✅ leading bullets or headings.\r
+- **Bold label on every bullet** (Cap): "**Seamless integration:** ..." Keep it for reference tables, not every list.\r
+- **Parallel bullet openers** (Cap): every bullet starting "Ensures... / Provides... / Enables..." Start bullets with the customer outcome and vary the grammar.\r
+- **Title Case Everywhere** (Cap): use sentence case unless the brand style guide says otherwise.\r
+- **Unicode decoration** (Ban): arrows, ×, 𝗯𝗼𝗹𝗱 letters in body copy.\r
+- **Label headings** (Cap): "What / Why / How" sections. Write headings that make a claim.\r
+\r
+---\r
+\r
+## Second-Generation Tells\r
+\r
+These show up in copy that has already been de-slopped. The banned words and contrast reveals are gone, but the draft still reads as generated because the model swapped one set of habits for another. Check for them after the patterns above are fixed.\r
+\r
+| Tell | Example (✗) | Fix |\r
+|---|---|---|\r
+| **Wisdom-shaped sentences** (Ban) | "Great tools get out of the way." "Speed is a feature." | A sentence with the shape of an insight that nobody would disagree with. Replace it with the specific fact it gestures at, or cut it |\r
+| **Performed cleverness** (Cap) | "Your inbox, minus the noise." "Spreadsheets with a pulse." | Unexpected word pairings built to sound witty. Keep one if the brand is playful and it says something true; otherwise say the plain thing |\r
+| **Staccato bursts** (Cap) | "It's fast. It's simple. And it just works." | Three or more short sentences in a row, then a longer one, as a rhythm device. Merge them into a sentence that carries a fact (see Fragment drumbeat) |\r
+| **Perfect balance** (Cap) | Every section has a heading, two sentences, and three bullets; every benefit gets the same weight | Real writers spend more words on what they care about. Let the strongest section run long and the weakest shrink or go |\r
+| **Omniscient casual** (Cap) | A relaxed, chatty voice that knows every answer and never admits a limit | Casual tone plus total certainty reads as generated. Scope claims honestly and say who the product isn't for |\r
+| **Self-narration** (Ban) | "Here's why this matters." "This is where it gets interesting." "The takeaway is simple." | Sentences that comment on the copy itself. Delete them; if the point needs help, add a detail |\r
+| **Tidy closers** (Ban) | "Because your team deserves better." "The future of billing starts now." | A balanced, quotable last line that could close any page. End on a number, a named customer, the offer, or the CTA |\r
+| **Reflexive specificity** (Cap) | Every claim has a suspiciously round stat or a too-neat customer anecdote | Specificity copied as a style. Every number and story must be real and sourced; mark gaps \`[NEED: proof]\` instead of filling them |\r
+\r
+---\r
+\r
+## Build a Writer\r
+\r
+Removing patterns leaves copy that's clean and flat. Human-sounding copy comes from a specific person with uneven knowledge and real opinions. Before a full rewrite of Situation A copy (see the Diagnosis section in SKILL.md), answer these silently:\r
+\r
+1. **Who is writing?** Name the person and role: the founder, the head of support, the engineer who built the feature. Say why they're writing this page.\r
+2. **What do they know cold?** Those parts get the most words and the most specific detail.\r
+3. **What do they find boring or not know well?** Those parts get compressed, or cut.\r
+4. **What's their honest, arguable opinion** about the problem, the category, or the old way of doing it?\r
+5. **If they had to cut a third, what goes first?** Cut it now.\r
+\r
+The answers produce traits that generated copy lacks:\r
+\r
+- **Uneven density.** The section the writer cares about runs longest. Equal coverage of everything is a tell.\r
+- **Mixed register.** A precise technical term in one sentence, plain words in the next. Don't polish every word to the same level.\r
+- **Honest limits.** When the writer doesn't know something, the copy skips it or says so. Saying who the product isn't for is a strong version of this.\r
+- **Lopsided structure.** At least one section is noticeably longer, and at least one is short, because that's how much there was to say.\r
+- **Sentence length from the thought.** Write each sentence as long as its idea needs. Don't plan short-short-long rhythms.\r
+- **Opinions that cost something.** A real opinion is specific and someone could disagree with it ("Most onboarding checklists are busywork. Ours has three steps."). "We believe in quality" costs nothing.\r
+- **First person only when it means something.** "I built this after losing a client to a missed invoice" earns the "I." First person that adds no fact is decoration.\r
+\r
+**Rules that override the persona:**\r
+- **Never invent experience.** The writer's opinions and emphasis can be constructed; their anecdotes, customers, and results cannot. A made-up "when I ran my agency..." story is fabrication, and so is a fake customer quote. Use what the user gave you or mark \`[NEED: founder story]\`.\r
+- **In Situation B, the writer already exists.** Match the real voice from the draft or sample; don't build a new one.\r
+- **Keep the brand's register.** A persona for an enterprise security product is still formal. Uneven density and real opinions work in a formal voice too.\r
+\r
+---\r
+\r
+## Rewrite Rules\r
+\r
+1. **Rewrite from the facts.** Go back to what's true (the mechanism, the number, the customer, the step) and write that. Synonym swaps and "humanizer" substitutions produce new tells.\r
+2. **Specificity test.** Every claim sentence needs a number, a name, a mechanism, or a concrete action.\r
+3. **Swap test.** If the line would work unchanged on a competitor's site, rewrite it.\r
+4. **Stacking test.** Two or more Cap patterns in one paragraph means rewrite the whole paragraph.\r
+5. **Don't invent to de-slop.** Replacing "industry-leading" with a made-up stat is worse. Mark it \`[NEED: proof]\` and ask.\r
+6. **Choose devices on purpose.** A fragment you picked once, for a reason, is copywriting. The same device on every line is slop.\r
+7. **Keep the brand's register.** A formal sentence that makes a specific claim is fine. Don't flatten an enterprise voice into clipped startup copy, which is its own tell.\r
+8. **Vary the fixes.** The ✓ examples show one way out. Don't reuse them as templates. If every reveal becomes ", because..." and every negation list becomes "There's nothing to X," those are the new tics.\r
+9. **Flag a missing differentiator.** If no headline can pass the swap test with what you have, write the best one and mark \`[NEED: differentiator vs. named competitors]\`.\r
+\r
+---\r
+\r
+## The Self-Check\r
+\r
+Run this on every draft before delivering it:\r
+\r
+1. **Search for the bans.** Look for "not ", "isn't", "no ", "without", "?", ":" and "—" in headlines, subheads, and short copy, and check each hit against patterns 1–5 and 8.\r
+2. **Read every sentence over 20 words.** If it has more than two commas, check for a trailing pile-on (pattern 3).\r
+3. **Count the caps.** Fragments, threes, and Cap vocabulary per section.\r
+4. **Read it aloud.** Mark anywhere you'd sound like a press release or a LinkedIn post.\r
+5. **Apply the swap test** to the headline, subhead, and every section heading.\r
+6. **Scan for second-generation tells.** Check the last line of every section for a tidy closer, look for wisdom-shaped sentences, and compare section lengths. If they're all about the same, the draft has perfect balance.\r
+\r
+If a fix needs information you don't have (a number, a customer, a mechanism), flag it rather than writing around it.\r
+\r
+---\r
+\r
+## Sources\r
+\r
+Patterns and evidence drawn from, and rewritten in our own words:\r
+\r
+- Wikipedia, [Signs of AI writing](https://en.wikipedia.org/wiki/Wikipedia:Signs_of_AI_writing) (WikiProject AI Cleanup)\r
+- Kobak et al., excess vocabulary in 15M+ PubMed abstracts ([arXiv 2406.07016](https://arxiv.org/abs/2406.07016))\r
+- Juzek & Ward, [Why Does ChatGPT "Delve" So Much?](https://aclanthology.org/2025.coling-main.426/) (COLING 2025)\r
+- Paech et al., Antislop ([arXiv 2510.15061](https://arxiv.org/abs/2510.15061)) and [EQ-Bench Slop Score](https://eqbench.com/slop-score.html)\r
+- [tropes.fyi](https://tropes.fyi/tropes-md) catalog of AI writing tropes\r
+- Charlie Guo, [The Field Guide to AI Slop](https://www.ignorance.ai/p/the-field-guide-to-ai-slop)\r
+- Blake Stockton, [Don't write like AI: negation](https://www.blakestockton.com/p/dont-write-like-ai-1-101-negation)\r
+- Profound's \`humanizer\` and \`improved-copywriting\` skills and Wispr Flow's \`writing\` skill, published in [skills-marketing-library](https://github.com/retieedra-profound/skills-marketing-library) (MIT): the build-a-writer questions, human-writing traits, and second-generation tells\r
+- Counter-view: [A case for the defense](https://robotsatemyhomework.substack.com/p/ai-writing-patterns) (devices are fine when chosen, not defaulted)\r
+\r
+For a broader word-level list used in content audits, see the seo-audit skill's \`references/ai-writing-detection.md\`.\r
+`,
+  },
+  {
+    skillId: "copywriting",
+    path: "references/copy-frameworks.md",
+    content:
+      '# Copy Frameworks Reference\r\n\r\nHeadline formulas, page section types, and structural templates.\r\n\r\n## Contents\r\n- Headline Formulas (outcome-focused, problem-focused, audience-focused, differentiation-focused, proof-focused, additional formulas)\r\n- Landing Page Section Types (core sections, supporting sections)\r\n- Page Structure Templates (feature-heavy page, varied engaging page, compact landing page, enterprise/B2B landing page, product launch page)\r\n- Section Writing Tips (problem section, benefits section, how it works section, testimonial selection)\r\n- Clarity & Message-Market Fit (the "Now you can" test, Human Action Model, the Perception Gap, the SavvyCal case, clarity metrics)\r\n\r\n## Headline Formulas\r\n\r\nThese are starting points. Fill every slot with specifics, and check the result against [ai-tells.md](ai-tells.md): a "without" or "Never X again" headline is fine once, but don\'t follow it with a negation list.\r\n\r\n### Outcome-Focused\r\n\r\n**{Achieve desirable outcome} without {pain point}**\r\n> Understand how users are really experiencing your site without drowning in numbers\r\n\r\n**{Achieve desirable outcome} by {how product makes it possible}**\r\n> Generate more leads by seeing which companies visit your site\r\n\r\n**Turn {input} into {outcome}**\r\n> Turn your hard-earned sales into repeat customers\r\n\r\n**[Achieve outcome] in [timeframe]**\r\n> Get your tax refund in 10 days\r\n\r\n---\r\n\r\n### Problem-Focused\r\n\r\n**Never {unpleasant event} again**\r\n> Never miss a sales opportunity again\r\n\r\n**{Question highlighting the main pain point}**\r\n> Hate returning stuff to Amazon?\r\n\r\n**Stop [pain]. Start [pleasure].**\r\n> Stop chasing invoices. Start getting paid on time.\r\n\r\n---\r\n\r\n### Audience-Focused\r\n\r\n**{Key feature/product type} for {target audience}**\r\n> Advanced analytics for Shopify e-commerce\r\n\r\n**{Key feature/product type} for {target audience} to {what it\'s used for}**\r\n> An online whiteboard for teams to ideate and brainstorm together\r\n\r\n**You don\'t have to {skills or resources} to {achieve desirable outcome}**\r\n> With Ahrefs, you don\'t have to be an SEO pro to rank higher and get more traffic\r\n\r\n---\r\n\r\n### Differentiation-Focused\r\n\r\n**The {opposite of usual process} way to {achieve desirable outcome}**\r\n> The easiest way to turn your passion into income\r\n\r\n**The [category] that [key differentiator]**\r\n> The CRM that updates itself\r\n\r\n---\r\n\r\n### Proof-Focused\r\n\r\n**[Number] [people] use [product] to [outcome]**\r\n> 50,000 marketers use Drip to send better emails\r\n\r\n**{Key benefit of your product}**\r\n> Sound clear in online meetings\r\n\r\n---\r\n\r\n### Additional Formulas\r\n\r\n**The simple way to {outcome}**\r\n> The simple way to track your time\r\n\r\n**Finally, {category} that {benefit}**\r\n> Finally, accounting software that doesn\'t suck\r\n\r\n**{Outcome} without {common pain}**\r\n> Build your website without writing code\r\n\r\n**Get {benefit} from your {thing}**\r\n> Get more revenue from your existing traffic\r\n\r\n**{Action verb} your {thing} like {admirable example}**\r\n> Market your SaaS like a Fortune 500\r\n\r\n**What if you could {desirable outcome}?**\r\n> What if you could close deals 30% faster?\r\n\r\n**The {adjective} {category} built for {audience}**\r\n> The lightweight CRM built for startups\r\n\r\n---\r\n\r\n## Landing Page Section Types\r\n\r\n### Core Sections\r\n\r\n**Hero (Above the Fold)**\r\n- Headline + subheadline\r\n- Primary CTA\r\n- Supporting visual (product screenshot, hero image)\r\n- Optional: Social proof bar\r\n\r\n**Social Proof Bar**\r\n- Customer logos (recognizable > many)\r\n- Key metric ("10,000+ teams")\r\n- Star rating with review count\r\n- Short testimonial snippet\r\n\r\n**Problem/Pain Section**\r\n- Articulate their problem better than they can\r\n- Create recognition ("that\'s exactly my situation")\r\n- Hint at cost of not solving it\r\n\r\n**Solution/Benefits Section**\r\n- Bridge from problem to your solution\r\n- 3-5 key benefits (not 10)\r\n- Each: headline + explanation + proof if available\r\n\r\n**How It Works**\r\n- 3-4 numbered steps\r\n- Reduces perceived complexity\r\n- Each step: action + outcome\r\n\r\n**Final CTA Section**\r\n- Recap value proposition\r\n- Repeat primary CTA\r\n- Risk reversal (guarantee, free trial)\r\n\r\n---\r\n\r\n### Supporting Sections\r\n\r\n**Testimonials**\r\n- Full quotes with names, roles, companies\r\n- Photos when possible\r\n- Specific results over vague praise\r\n- Formats: quote cards, video, tweet embeds\r\n\r\n**Case Studies**\r\n- Problem → Solution → Results\r\n- Specific metrics and outcomes\r\n- Customer name and context\r\n- Can be snippets with "Read more" links\r\n\r\n**Use Cases**\r\n- Different ways product is used\r\n- Helps visitors self-identify\r\n- "For marketers who need X" format\r\n\r\n**Personas / "Built For" Sections**\r\n- Explicitly call out target audience\r\n- "Perfect for [role]" blocks\r\n- Addresses "Is this for me?" question\r\n\r\n**FAQ Section**\r\n- Address common objections\r\n- Good for SEO\r\n- Reduces support burden\r\n- 5-10 most common questions\r\n\r\n**Comparison Section**\r\n- vs. competitors (name them or don\'t)\r\n- vs. status quo (spreadsheets, manual processes)\r\n- Tables or side-by-side format\r\n\r\n**Integrations / Partners**\r\n- Logos of tools you connect with\r\n- "Works with your stack" messaging\r\n- Builds credibility\r\n\r\n**Founder Story / Manifesto**\r\n- Why you built this\r\n- What you believe\r\n- Emotional connection\r\n- Differentiates from faceless competitors\r\n\r\n**Demo / Product Tour**\r\n- Interactive demos\r\n- Video walkthroughs\r\n- GIF previews\r\n- Shows product in action\r\n\r\n**Pricing Preview**\r\n- Teaser even on non-pricing pages\r\n- Starting price or "from $X/mo"\r\n- Moves decision-makers forward\r\n\r\n**Guarantee / Risk Reversal**\r\n- Money-back guarantee\r\n- Free trial terms\r\n- "Cancel anytime"\r\n- Reduces friction\r\n\r\n**Stats Section**\r\n- Key metrics that build credibility\r\n- "10,000+ customers"\r\n- "4.9/5 rating"\r\n- "$2M saved for customers"\r\n\r\n---\r\n\r\n## Page Structure Templates\r\n\r\n### Feature-Heavy Page (Weak)\r\n\r\n```\r\n1. Hero\r\n2. Feature 1\r\n3. Feature 2\r\n4. Feature 3\r\n5. Feature 4\r\n6. CTA\r\n```\r\n\r\nThis is a list, not a persuasive narrative.\r\n\r\n---\r\n\r\n### Varied, Engaging Page (Strong)\r\n\r\n```\r\n1. Hero with clear value prop\r\n2. Social proof bar (logos or stats)\r\n3. Problem/pain section\r\n4. How it works (3 steps)\r\n5. Key benefits (2-3, not 10)\r\n6. Testimonial\r\n7. Use cases or personas\r\n8. Comparison to alternatives\r\n9. Case study snippet\r\n10. FAQ\r\n11. Final CTA with guarantee\r\n```\r\n\r\nThis tells a story and addresses objections.\r\n\r\n---\r\n\r\n### Compact Landing Page\r\n\r\n```\r\n1. Hero (headline, subhead, CTA, image)\r\n2. Social proof bar\r\n3. 3 key benefits with icons\r\n4. Testimonial\r\n5. How it works (3 steps)\r\n6. Final CTA with guarantee\r\n```\r\n\r\nGood for ad landing pages where brevity matters.\r\n\r\n---\r\n\r\n### Enterprise/B2B Landing Page\r\n\r\n```\r\n1. Hero (outcome-focused headline)\r\n2. Logo bar (recognizable companies)\r\n3. Problem section (business pain)\r\n4. Solution overview\r\n5. Use cases by role/department\r\n6. Security/compliance section\r\n7. Integration logos\r\n8. Case study with metrics\r\n9. ROI/value section\r\n10. Contact/demo CTA\r\n```\r\n\r\nAddresses enterprise buyer concerns.\r\n\r\n---\r\n\r\n### Product Launch Page\r\n\r\n```\r\n1. Hero with launch announcement\r\n2. Video demo or walkthrough\r\n3. Feature highlights (3-5)\r\n4. Before/after comparison\r\n5. Early testimonials\r\n6. Launch pricing or early access offer\r\n7. CTA with urgency\r\n```\r\n\r\nGood for ProductHunt, launches, or announcements.\r\n\r\n---\r\n\r\n## Section Writing Tips\r\n\r\n### Problem Section\r\n\r\nStart with phrases like:\r\n- "You know the feeling..."\r\n- "If you\'re like most [role]..."\r\n- "Every day, [audience] struggles with..."\r\n- "We\'ve all been there..."\r\n\r\nThen describe:\r\n- The specific frustration\r\n- The time/money wasted\r\n- The impact on their work/life\r\n\r\n### Benefits Section\r\n\r\nFor each benefit, include:\r\n- **Headline**: The outcome they get\r\n- **Body**: How it works (1-2 sentences)\r\n- **Proof**: Number, testimonial, or example (optional)\r\n\r\n### How It Works Section\r\n\r\nEach step should be:\r\n- **Numbered**: Creates sense of progress\r\n- **Simple verb**: "Connect," "Set up," "Get"\r\n- **Outcome-oriented**: What they get from this step\r\n\r\nExample:\r\n1. Connect your tools (takes 2 minutes)\r\n2. Set your preferences\r\n3. Get automated reports every Monday\r\n\r\n### Testimonial Selection\r\n\r\nBest testimonials include:\r\n- Specific results ("increased conversions by 32%")\r\n- Before/after context ("We used to spend hours...")\r\n- Role + company for credibility\r\n- Something quotable and specific\r\n\r\nAvoid testimonials that just say:\r\n- "Great product!"\r\n- "Love it!"\r\n- "Easy to use!"\r\n\r\n---\r\n\r\n## Clarity & Message-Market Fit\r\n\r\nHeadline formulas give you the shape of a line. These tools tell you whether the line is actually *working*: whether it\'s clear, whether it maps to how the reader already thinks, and whether it lands with the right person. Positioning is the prologue to your novel: it sets up everything that follows. Get it clear and the rest of the page writes itself.\r\n\r\n### The "Now you can" Test\r\n\r\nA fast gut-check for any headline or benefit line. Mentally prefix it with **"Now you can…"**. If the result is both **compelling** and **true**, the line is doing its job. If it reads as vague, obvious, or a stretch, rewrite it.\r\n\r\nThe test works because "Now you can…" forces the copy into the reader\'s world. It has to name a concrete new ability they didn\'t have before. Feature-speak and buzzwords collapse under it.\r\n\r\n| Original line | "Now you can…" version | Verdict |\r\n|---------------|------------------------|---------|\r\n| "Powerful analytics platform" | Now you can… have a powerful analytics platform | Fails. not a new ability, just a description |\r\n| "See which companies visit your site" | Now you can… see which companies visit your site | Works. compelling + true |\r\n| "Streamline your workflow" | Now you can… streamline your workflow | Fails. vague, unfalsifiable |\r\n| "Send unlimited docs, images, and audio in one place" | Now you can… send unlimited docs, images, and audio in one place | Works. concrete + true |\r\n\r\nUse it as a filter, not a formula: draft with the headline formulas above, then run each candidate through "Now you can…" and keep the survivors.\r\n\r\n### The Human Action Model (landing-page narrative spine)\r\n\r\nLudwig von Mises\' Human Action Model explains *why* anyone acts: a person acts only when three things line up. Every above-the-fold that converts follows the same three-beat spine:\r\n\r\n1. **Current discomfort**: the felt problem, named in the reader\'s own words. They have to recognize their situation ("that\'s exactly me").\r\n2. **Better vision**: a clearly imagined, more satisfying state. What life looks like once the discomfort is gone.\r\n3. **Path to action**: the belief that *this specific step* closes the gap between the two. The product is the bridge, and the CTA is how they cross it.\r\n\r\nMiss any beat and the reader stalls. No discomfort = no reason to move. No vision = no destination. No path = no reason to believe *you\'re* the way there.\r\n\r\n**Mapping it onto the hero:**\r\n\r\n| Beat | Where it usually lives | Example |\r\n|------|------------------------|---------|\r\n| Current discomfort | Eyebrow, subhead, or problem-framed headline | "You shouldn\'t have to feel awkward sending out your scheduling link" |\r\n| Better vision | Headline or subhead | "Scheduling that feels considerate, not one-sided" |\r\n| Path to action | CTA + supporting proof | "Start scheduling free" |\r\n\r\nThis is the transformation spine underneath the "6 essential sections" of a landing page (hero, social proof, problem, solution, how-it-works, and final CTA). The hero states the transformation; the rest of the page substantiates each beat.\r\n\r\n### The Perception Gap\r\n\r\nThe same benefit can read as a **selling point to one segment and a red flag to another**. The gap is between what *you* think you\'re saying and what a given reader hears through their own risk tolerance.\r\n\r\nThe fix is **matching the value prop to the reader\'s risk tolerance**. Segment first, then swap the framing.\r\n\r\n| Benefit as written | Startup / early-adopter hears | Enterprise / risk-averse hears |\r\n|--------------------|-------------------------------|--------------------------------|\r\n| "Move fast. Ship in a weekend." | Speed, momentum (✅) | Immature, unstable (🚩) |\r\n| "Brand-new approach" | Innovative edge (✅) | Unproven, risky (🚩) |\r\n| "Enterprise-grade security & SLAs" | Bloated, slow, expensive (🚩) | Safe, trustworthy (✅) |\r\n| "Trusted by the Fortune 500" | Not built for me (🚩) | Proven, de-risked (✅) |\r\n\r\n**Value-prop swap in practice** (same product, two audiences):\r\n\r\n- *Startup landing page:* "Ship your first integration this afternoon. Pay by card and skip the sales call."\r\n- *Enterprise landing page:* "SOC 2 Type II, 99.99% uptime SLA, and a named implementation lead. Roll out with confidence."\r\n\r\nWhen a page has to serve both, don\'t average them into mush. Segment the traffic (separate pages, or a persona split) and let each read its own version of the truth.\r\n\r\n### Worked Example: SavvyCal (message-market fit)\r\n\r\nSavvyCal (a scheduling tool) originally led with feature-forward copy. They rewrote the hero around a single felt discomfort:\r\n\r\n> **"You shouldn\'t have to feel awkward sending out your scheduling link."**\r\n\r\nThat one line **roughly tripled (3×) conversions**. It works because it hits all three beats of the Human Action Model at once:\r\n\r\n- **Discomfort:** the small social awkwardness of "here\'s my link, pick a time," named exactly as users feel it.\r\n- **Vision:** scheduling that feels considerate to *both* people.\r\n- **Path:** SavvyCal\'s overlay-your-calendar mechanic is the bridge, so the CTA feels like the obvious next step.\r\n\r\nThe lesson: message-market fit beats feature lists. The winning line named a real feeling the reader hadn\'t heard a scheduling tool acknowledge before. Run your own hero through "Now you can…" and the Human Action Model to find that line.\r\n\r\n### Clarity Beats Cleverness (the metrics)\r\n\r\nWhen teams measure it, clarity is what moves the numbers. Clearer positioning and copy is associated with:\r\n\r\n- **+81% conversions**\r\n- **−38% sales cycle** (shorter time to close)\r\n- **−28% CAC** (lower customer acquisition cost)\r\n- **+175% referrals**\r\n\r\nThe mechanism: clear copy lets the *right* buyer self-qualify fast and the wrong one bounce early, so every downstream metric improves. Clever copy that requires decoding does the opposite. It adds a comprehension tax at the exact moment attention is scarcest.\r\n\r\n**Practical rule:** if a reader has to pause to figure out what you mean, you\'ve already lost. When forced to choose between a clever line and a clear one, ship the clear one, then use the tests above ("Now you can…", the Human Action Model, the Perception Gap) to make the clear line compelling too.\r\n',
+  },
+  {
+    skillId: "copywriting",
+    path: "references/natural-transitions.md",
+    content: `# Natural Transitions\r
+\r
+Transitional phrases to guide readers through your content. Good signposting improves readability, user engagement, and helps search engines understand content structure.\r
+\r
+Adapted from: University of Manchester Academic Phrasebank (2023), Plain English Campaign, web content best practices\r
+\r
+---\r
+\r
+## Contents\r
+- Previewing Content Structure\r
+- Introducing a New Topic\r
+- Referring Back\r
+- Moving Between Sections\r
+- Indicating Addition\r
+- Indicating Contrast\r
+- Indicating Similarity\r
+- Indicating Cause and Effect\r
+- Giving Examples\r
+- Emphasising Key Points\r
+- Providing Evidence (neutral attribution, expert quotes, supporting claims)\r
+- Summarising Sections\r
+- Concluding Content\r
+- Question-Based Transitions\r
+- List Introductions\r
+- Hedging Language\r
+- Best Practice Guidelines\r
+- Transitions to Avoid (AI Tells)\r
+\r
+## Previewing Content Structure\r
+\r
+Use in long guides to orient readers. On marketing pages, start with the content instead.\r
+\r
+- Here's what we'll cover...\r
+- This guide walks you through...\r
+- Below, you'll find...\r
+- We'll start with X, then move to Y...\r
+- First, let's look at...\r
+- The sections below explain...\r
+\r
+---\r
+\r
+## Introducing a New Topic\r
+\r
+- Regarding X,...\r
+- Speaking of X,...\r
+- Now let's talk about X.\r
+- Another key factor is...\r
+- X is worth exploring because...\r
+\r
+---\r
+\r
+## Referring Back\r
+\r
+Use to connect ideas and reinforce key points:\r
+\r
+- As mentioned earlier,...\r
+- As we covered above,...\r
+- Remember when we discussed X?\r
+- Building on that point,...\r
+- Going back to X,...\r
+- Earlier, we explained that...\r
+\r
+---\r
+\r
+## Moving Between Sections\r
+\r
+- Now let's look at...\r
+- Next up:...\r
+- Moving on to...\r
+- With that covered, let's turn to...\r
+- Now that you understand X, here's Y.\r
+- That brings us to...\r
+\r
+---\r
+\r
+## Indicating Addition\r
+\r
+- Also,...\r
+- Plus,...\r
+- On top of that,...\r
+- What's more,...\r
+- Another benefit is...\r
+- Beyond that,...\r
+- In addition,...\r
+- There's also...\r
+\r
+**Note:** Avoid "moreover" and "furthermore" in marketing copy. They read as AI-generated.\r
+\r
+---\r
+\r
+## Indicating Contrast\r
+\r
+- However,...\r
+- But,...\r
+- That said,...\r
+- On the flip side,...\r
+- In contrast,...\r
+- Unlike X, Y...\r
+- While X is true, Y...\r
+- Despite this,...\r
+\r
+---\r
+\r
+## Indicating Similarity\r
+\r
+- Similarly,...\r
+- Likewise,...\r
+- In the same way,...\r
+- Just like X, Y also...\r
+- This mirrors...\r
+- The same applies to...\r
+\r
+---\r
+\r
+## Indicating Cause and Effect\r
+\r
+- So,...\r
+- This means...\r
+- As a result,...\r
+- That's why...\r
+- Because of this,...\r
+- This leads to...\r
+\r
+---\r
+\r
+## Giving Examples\r
+\r
+- For example,...\r
+- For instance,...\r
+- Here's an example:...\r
+- Take X, for instance.\r
+- Consider this:...\r
+- A good example is...\r
+- To illustrate,...\r
+- Like when...\r
+- Say you want to...\r
+\r
+---\r
+\r
+## Emphasising Key Points\r
+\r
+- Here's the key takeaway:...\r
+- The important thing is...\r
+- What matters most is...\r
+- Pay attention to...\r
+\r
+---\r
+\r
+## Providing Evidence\r
+\r
+Use when citing sources, data, or expert opinions:\r
+\r
+### Neutral attribution\r
+- According to [Source],...\r
+- [Source] reports that...\r
+- Research shows that...\r
+- Data from [Source] indicates...\r
+- A study by [Source] found...\r
+\r
+### Expert quotes\r
+- As [Expert] puts it,...\r
+- [Expert] explains,...\r
+- In the words of [Expert],...\r
+- [Expert] notes that...\r
+\r
+### Supporting claims\r
+- This is backed by...\r
+- Evidence suggests...\r
+- The numbers confirm...\r
+- This aligns with findings from...\r
+\r
+---\r
+\r
+## Summarising Sections\r
+\r
+- To recap,...\r
+- In short,...\r
+- Quick summary:...\r
+\r
+---\r
+\r
+## Concluding Content\r
+\r
+- Wrapping up,...\r
+- The bottom line is...\r
+- Here's what to do next:...\r
+- To sum up,...\r
+- Final thoughts:...\r
+- Ready to get started?...\r
+- Now it's your turn.\r
+\r
+**Note:** Avoid "In conclusion" at the start of a paragraph. It's overused and signals AI writing.\r
+\r
+---\r
+\r
+## Question-Based Transitions\r
+\r
+Useful in long-form content for conversational tone and featured snippet optimization. Use them as headings or questions the reader would really ask, then answer with substance. Don't use them as a setup for your own punchline, and keep them out of landing-page copy (see [ai-tells.md](ai-tells.md)).\r
+\r
+- So what does this mean for you?\r
+- How do you actually do this?\r
+- Wondering where to start?\r
+\r
+---\r
+\r
+## List Introductions\r
+\r
+For numbered lists and step-by-step content:\r
+\r
+- Here's how to do it:\r
+- Follow these steps:\r
+- The process is straightforward:\r
+- Here's what you need to know:\r
+- Key things to consider:\r
+- The main factors are:\r
+\r
+---\r
+\r
+## Hedging Language\r
+\r
+For claims that need qualification or aren't absolute:\r
+\r
+- may, might, could\r
+- tends to, generally\r
+- often, usually, typically\r
+- in most cases\r
+- it appears that\r
+- evidence suggests\r
+- this can help\r
+\r
+---\r
+\r
+## Best Practice Guidelines\r
+\r
+1. **Match tone to audience**: B2B content can be slightly more formal; B2C often benefits from conversational transitions\r
+2. **Vary your transitions**: Repeating the same phrase gets noticed (and not in a good way)\r
+3. **Don't over-signpost**: Trust your reader; every sentence doesn't need a transition\r
+4. **Use for scannability**: Transitions at paragraph starts help skimmers navigate\r
+5. **Keep it natural**: Read aloud; if it sounds forced, simplify\r
+6. **Front-load key info**: Put the important word or phrase early in the transition\r
+\r
+---\r
+\r
+## Transitions to Avoid (AI Tells)\r
+\r
+These phrases are overused in AI-generated content:\r
+\r
+- "That being said,..."\r
+- "It's worth noting that..."\r
+- "At its core,..."\r
+- "In today's digital landscape,..."\r
+- "When it comes to the realm of..."\r
+- "This begs the question..."\r
+- "Let's delve into..."\r
+\r
+See [ai-tells.md](ai-tells.md) for the full copy blacklist, including structural patterns like contrast reveals and negation lists.\r
+`,
+  },
+  {
+    skillId: "cro",
+    path: "references/experiments.md",
+    content: `# Page CRO Experiment Ideas\r
+\r
+Comprehensive list of A/B tests and experiments organized by page type.\r
+\r
+## Contents\r
+- Homepage Experiments (Hero Section, Trust & Social Proof, Features & Content, Navigation & UX)\r
+- Pricing Page Experiments (Price Presentation, Pricing UX, Objection Handling, Trust Signals)\r
+- Demo Request Page Experiments (Form Optimization, Page Content, CTA & Routing)\r
+- Resource/Blog Page Experiments (Content CTAs, Resource Section)\r
+- Landing Page Experiments (Message Match, Conversion Focus, Page Length)\r
+- Feature Page Experiments (Feature Presentation, Conversion Path)\r
+- Cross-Page Experiments (Site-Wide Tests, Navigation Tests)\r
+\r
+## Homepage Experiments\r
+\r
+### Hero Section\r
+\r
+| Test | Hypothesis |\r
+|------|------------|\r
+| Headline variations | Specific vs. abstract messaging |\r
+| Subheadline clarity | Add/refine to support headline |\r
+| CTA above fold | Include or exclude prominent CTA |\r
+| Hero visual format | Screenshot vs. GIF vs. illustration vs. video |\r
+| CTA button color | Test contrast and visibility |\r
+| CTA button text | "Start Free Trial" vs. "Get Started" vs. "See Demo" |\r
+| Interactive demo | Engage visitors immediately with product |\r
+\r
+### Trust & Social Proof\r
+\r
+| Test | Hypothesis |\r
+|------|------------|\r
+| Logo placement | Hero section vs. below fold |\r
+| Case study in hero | Show results immediately |\r
+| Trust badges | Add security, compliance, awards |\r
+| Social proof in headline | "Join 10,000+ teams" messaging |\r
+| Testimonial placement | Above fold vs. dedicated section |\r
+| Video testimonials | More engaging than text quotes |\r
+\r
+### Features & Content\r
+\r
+| Test | Hypothesis |\r
+|------|------------|\r
+| Feature presentation | Icons + descriptions vs. detailed sections |\r
+| Section ordering | Move high-value features up |\r
+| Secondary CTAs | Add/remove throughout page |\r
+| Benefit vs. feature focus | Lead with outcomes |\r
+| Comparison section | Show vs. competitors or status quo |\r
+\r
+### Navigation & UX\r
+\r
+| Test | Hypothesis |\r
+|------|------------|\r
+| Sticky navigation | Persistent nav with CTA |\r
+| Nav menu order | High-priority items at edges |\r
+| Nav CTA button | Add prominent button in nav |\r
+| Support widget | Live chat vs. AI chatbot |\r
+| Footer optimization | Clearer secondary conversions |\r
+| Exit intent popup | Capture abandoning visitors |\r
+\r
+---\r
+\r
+## Pricing Page Experiments\r
+\r
+### Price Presentation\r
+\r
+| Test | Hypothesis |\r
+|------|------------|\r
+| Annual vs. monthly display | Highlight savings or simplify |\r
+| Price points | $99 vs. $100 vs. $97 psychology |\r
+| "Most Popular" badge | Highlight target plan |\r
+| Number of tiers | 3 vs. 4 vs. 2 visible options |\r
+| Price anchoring | Order plans to anchor expectations |\r
+| Custom enterprise tier | Show vs. "Contact Sales" |\r
+\r
+### Pricing UX\r
+\r
+| Test | Hypothesis |\r
+|------|------------|\r
+| Pricing calculator | For usage-based pricing clarity |\r
+| Guided pricing flow | Multistep wizard vs. comparison table |\r
+| Feature comparison format | Table vs. expandable sections |\r
+| Monthly/annual toggle | With savings highlighted |\r
+| Plan recommendation quiz | Help visitors choose |\r
+| Checkout flow length | Steps required after plan selection |\r
+\r
+### Objection Handling\r
+\r
+| Test | Hypothesis |\r
+|------|------------|\r
+| FAQ section | Address pricing objections |\r
+| ROI calculator | Demonstrate value vs. cost |\r
+| Money-back guarantee | Prominent placement |\r
+| Per-user breakdowns | Clarity for team plans |\r
+| Feature inclusion clarity | What's in each tier |\r
+| Competitor comparison | Side-by-side value comparison |\r
+\r
+### Trust Signals\r
+\r
+| Test | Hypothesis |\r
+|------|------------|\r
+| Value testimonials | Quotes about ROI specifically |\r
+| Customer logos | Near pricing section |\r
+| Review scores | G2/Capterra ratings |\r
+| Case study snippet | Specific pricing/value results |\r
+\r
+---\r
+\r
+## Demo Request Page Experiments\r
+\r
+### Form Optimization\r
+\r
+| Test | Hypothesis |\r
+|------|------------|\r
+| Field count | Fewer fields, higher completion |\r
+| Multi-step vs. single | Progress bar encouragement |\r
+| Form placement | Above fold vs. after content |\r
+| Phone field | Include vs. exclude |\r
+| Field enrichment | Hide fields you can auto-fill |\r
+| Form labels | Inside field vs. above |\r
+\r
+### Page Content\r
+\r
+| Test | Hypothesis |\r
+|------|------------|\r
+| Benefits above form | Reinforce value before ask |\r
+| Demo preview | Video/GIF showing demo experience |\r
+| "What You'll Learn" | Set expectations clearly |\r
+| Testimonials near form | Reduce friction at decision point |\r
+| FAQ below form | Address common objections |\r
+| Video vs. text | Format for explaining value |\r
+\r
+### CTA & Routing\r
+\r
+| Test | Hypothesis |\r
+|------|------------|\r
+| CTA text | "Book Your Demo" vs. "Schedule 15-Min Call" |\r
+| On-demand option | Instant demo alongside live option |\r
+| Personalized messaging | Based on visitor data/source |\r
+| Navigation removal | Reduce page distractions |\r
+| Calendar integration | Inline booking vs. external link |\r
+| Qualification routing | Self-serve for some, sales for others |\r
+\r
+---\r
+\r
+## Resource/Blog Page Experiments\r
+\r
+### Content CTAs\r
+\r
+| Test | Hypothesis |\r
+|------|------------|\r
+| Floating CTAs | Sticky CTA on blog posts |\r
+| CTA placement | Inline vs. end-of-post only |\r
+| Reading time display | Estimated reading time |\r
+| Related resources | End-of-article recommendations |\r
+| Gated vs. free | Content access strategy |\r
+| Content upgrades | Specific to article topic |\r
+\r
+### Resource Section\r
+\r
+| Test | Hypothesis |\r
+|------|------------|\r
+| Navigation/filtering | Easier to find relevant content |\r
+| Search functionality | Find specific resources |\r
+| Featured resources | Highlight best content |\r
+| Layout format | Grid vs. list view |\r
+| Topic bundles | Grouped resources by theme |\r
+| Download tracking | Gate some, track engagement |\r
+\r
+---\r
+\r
+## Landing Page Experiments\r
+\r
+### Message Match\r
+\r
+| Test | Hypothesis |\r
+|------|------------|\r
+| Headline matching | Match ad copy exactly |\r
+| Visual matching | Match ad creative |\r
+| Offer alignment | Same offer as ad promised |\r
+| Audience-specific pages | Different pages per segment |\r
+\r
+### Conversion Focus\r
+\r
+| Test | Hypothesis |\r
+|------|------------|\r
+| Navigation removal | Single-focus page |\r
+| CTA repetition | Multiple CTAs throughout |\r
+| Form vs. button | Direct capture vs. click-through |\r
+| Urgency/scarcity | If genuine, test messaging |\r
+| Social proof density | Amount and placement |\r
+| Video inclusion | Explain offer with video |\r
+\r
+### Page Length\r
+\r
+| Test | Hypothesis |\r
+|------|------------|\r
+| Short vs. long | Quick conversion vs. complete argument |\r
+| Above-fold only | Minimal scroll required |\r
+| Section ordering | Most important content first |\r
+| Footer removal | Eliminate navigation |\r
+\r
+---\r
+\r
+## Feature Page Experiments\r
+\r
+### Feature Presentation\r
+\r
+| Test | Hypothesis |\r
+|------|------------|\r
+| Demo/screenshot | Show feature in action |\r
+| Use case examples | How customers use it |\r
+| Before/after | Impact visualization |\r
+| Video walkthrough | Feature tour |\r
+| Interactive demo | Try feature without signup |\r
+\r
+### Conversion Path\r
+\r
+| Test | Hypothesis |\r
+|------|------------|\r
+| Trial CTA | Feature-specific trial offer |\r
+| Related features | Cross-link to other features |\r
+| Comparison | vs. competitors' version |\r
+| Pricing mention | Connect to relevant plan |\r
+| Case study link | Feature-specific success story |\r
+\r
+---\r
+\r
+## Cross-Page Experiments\r
+\r
+### Site-Wide Tests\r
+\r
+| Test | Hypothesis |\r
+|------|------------|\r
+| Chat widget | Impact on conversions |\r
+| Cookie consent UX | Minimize friction |\r
+| Page load speed | Performance vs. features |\r
+| Mobile experience | Responsive optimization |\r
+| Accessibility | Impact on conversion |\r
+| Personalization | Dynamic content by segment |\r
+\r
+### Navigation Tests\r
+\r
+| Test | Hypothesis |\r
+|------|------------|\r
+| Menu structure | Information architecture |\r
+| Search placement | Help visitors find content |\r
+| CTA in nav | Always-visible conversion path |\r
+| Breadcrumbs | Navigation clarity |\r
+`,
+  },
+  {
+    skillId: "cro",
+    path: "references/form.md",
+    content:
+      '# Form CRO\r\n\r\nYou are an expert in form optimization. Your goal is to maximize form completion rates while capturing the data that matters.\r\n\r\n## Initial Assessment\r\n\r\n**Check for product marketing context first:**\r\nIf `.agents/product-marketing.md` exists (or `.claude/product-marketing.md` in older setups), read it before asking questions. Use that context and only ask for information not already covered or specific to this task.\r\n\r\nBefore providing recommendations, identify:\r\n\r\n1. **Form Type**\r\n   - Lead capture (gated content, newsletter)\r\n   - Contact form\r\n   - Demo/sales request\r\n   - Application form\r\n   - Survey/feedback\r\n   - Checkout form\r\n   - Quote request\r\n\r\n2. **Current State**\r\n   - How many fields?\r\n   - What\'s the current completion rate?\r\n   - Mobile vs. desktop split?\r\n   - Where do users abandon?\r\n\r\n3. **Business Context**\r\n   - What happens with form submissions?\r\n   - Which fields are actually used in follow-up?\r\n   - Are there compliance/legal requirements?\r\n\r\n---\r\n\r\n## Core Principles\r\n\r\n### 1. Every Field Has a Cost\r\nEach field reduces completion rate. Rule of thumb:\r\n- 3 fields: Baseline\r\n- 4-6 fields: 10-25% reduction\r\n- 7+ fields: 25-50%+ reduction\r\n\r\nFor each field, ask:\r\n- Is this absolutely necessary before we can help them?\r\n- Can we get this information another way?\r\n- Can we ask this later?\r\n\r\n### 2. Value Must Exceed Effort\r\n- Clear value proposition above form\r\n- Make what they get obvious\r\n- Reduce perceived effort (field count, labels)\r\n\r\n### 3. Reduce Cognitive Load\r\n- One question per field\r\n- Clear, conversational labels\r\n- Logical grouping and order\r\n- Smart defaults where possible\r\n\r\n---\r\n\r\n## Field-by-Field Optimization\r\n\r\n### Email Field\r\n- Single field, no confirmation\r\n- Inline validation\r\n- Typo detection (did you mean gmail.com?)\r\n- Proper mobile keyboard\r\n\r\n### Name Fields\r\n- Single "Name" vs. First/Last — test this\r\n- Single field reduces friction\r\n- Split needed only if personalization requires it\r\n\r\n### Phone Number\r\n- Make optional if possible\r\n- If required, explain why\r\n- Auto-format as they type\r\n- Country code handling\r\n\r\n### Company/Organization\r\n- Auto-suggest for faster entry\r\n- Enrichment after submission (HubSpot Breeze, Clay, Apollo, etc.)\r\n- Consider inferring from email domain\r\n\r\n### Job Title/Role\r\n- Dropdown if categories matter\r\n- Free text if wide variation\r\n- Consider making optional\r\n\r\n### Message/Comments (Free Text)\r\n- Make optional\r\n- Reasonable character guidance\r\n- Expand on focus\r\n\r\n### Dropdown Selects\r\n- "Select one..." placeholder\r\n- Searchable if many options\r\n- Consider radio buttons if < 5 options\r\n- "Other" option with text field\r\n\r\n### Checkboxes (Multi-select)\r\n- Clear, parallel labels\r\n- Reasonable number of options\r\n- Consider "Select all that apply" instruction\r\n\r\n---\r\n\r\n## Form Layout Optimization\r\n\r\n### Field Order\r\n1. Start with easiest fields (name, email)\r\n2. Build commitment before asking more\r\n3. Sensitive fields last (phone, company size)\r\n4. Logical grouping if many fields\r\n\r\n### Labels and Placeholders\r\n- Labels: Keep visible (not just placeholder) — placeholders disappear when typing, leaving users unsure what they\'re filling in\r\n- Placeholders: Examples, not labels\r\n- Help text: Only when genuinely helpful\r\n\r\n**Good:**\r\n```\r\nEmail\r\n[name@company.com]\r\n```\r\n\r\n**Bad:**\r\n```\r\n[Enter your email address]  ← Disappears on focus\r\n```\r\n\r\n### Visual Design\r\n- Sufficient spacing between fields\r\n- Clear visual hierarchy\r\n- CTA button stands out\r\n- Mobile-friendly tap targets (44px+)\r\n\r\n### Single Column vs. Multi-Column\r\n- Single column: Higher completion, mobile-friendly\r\n- Multi-column: Only for short related fields (First/Last name)\r\n- When in doubt, single column\r\n\r\n---\r\n\r\n## Multi-Step Forms\r\n\r\n### When to Use Multi-Step\r\n- More than 5-6 fields\r\n- Logically distinct sections\r\n- Conditional paths based on answers\r\n- Complex forms (applications, quotes)\r\n\r\n### Multi-Step Best Practices\r\n- Progress indicator (step X of Y)\r\n- Start with easy, end with sensitive\r\n- One topic per step\r\n- Allow back navigation\r\n- Save progress (don\'t lose data on refresh)\r\n- Clear indication of required vs. optional\r\n\r\n### Progressive Commitment Pattern\r\n1. Low-friction start (just email)\r\n2. More detail (name, company)\r\n3. Qualifying questions\r\n4. Contact preferences\r\n\r\n---\r\n\r\n## Error Handling\r\n\r\n### Inline Validation\r\n- Validate as they move to next field\r\n- Don\'t validate too aggressively while typing\r\n- Clear visual indicators (green check, red border)\r\n\r\n### Error Messages\r\n- Specific to the problem\r\n- Suggest how to fix\r\n- Positioned near the field\r\n- Don\'t clear their input\r\n\r\n**Good:** "Please enter a valid email address (e.g., name@company.com)"\r\n**Bad:** "Invalid input"\r\n\r\n### On Submit\r\n- Focus on first error field\r\n- Summarize errors if multiple\r\n- Preserve all entered data\r\n- Don\'t clear form on error\r\n\r\n---\r\n\r\n## Submit Button Optimization\r\n\r\n### Button Copy\r\nWeak: "Submit" | "Send"\r\nStrong: "[Action] + [What they get]"\r\n\r\nExamples:\r\n- "Get My Free Quote"\r\n- "Download the Guide"\r\n- "Request Demo"\r\n- "Send Message"\r\n- "Start Free Trial"\r\n\r\n### Button Placement\r\n- Immediately after last field\r\n- Left-aligned with fields\r\n- Sufficient size and contrast\r\n- Mobile: Sticky or clearly visible\r\n\r\n### Post-Submit States\r\n- Loading state (disable button, show spinner)\r\n- Success confirmation (clear next steps)\r\n- Error handling (clear message, focus on issue)\r\n\r\n---\r\n\r\n## Trust and Friction Reduction\r\n\r\n### Near the Form\r\n- Privacy statement: "We\'ll never share your info"\r\n- Security badges if collecting sensitive data\r\n- Testimonial or social proof\r\n- Expected response time\r\n\r\n### Reducing Perceived Effort\r\n- "Takes 30 seconds"\r\n- Field count indicator\r\n- Remove visual clutter\r\n- Generous white space\r\n\r\n### Addressing Objections\r\n- "No spam, unsubscribe anytime"\r\n- "We won\'t share your number"\r\n- "No credit card required"\r\n\r\n---\r\n\r\n## Form Types: Specific Guidance\r\n\r\n### Lead Capture (Gated Content)\r\n- Minimum viable fields (often just email)\r\n- Clear value proposition for what they get\r\n- Consider asking enrichment questions post-download\r\n- Test email-only vs. email + name\r\n\r\n### Contact Form\r\n- Essential: Email/Name + Message\r\n- Phone optional\r\n- Set response time expectations\r\n- Offer alternatives (chat, phone)\r\n\r\n### Demo Request\r\n- Name, Email, Company required\r\n- Phone: Optional with "preferred contact" choice\r\n- Use case/goal question helps personalize\r\n- Calendar embed can increase show rate\r\n\r\n### Quote/Estimate Request\r\n- Multi-step often works well\r\n- Start with easy questions\r\n- Technical details later\r\n- Save progress for complex forms\r\n\r\n### Survey Forms\r\n- Progress bar essential\r\n- One question per screen for engagement\r\n- Skip logic for relevance\r\n- Consider incentive for completion\r\n\r\n---\r\n\r\n## Mobile Optimization\r\n\r\n- Larger touch targets (44px minimum height)\r\n- Appropriate keyboard types (email, tel, number)\r\n- Autofill support\r\n- Single column only\r\n- Sticky submit button\r\n- Minimal typing (dropdowns, buttons)\r\n\r\n---\r\n\r\n## Measurement\r\n\r\n### Key Metrics\r\n- **Form start rate**: Page views → Started form\r\n- **Completion rate**: Started → Submitted\r\n- **Field drop-off**: Which fields lose people\r\n- **Error rate**: By field\r\n- **Time to complete**: Total and by field\r\n- **Mobile vs. desktop**: Completion by device\r\n\r\n### What to Track\r\n- Form views\r\n- First field focus\r\n- Each field completion\r\n- Errors by field\r\n- Submit attempts\r\n- Successful submissions\r\n\r\n---\r\n\r\n## Output Format\r\n\r\n### Form Audit\r\nFor each issue:\r\n- **Issue**: What\'s wrong\r\n- **Impact**: Estimated effect on conversions\r\n- **Fix**: Specific recommendation\r\n- **Priority**: High/Medium/Low\r\n\r\n### Recommended Form Design\r\n- **Required fields**: Justified list\r\n- **Optional fields**: With rationale\r\n- **Field order**: Recommended sequence\r\n- **Copy**: Labels, placeholders, button\r\n- **Error messages**: For each field\r\n- **Layout**: Visual guidance\r\n\r\n### Test Hypotheses\r\nIdeas to A/B test with expected outcomes\r\n\r\n---\r\n\r\n## Experiment Ideas\r\n\r\n### Form Structure Experiments\r\n\r\n**Layout & Flow**\r\n- Single-step form vs. multi-step with progress bar\r\n- 1-column vs. 2-column field layout\r\n- Form embedded on page vs. separate page\r\n- Vertical vs. horizontal field alignment\r\n- Form above fold vs. after content\r\n\r\n**Field Optimization**\r\n- Reduce to minimum viable fields\r\n- Add or remove phone number field\r\n- Add or remove company/organization field\r\n- Test required vs. optional field balance\r\n- Use field enrichment to auto-fill known data\r\n- Hide fields for returning/known visitors\r\n\r\n**Smart Forms**\r\n- Add real-time validation for emails and phone numbers\r\n- Progressive profiling (ask more over time)\r\n- Conditional fields based on earlier answers\r\n- Auto-suggest for company names\r\n\r\n---\r\n\r\n### Copy & Design Experiments\r\n\r\n**Labels & Microcopy**\r\n- Test field label clarity and length\r\n- Placeholder text optimization\r\n- Help text: show vs. hide vs. on-hover\r\n- Error message tone (friendly vs. direct)\r\n\r\n**CTAs & Buttons**\r\n- Button text variations ("Submit" vs. "Get My Quote" vs. specific action)\r\n- Button color and size testing\r\n- Button placement relative to fields\r\n\r\n**Trust Elements**\r\n- Add privacy assurance near form\r\n- Show trust badges next to submit\r\n- Add testimonial near form\r\n- Display expected response time\r\n\r\n---\r\n\r\n### Form Type-Specific Experiments\r\n\r\n**Demo Request Forms**\r\n- Test with/without phone number requirement\r\n- Add "preferred contact method" choice\r\n- Include "What\'s your biggest challenge?" question\r\n- Test calendar embed vs. form submission\r\n\r\n**Lead Capture Forms**\r\n- Email-only vs. email + name\r\n- Test value proposition messaging above form\r\n- Gated vs. ungated content strategies\r\n- Post-submission enrichment questions\r\n\r\n**Contact Forms**\r\n- Add department/topic routing dropdown\r\n- Test with/without message field requirement\r\n- Show alternative contact methods (chat, phone)\r\n- Expected response time messaging\r\n\r\n---\r\n\r\n### Mobile & UX Experiments\r\n\r\n- Larger touch targets for mobile\r\n- Test appropriate keyboard types by field\r\n- Sticky submit button on mobile\r\n- Auto-focus first field on page load\r\n- Test form container styling (card vs. minimal)\r\n\r\n---\r\n\r\n## Task-Specific Questions\r\n\r\n1. What\'s your current form completion rate?\r\n2. Do you have field-level analytics?\r\n3. What happens with the data after submission?\r\n4. Which fields are actually used in follow-up?\r\n5. Are there compliance/legal requirements?\r\n6. What\'s the mobile vs. desktop split?\r\n\r\n---\r\n\r\n## Related Skills\r\n\r\n- **signup**: For account creation forms\r\n- **popups**: For forms inside popups/modals\r\n- **cro**: For the page containing the form\r\n- **ab-testing**: For testing form changes\r\n',
+  },
+  {
+    skillId: "customer-research",
+    path: "references/interviews-and-surveys.md",
+    content: `# Customer Research — Interviews & Surveys (Primary Research)\r
+\r
+Going to the source. Mode 2 mines what customers already said in public; this is Mode 3 — you *ask*. Customer research is your marketing cheat code, and the highest-signal version is talking to customers directly.\r
+\r
+Three primary-research pillars, best used together:\r
+1. **Video calls** — deep, unstructured, follow-the-thread (this file)\r
+2. **Surveys** — broad, quantified, benchmarkable (this file)\r
+3. **Online sleuthing** — Sales Safari and watering-hole mining (see \`references/source-guides.md\`)\r
+\r
+---\r
+\r
+## The First Rule of Customer Research\r
+\r
+> The first rule of customer research: you do not talk about customer research.\r
+\r
+Keep it casual. The moment a customer thinks they're in "a research study" they perform — they give you the polished, socially-acceptable answer instead of the real one. Frame calls as a chat, not an interview. Don't lead. Don't pitch. Don't defend the product. You're there to listen and learn how they actually think, talk, and decide.\r
+\r
+**Prove yourself wrong, not right.** The point of research is not validation — it's disconfirmation. Go in trying to *break* your assumptions, not confirm them. If you only look for evidence you're right, you'll find it, and it'll be worthless.\r
+\r
+- **Dropbox example**: the team assumed users would care most about sync *speed*. Research aimed at disproving the assumption revealed users cared more that files were *reliably there and safe* than about raw speed. Chasing the confirmation would have optimized the wrong thing.\r
+- Ask questions that could return an answer you don't want to hear. If none of your questions can prove you wrong, rewrite them.\r
+\r
+---\r
+\r
+## Sales Safari (Amy Hoy)\r
+\r
+Amy Hoy's **Sales Safari**: go where your audience already congregates and observe them in the wild, without interrupting. It's structured online sleuthing — read threads, reviews, comments, and forum posts to mine four things:\r
+\r
+| Mine for | What you're capturing |\r
+|----------|-----------------------|\r
+| **Pains** | The problems, frustrations, and workarounds they describe unprompted |\r
+| **Jargon** | The exact words, phrases, and shorthand they use — copy gold |\r
+| **Recommendations** | What they tell each other to buy, try, or avoid |\r
+| **Worldview** | Their beliefs, biases, and how they see themselves and the problem |\r
+\r
+Safari is passive (you observe) where interviews are active (you ask). Run it first: it tells you what to ask about, and in whose words. For per-platform search operators and extraction tips, see \`references/source-guides.md\`.\r
+\r
+---\r
+\r
+## Customer Interviews (Video Calls)\r
+\r
+### Recruit your best customers\r
+\r
+Don't interview whoever answers first. Interview the customers you want *more of*. Segment your CRM and prioritize by:\r
+\r
+- **High deal size** — the accounts worth the most\r
+- **Short sales cycle** — they "got it" fast; their language converts fast\r
+- **Low churn / high retention** — they got real, lasting value\r
+\r
+Recruitment methods, in order of leverage:\r
+1. **Segment the CRM** by the three signals above and pull a shortlist\r
+2. **Ask sales and CS for referrals** — they know who loves the product and who articulates why\r
+3. **Always close every call with**: *"Who else should we talk to?"* — the single most reliable way to compound your interview pipeline\r
+\r
+### Incentives\r
+\r
+- **$50 per call** (~30 min); **$5 per survey response**\r
+- Aim for **10 calls, be happy with 5.** Signal saturates fast — by call 5-6 you'll hear the same themes repeat. Don't stall the project waiting for a perfect sample.\r
+- Offer the incentive up front; it dramatically lifts response rate and shows you value their time. Gift cards work fine.\r
+\r
+### Outreach email template\r
+\r
+Keep it short, casual, specific, and low-commitment. Not a "research study."\r
+\r
+\`\`\`\r
+Subject: Quick favor — 30 min, on us\r
+\r
+Hi [First name],\r
+\r
+I'm [name] from [company]. I'm trying to get better at helping customers\r
+like you, and I'd love to steal 30 minutes to hear how [product area] is\r
+actually working for you — what's good, what's annoying, what you wish\r
+were different. No pitch, no agenda.\r
+\r
+As a thank you I'll send you a $50 [Amazon/Visa] gift card.\r
+\r
+Are you free [day] or [day] this week? Here's my calendar: [link]\r
+\r
+Thanks either way,\r
+[Name]\r
+\`\`\`\r
+\r
+Notes:\r
+- "No pitch, no agenda" and "what's annoying" signal you actually want the truth.\r
+- One clear ask, two concrete time options, a booking link. Remove friction.\r
+- Never say "customer research study."\r
+\r
+---\r
+\r
+## Keep Asking Why (5-Why Laddering)\r
+\r
+The first answer is never the real answer. **Keep Asking Why** — ladder each response down 3-5 levels until you hit the root motivation, the business outcome, or the emotional driver. Surface answers are features; the bottom of the ladder is why they pay and why they stay.\r
+\r
+**Worked example** — laddering a churn signal to NRR:\r
+\r
+- **Q: Why did you downgrade your plan last quarter?**\r
+  - "We weren't using the advanced reports."\r
+- **Why weren't you using them?**\r
+  - "Nobody on the team knew how to build one."\r
+- **Why didn't anyone learn?**\r
+  - "The person who set us up left, and onboarding never got re-run for the new hires."\r
+- **Why did that matter enough to downgrade?**\r
+  - "Without the reports, my boss couldn't see the ROI, so at renewal it looked like an easy cost to cut."\r
+- **Why is that the real risk?**\r
+  - "If leadership can't see value, we churn — and if we *had* seen it, we'd probably have added seats, not cut them."\r
+\r
+The surface answer was "we don't use reports." The root is an **onboarding gap that quietly converts an expansion (NRR up) into a contraction or churn (NRR down)**. You can't fix "they don't use reports." You can fix re-onboarding new hires and surfacing ROI to the buyer — which is the difference between contraction and net revenue retention.\r
+\r
+**Pain points vs. passion points.** Ladder for both. Pain points are what's broken and what they'll pay to escape. Passion points are what they love, brag about, and would be "very disappointed" to lose. Passion points drive retention and referrals; pains drive acquisition. Capture both in their words.\r
+\r
+---\r
+\r
+## Surveys\r
+\r
+### The PMF Survey (Sean Ellis / Superhuman)\r
+\r
+The single most useful survey question, from Sean Ellis and popularized by Superhuman's Rahul Vohra:\r
+\r
+> **"How would you feel if you could no longer use [product]?"**\r
+> - Very disappointed\r
+> - Somewhat disappointed\r
+> - Not disappointed\r
+> - N/A — I no longer use it\r
+\r
+**The 40% benchmark**: if **40% or more** of users answer **"very disappointed,"** you likely have product/market fit. Below 40%, keep iterating. **Superhuman reached 58%** by engineering their roadmap around this metric — segmenting on the "very disappointed" cohort, doubling down on what that cohort loved, and converting the "somewhat disappointed" fence-sitters.\r
+\r
+Run it as a recurring pulse, not once. Follow the core question with:\r
+- *"What type of person do you think would most benefit from [product]?"* (sharpens ICP)\r
+- *"What is the main benefit you receive from [product]?"* (your positioning, in their words)\r
+- *"How can we improve [product] for you?"* (roadmap fuel from fence-sitters)\r
+\r
+Segment every answer by the "very disappointed" cohort vs. the rest — that cohort is your true market.\r
+\r
+### Survey design guardrails\r
+\r
+- Keep it short — every extra question drops completion.\r
+- Prefer open-ended for language mining; multiple-choice answers are artifacts of the options you gave.\r
+- Don't lead. A question that telegraphs the answer you want returns the answer you want, not the truth.\r
+- $5/response incentive lifts completion; deliver it on submit.\r
+\r
+---\r
+\r
+## Case Anchors\r
+\r
+- **Airbnb (host photography)**: research revealed listings failed because the *photos* were bad, not the pricing or copy. Airbnb sent photographers to shoot host homes — a fix nobody would have guessed without talking to the market. Research points at problems you can't see from inside.\r
+- **Dropbox (confirmation bias)**: assumed sync speed mattered most; disconfirming research showed reliability/safety of files mattered more. Prove yourself wrong.\r
+- **Superhuman (PMF survey)**: engineered the roadmap around the "very disappointed" metric, 40% → 58%.\r
+\r
+---\r
+\r
+## Where This Fits\r
+\r
+- **Analyze what you gather** with the Mode 1 extraction framework in \`SKILL.md\` (jobs to be done, pains, triggers, outcomes, language, alternatives) and the confidence guardrails.\r
+- **Mine public sources** (the passive Safari half) via \`references/source-guides.md\`.\r
+- Interview + survey signal is **first-party and high-confidence** — weight it above scraped online sources when they conflict.\r
+`,
+  },
+];

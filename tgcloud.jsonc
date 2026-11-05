@@ -1,5 +1,4 @@
 {
-  // Mini App hosting: build output of the Vite front-end
   "static": {
     "source": "dist",
     "spa": true,

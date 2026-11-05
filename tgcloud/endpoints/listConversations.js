@@ -1,7 +1,6 @@
-import { db } from 'sdk';
-import { sql } from 'sdk/db';
-import { ensureUser } from '../lib/chat.js';
-
+import { db } from "sdk";
+import { sql } from "sdk/db";
+import { ensureUser } from "../lib/chat.js";
 export default async function (input, ctx) {
   const tgUser = ctx.initData.user;
   await ensureUser(tgUser);
@@ -22,8 +21,8 @@ export default async function (input, ctx) {
     conversations: rows.map((r) => ({
       id: r.id,
       agentId: r.agentId,
-      title: r.title ?? 'Без названия',
-      updatedAt: (r.updatedAt ?? 0) * 1000,
+      title: r.title ?? "Без названия",
+      updatedAt: (r.updatedAt ?? 0) * 1e3,
       preview: r.preview ? String(r.preview).slice(0, 110) : null,
       previewRole: r.previewRole ?? null,
     })),

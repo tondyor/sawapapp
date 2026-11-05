@@ -1,29 +1,37 @@
-import { db, EndpointError } from 'sdk';
-import { eq, asc, lte, and } from 'sdk/db';
-import { conversations, messages } from '../schema.js';
-import { getConversationById, createConversation, ensureUser } from '../lib/chat.js';
-
+import { db, EndpointError } from "sdk";
+import { eq, asc, lte, and } from "sdk/db";
+import { conversations, messages } from "../schema.js";
+import {
+  getConversationById,
+  createConversation,
+  ensureUser,
+} from "../lib/chat.js";
 export default async function (input, ctx) {
   const tgUser = ctx.initData.user;
   const convId = Number(input?.conversationId);
-  if (!convId) throw new EndpointError('Не указан диалог', { code: 'BAD_INPUT' });
+  if (!convId)
+    throw new EndpointError("Не указан диалог", { code: "BAD_INPUT" });
   const src = await getConversationById(convId, tgUser.id);
-  if (!src) throw new EndpointError('Диалог не найден', { code: 'NOT_FOUND' });
-
+  if (!src) throw new EndpointError("Диалог не найден", { code: "NOT_FOUND" });
   const userRow = await ensureUser(tgUser);
-  const copy = await createConversation(userRow, src.agentId, src.title ? `Копия: ${src.title.slice(0, 70)}` : 'Копия диалога');
-
+  const copy = await createConversation(
+    userRow,
+    src.agentId,
+    src.title ? `Копия: ${src.title.slice(0, 70)}` : "Копия диалога",
+  );
   const conds = [eq(messages.conversationId, src.id)];
   if (input?.upToMessageId) {
     const upTo = Number(input.upToMessageId);
-    if (!upTo) throw new EndpointError('Неверное сообщение', { code: 'BAD_INPUT' });
+    if (!upTo)
+      throw new EndpointError("Неверное сообщение", { code: "BAD_INPUT" });
     conds.push(lte(messages.id, upTo));
   }
-  const srcMessages = await db.select().from(messages)
+  const srcMessages = await db
+    .select()
+    .from(messages)
     .where(and(...conds))
     .orderBy(asc(messages.id))
     .all();
-
   const chunk = [];
   const flush = async () => {
     if (!chunk.length) return;
@@ -32,7 +40,7 @@ export default async function (input, ctx) {
   };
   let copied = 0;
   for (const m of srcMessages) {
-    if (m.role !== 'user' && m.role !== 'assistant') continue;
+    if (m.role !== "user" && m.role !== "assistant") continue;
     chunk.push({
       conversationId: copy.id,
       role: m.role,
@@ -44,6 +52,5 @@ export default async function (input, ctx) {
     if (chunk.length >= 40) await flush();
   }
   await flush();
-
   return { conversationId: copy.id, agentId: copy.agentId, copied };
 }
