@@ -57,9 +57,6 @@ export function getCompressModel() {
 export function resolveAnswerModel() {
   return getAnswerModel();
 }
-function thinkingToggleSupported(model) {
-  return typeof model === "string" && model.startsWith("deepseek-ai/deepseek");
-}
 function buildBody(messages, opts = {}) {
   const model = opts.model ?? DEFAULT_MODEL;
   const body = {
@@ -69,8 +66,10 @@ function buildBody(messages, opts = {}) {
     max_tokens: opts.maxTokens ?? MAX_OUTPUT_TOKENS,
     stream: opts.stream === true,
   };
-  if (thinkingToggleSupported(model)) {
-    body.chat_template_kwargs = { thinking: false };
+  if (typeof opts.reasoningEffort === "number") {
+    body.reasoning_effort = opts.reasoningEffort;
+  } else if (opts.thinking === true) {
+    body.chat_template_kwargs = { thinking: true };
   }
   if (body.stream) body.stream_options = { include_usage: true };
   if (opts.tools && opts.tools.length) {
