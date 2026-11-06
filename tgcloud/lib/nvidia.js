@@ -70,6 +70,25 @@ export function getStatusModel() {
 export function getParseModel() {
   return getSettingOr("PARSE_MODEL", PARSE_MODEL);
 }
+export async function generateActionStatus({ action, step, question }) {
+  try {
+    const model = await getStatusModel();
+    const prompt = `Ты — быстрый генератор статуса хода AI-агента для отображения в реальном времени.
+Сформулируй ОДНУ короткую фразу на русском языке (3-6 слов, от первого лица, настоящее время, без кавычек и точки на конце), отражающую действие:
+Вопрос: ${String(question ?? "").slice(0, 100)}
+Действие: ${step?.title || step?.type || action || "выполняю шаг"}
+Статус:`;
+    const res = await completeChat([{ role: "user", content: prompt }], {
+      model,
+      maxTokens: 25,
+      temperature: 0.1,
+    });
+    const text = (res.content ?? "").trim().replace(/^["'«»]|["'«»]$/g, "").replace(/\.$/, "").trim();
+    return text || null;
+  } catch (_) {
+    return null;
+  }
+}
 export function resolveAnswerModel() {
   return getAnswerModel();
 }

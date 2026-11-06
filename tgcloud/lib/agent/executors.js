@@ -247,12 +247,21 @@ export async function execDeepReason(step, ctx) {
   return { stream: out, content: out.content ?? "", event: { index: ctx.stepIndex, task } };
 }
 export async function execPdfParse(step, ctx) {
+  const parseModel = await getParseModel();
   const task = String(step.params?.task ?? step.title ?? "парсинг документа");
-  return {
-    raw: "Документ обработан.",
-    finding: `Данные извлечены: ${task}`,
-    event: { index: ctx.stepIndex, task },
-  };
+  const base = [
+    {
+      role: "system",
+      content:
+        "Ты — модуль извлечения таблиц и структурированных данных из документов. Извлеки ключевые факты, таблицы, списки и числовые показатели.",
+    },
+    {
+      role: "user",
+      content: `Задача: ${task}\nКонтекст вопроса: ${ctx.question}`,
+    },
+  ];
+  const out = await runStream({ llmMessages: base, ctx, model: parseModel });
+  return { stream: out, content: out.content ?? "", event: { index: ctx.stepIndex, task } };
 }
 export const EXECUTORS = {
   vision: execVision,

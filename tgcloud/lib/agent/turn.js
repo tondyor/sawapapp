@@ -16,7 +16,7 @@ import {
   buildLlmMessages,
   deleteMessagesAfter,
 } from "../chat.js";
-import { streamChat, resolveAnswerModel } from "../nvidia.js";
+import { streamChat, resolveAnswerModel, generateActionStatus } from "../nvidia.js";
 import { getAgentOrDefault } from "../agents.js";
 import { planTurn, fallbackPlan, planKey, MAX_PLAN_STEPS, fastPathPlan } from "./pipeline.js";
 import {
@@ -256,6 +256,13 @@ export async function runTurnStep({ turnId, tgId }) {
       });
     } else {
       await touch(tid, { stepAttempts: attemptsPlan });
+      const boltPlanStatus = await generateActionStatus({
+        action: "составляю план действий",
+        question: turn.question,
+      });
+      if (boltPlanStatus) {
+        await turnRecorder.event("status", { text: boltPlanStatus });
+      }
       const res = await planTurn({
         question: turn.question,
         history: turnHistory,
@@ -329,16 +336,38 @@ export async function runTurnStep({ turnId, tgId }) {
   const step = plan[idx];
   if (!step) {
     await touch(tid, { status: "synthesizing" });
+  const boltSynthStatus = await generateActionStatus({
+    action: "формулирую итоговый ответ",
+    question: turn.question,
+  });
+  if (boltSynthStatus) {
+    await recorder.event("status", { text: boltSynthStatus });
+  }
     return { status: "synthesizing", currentStep: idx, plan, findings };
+  }
+  const boltStepStatus = await generateActionStatus({
+    step,
+    question: turn.question,
+  });
+  if (boltStepStatus) {
+    await recorder.event("status", { text: boltStepStatus });
   }
   await recorder.event("step_start", {
     index: idx,
     type: step.type,
-    title: step.title,
+    title: boltStepStatus || step.title,
+    rawTitle: step.title,
   });
   const t0 = Date.now();
   if (isFinalStep(step.type) && !step.duplicate) {
     await touch(tid, { status: "synthesizing" });
+  const boltSynthStatus = await generateActionStatus({
+    action: "формулирую итоговый ответ",
+    question: turn.question,
+  });
+  if (boltSynthStatus) {
+    await recorder.event("status", { text: boltSynthStatus });
+  }
     return { status: "synthesizing", currentStep: idx, plan, findings };
   }
   if (step.type === "reason" && !step.duplicate) {
@@ -897,6 +926,13 @@ export async function finishTurnSynthesis({ turnId, tgId }) {
     };
   }
   await touch(tid, { status: "synthesizing" });
+  const boltSynthStatus = await generateActionStatus({
+    action: "формулирую итоговый ответ",
+    question: turn.question,
+  });
+  if (boltSynthStatus) {
+    await recorder.event("status", { text: boltSynthStatus });
+  }
   const base = await buildLlmMessages(
     agent,
     historyWithoutTurnQuestion(history, turn.question),
@@ -912,7 +948,7 @@ ${f.text}`,
         )
         .join("\n\n")
     : "(шаги не дали находок)";
-  const acc = turn.answerText ?? "";
+  let acc = turn.answerText ?? "";
   base.push({
     role: "user",
     content: acc

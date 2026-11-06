@@ -195,11 +195,20 @@ function capabilitiesText({ hasImages, search, readUrl, skills }) {
   if (readUrl) lines.push("- read_url — чтение конкретной страницы");
   if (skills?.length) {
     lines.push(
-      '- skill — прочитать профильный навык из библиотеки агента, params: {"skill": "<id>"}',
+      '- skill — профильный навык, params: {"skill": "<id>"}',
     );
     lines.push("Доступные навыки (id: название — когда применять):");
     lines.push(
-      skills.map((s) => `- ${s.id}: ${s.name} — ${s.when}`).join("\n"),
+      skills
+        .map((s) => {
+          const shortWhen = String(s.when || s.name || "")
+            .replace(/\s+/g, " ")
+            .split(/[.\n;]/)[0]
+            .trim()
+            .slice(0, 80);
+          return `- ${s.id}: ${s.name}${shortWhen && shortWhen !== s.name ? ` (${shortWhen})` : ""}`;
+        })
+        .join("\n"),
     );
   }
   return lines.join("\n");
@@ -227,6 +236,7 @@ function plannerSystemPrompt({ hasImages, search, readUrl, replan, skills }) {
     "- Каждый шаг — конкретная цель: title коротко о чём шаг; search-запросы самодостаточные и точные.",
     "- Не дублируй шаги (одинаковый тип + запрос).",
     "- Если используешь инструменты (search/read_url/vision/skill/math/deep_reason/pdf_parse) — последний шаг ВСЕГДА synthesize.",
+    "- Рассуждай предельно кратко (1-2 коротких предложения в мыслях), сразу переходи к JSON-массиву.",
     "Ответ: СТРОГО JSON-массив, без markdown, без пояснений, формат:",
     '[{"type":"search","title":"кратко","params":{"query":"точный запрос"}}]',
   ];
@@ -281,28 +291,23 @@ export async function planTurn({
   try {
     const search = await searchAvailable();
     const model = await getPlannerModel();
-    const msgs = [
-      {
-        role: "system",
-        content: plannerSystemPrompt({
-          hasImages,
-          search,
-          readUrl: search,
-          replan,
-          skills,
-        }),
-      },
-      {
-        role: "user",
-        content: plannerUserPrompt({
-          question,
-          history,
-          hasImages,
-          priorSteps,
-          findings,
-        }),
-      },
-    ];
+    const promptText = [
+      plannerSystemPrompt({
+        hasImages,
+        search,
+        readUrl: search,
+        replan,
+        skills,
+      }),
+      plannerUserPrompt({
+        question,
+        history,
+        hasImages,
+        priorSteps,
+        findings,
+      }),
+    ].join("\n\n");
+    const msgs = [{ role: "user", content: promptText }];
 
     let content = "";
     let reasoning = "";
@@ -313,7 +318,7 @@ export async function planTurn({
     for await (const ev of streamChat(msgs, {
       model,
       temperature: 0.2,
-      maxTokens: 1500,
+      maxTokens: 600,
     })) {
       if (ev.model && !resModel) resModel = ev.model;
       if (ev.usage) usage = ev.usage;

@@ -247,10 +247,12 @@ export default function ReasoningTrace({
     seq.push("🧠 размышления");
   if (stopEv) seq.push("⏹ остановлен");
   if (doneEv) seq.push("✓ ответ");
+  const statusEvs = events.filter((e) => e.type === "status");
+  const lastStatus = statusEvs[statusEvs.length - 1]?.payload?.text;
   let statusText;
   if (errorEv) statusText = "Ошибка генерации";
   else if (stopEv) statusText = "Ход остановлен";
-  else if (running) statusText = "Думаю…";
+  else if (running) statusText = lastStatus || "Думаю…";
   else statusText = seq.join(" · ");
   const model = startEv?.payload?.model ?? doneEv?.payload?.meta?.model ?? null;
   const tail =
