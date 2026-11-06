@@ -5,14 +5,24 @@ export const ALLOWED_SETTING_KEYS = [
   "DEFAULT_MODEL",
   "PLANNER_MODEL",
   "COMPRESS_MODEL",
+  "ANSWER_MODEL",
+  "MATH_MODEL",
+  "DEEP_REASON_MODEL",
+  "STATUS_MODEL",
+  "PARSE_MODEL",
   "SERPER_API_KEY",
   "READER_MODE",
 ];
-export const DEFAULT_MODEL = "deepseek-ai/deepseek-v4.1-flash";
-export const PLANNER_MODEL = "deepseek-ai/deepseek-v4.1-flash";
-export const COMPRESS_MODEL = "deepseek-ai/deepseek-v4.1-flash";
-export const ANSWER_MODEL = "deepseek-ai/deepseek-v4.1-flash";
-export const VISION_MODEL = "deepseek-ai/deepseek-v4.1-flash";
+export const DEFAULT_MODEL = "mistralai/mistral-large-4-1t-a52b";
+export const PLANNER_MODEL = "meta/muse-glimmer-30b";
+export const COMPRESS_MODEL = "nvidia/nemotron-3-ultra-550b-a55b";
+export const ANSWER_MODEL = "mistralai/mistral-large-4-1t-a52b";
+export const VISION_MODEL = "nvidia/nemotron-3.5-super-vl-120b-a12b";
+export const MATH_MODEL = "nvidia/nemotron-3-ultra-550b-a55b";
+export const DEEP_REASON_MODEL = "stepfun-ai/step-5-preview";
+export const STATUS_MODEL = "nvidia/nemotron-3.5-bolt-e4b";
+export const PARSE_MODEL = "nvidia/nemotron-parse-2.0";
+
 export const VISION_READER_PROMPT = [
   "Ты — модуль компьютерного зрения внутри AI-агента. Твоя задача — исчерпывающе и точно описать изображение для текстовой модели, которая его НЕ видит.",
   "Опиши: тип изображения (фото/скриншот/документ/диаграмма/рисунок), все объекты и людей, цвета, расположение элементов, надписи и числа ДОСЛОВНО, таблицы — построчно.",

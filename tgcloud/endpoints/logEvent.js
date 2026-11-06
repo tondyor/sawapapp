@@ -1,10 +1,12 @@
 import { db, EndpointError } from "sdk";
 import { events } from "../schema.js";
+import { ensureUser } from "../lib/chat.js";
 const ALLOWED = new Set(["app_opened"]);
 export default async function logEvent(input, ctx) {
   const user = ctx.initData?.user;
   if (!user?.id)
     throw new EndpointError("Нет пользователя", { code: "NO_USER" });
+  await ensureUser(user);
   const name = String(input?.name ?? "").trim();
   if (!ALLOWED.has(name))
     throw new EndpointError("Неизвестное событие", { code: "BAD_NAME" });

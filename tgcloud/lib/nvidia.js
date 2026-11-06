@@ -12,6 +12,10 @@ import {
   VISION_MODEL,
   PLANNER_MODEL,
   COMPRESS_MODEL,
+  MATH_MODEL,
+  DEEP_REASON_MODEL,
+  STATUS_MODEL,
+  PARSE_MODEL,
 } from "./config.js";
 export async function getApiKey() {
   const row = await db
@@ -54,6 +58,18 @@ export function getAnswerModel() {
 export function getCompressModel() {
   return getSettingOr("COMPRESS_MODEL", COMPRESS_MODEL);
 }
+export function getMathModel() {
+  return getSettingOr("MATH_MODEL", MATH_MODEL);
+}
+export function getDeepReasonModel() {
+  return getSettingOr("DEEP_REASON_MODEL", DEEP_REASON_MODEL);
+}
+export function getStatusModel() {
+  return getSettingOr("STATUS_MODEL", STATUS_MODEL);
+}
+export function getParseModel() {
+  return getSettingOr("PARSE_MODEL", PARSE_MODEL);
+}
 export function resolveAnswerModel() {
   return getAnswerModel();
 }
@@ -66,7 +82,7 @@ function buildBody(messages, opts = {}) {
     max_tokens: opts.maxTokens ?? MAX_OUTPUT_TOKENS,
     stream: opts.stream === true,
   };
-  if (typeof opts.reasoningEffort === "number") {
+  if (typeof opts.reasoningEffort === "string") {
     body.reasoning_effort = opts.reasoningEffort;
   } else if (opts.thinking === true) {
     body.chat_template_kwargs = { thinking: true };

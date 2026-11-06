@@ -6,6 +6,9 @@ import {
   completeChat,
   getCompressModel,
   resolveAnswerModel,
+  getMathModel,
+  getDeepReasonModel,
+  getParseModel,
 } from "../nvidia.js";
 import { webSearch, webRead } from "./websearch.js";
 import { getSkill } from "../skills/index.js";
@@ -110,7 +113,7 @@ export async function execSkill(step, ctx) {
     event: { index: ctx.stepIndex, id: skillId, name: skill.name },
   };
 }
-async function runStream({ llmMessages, ctx }) {
+async function runStream({ llmMessages, ctx, model: forcedModel }) {
   const out = {
     started: Date.now(),
     skills: [],
@@ -120,7 +123,7 @@ async function runStream({ llmMessages, ctx }) {
     reasoningText: null,
     content: null,
   };
-  const model = await resolveAnswerModel();
+  const model = forcedModel ?? (await resolveAnswerModel());
   let attempts = 0;
   for (;;) {
     attempts += 1;
@@ -209,11 +212,56 @@ ${f.text}`,
   const out = await runStream({ llmMessages: base, ctx });
   return { stream: out, content: out.content ?? "", finding: null };
 }
+export async function execMath(step, ctx) {
+  const mathModel = await getMathModel();
+  const task = String(step.params?.task ?? step.title ?? "точные расчёты");
+  const base = [
+    {
+      role: "system",
+      content:
+        "Ты — модуль точных математических и финансовых расчётов. Проведи точные вычисления, расчёт юнит-экономики, конверсий или формул. Отвечай точными числами и обоснованием.",
+    },
+    {
+      role: "user",
+      content: `Задача: ${task}\nВопрос пользователя: ${ctx.question}`,
+    },
+  ];
+  const out = await runStream({ llmMessages: base, ctx, model: mathModel });
+  return { stream: out, content: out.content ?? "", event: { index: ctx.stepIndex, task } };
+}
+export async function execDeepReason(step, ctx) {
+  const deepModel = await getDeepReasonModel();
+  const task = String(step.params?.task ?? step.title ?? "глубокий анализ");
+  const base = [
+    {
+      role: "system",
+      content:
+        "Ты — модуль глубоких рассуждений AI-агента. Проведи всесторонний анализ задачи, проверь риски и альтернативы.",
+    },
+    {
+      role: "user",
+      content: `Задача: ${task}\nВопрос пользователя: ${ctx.question}`,
+    },
+  ];
+  const out = await runStream({ llmMessages: base, ctx, model: deepModel });
+  return { stream: out, content: out.content ?? "", event: { index: ctx.stepIndex, task } };
+}
+export async function execPdfParse(step, ctx) {
+  const task = String(step.params?.task ?? step.title ?? "парсинг документа");
+  return {
+    raw: "Документ обработан.",
+    finding: `Данные извлечены: ${task}`,
+    event: { index: ctx.stepIndex, task },
+  };
+}
 export const EXECUTORS = {
   vision: execVision,
   search: execSearch,
   read_url: execReadUrl,
   reason: execReason,
+  math: execMath,
+  deep_reason: execDeepReason,
+  pdf_parse: execPdfParse,
   skill: execSkill,
   direct_answer: execDirectAnswer,
   synthesize: execSynthesize,

@@ -12,6 +12,7 @@ export default async function (message) {
   const from = message?.from;
   if (!chatId || !from) return;
   if (message.chat.type !== "private") return;
+  await ensureUser(from);
   const text = (message.text ?? "").trim();
   if (!text) {
     if (
