@@ -242,16 +242,22 @@ ${a.vision}`,
     ? "(изображение приложено)"
     : "";
 }
-export async function buildLlmMessages(agent, history) {
+export async function buildLlmMessages(
+  agent,
+  history,
+  { includeSkillTool = false } = {},
+) {
   const sysParts = [agent.systemPrompt];
-  const dbSkills =
-    agent.id === MARKETER_AGENT_ID ? await ensureMarketerSkills() : [];
-  const skills = [...skillsForAgent(agent.id), ...dbSkills];
-  if (skills.length) {
-    sysParts.push(
-      "Инструмент read_skill даёт доступ к подробным навыкам. Если запрос пользователя попадает в тематику любого навыка из списка ниже — ОБЯЗАТЕЛЬНО сначала вызови read_skill с его id, прочитай содержимое и строй ответ на его основе. Не вызывай навык только для приветствий и совсем коротких вопросов.",
-      skills.map((s) => `- ${s.id}: ${s.name} — ${s.when}`).join("\n"),
-    );
+  if (includeSkillTool) {
+    const dbSkills =
+      agent.id === MARKETER_AGENT_ID ? await ensureMarketerSkills() : [];
+    const skills = [...skillsForAgent(agent.id), ...dbSkills];
+    if (skills.length) {
+      sysParts.push(
+        "Инструмент read_skill даёт доступ к подробным навыкам. Если запрос пользователя попадает в тематику любого навыка из списка ниже — ОБЯЗАТЕЛЬНО сначала вызови read_skill с его id, прочитай содержимое и строй ответ на его основе. Не вызывай навык только для приветствий и совсем коротких вопросов.",
+        skills.map((s) => `- ${s.id}: ${s.name} — ${s.when}`).join("\n"),
+      );
+    }
   }
   const out = [{ role: "system", content: sysParts.join("\n\n") }];
   for (const m of history) {
@@ -515,7 +521,9 @@ async function runTurn({ agent, conv, history, model }, turnId) {
   }
   try {
     await runVisionStep({ history, recorder, out });
-    const llmMessages = await buildLlmMessages(agent, history);
+    const llmMessages = await buildLlmMessages(agent, history, {
+      includeSkillTool: true,
+    });
     for await (const _ev of streamRounds(
       { agent, llmMessages, model },
       out,

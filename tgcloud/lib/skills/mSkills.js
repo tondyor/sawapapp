@@ -6,43 +6,13 @@ export const MARKETER_AGENT_ID = "marketer";
 let cache = null;
 export async function ensureMarketerSkills() {
   if (cache) return cache;
-  try {
-    const rows = await db.select().from(marketerSkills).all();
-    const have = new Set(rows.map((r) => r.skillId));
-    const missing = MARKETER_SKILL_PACK.filter((s) => !have.has(s.id));
-    for (const s of missing) {
-      await db
-        .insert(marketerSkills)
-        .values({
-          skillId: s.id,
-          name: s.name,
-          useWhen: s.when,
-          content: s.content,
-          active: true,
-        })
-        .onConflictDoNothing({ target: marketerSkills.skillId })
-        .run();
-    }
-    cache = [
-      ...rows
-        .filter((r) => r.active !== false)
-        .map((r) => ({
-          id: r.skillId,
-          name: r.name,
-          when: r.useWhen ?? "",
-          content: r.content,
-        })),
-      ...missing.map((s) => ({
-        id: s.id,
-        name: s.name,
-        when: s.when,
-        content: s.content,
-      })),
-    ].filter((s) => s.id && s.content);
-    return cache;
-  } catch (_) {
-    return [];
-  }
+  cache = MARKETER_SKILL_PACK.map((s) => ({
+    id: s.id,
+    name: s.name,
+    when: s.when,
+    content: s.content,
+  }));
+  return cache;
 }
 export function marketerSkillsCached() {
   return cache ?? [];

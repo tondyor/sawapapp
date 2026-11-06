@@ -264,6 +264,7 @@ export async function runTurnStep({ turnId, tgId }) {
           turn.agentId === MARKETER_AGENT_ID
             ? await ensureMarketerSkills()
             : [],
+        recorder: turnRecorder,
       });
       plan = res.steps;
       planMeta = {
@@ -526,6 +527,7 @@ export async function runTurnStep({ turnId, tgId }) {
         executedKeys: findings.map((f) =>
           planKey({ type: f.type, params: keyParams(plan[f.index]) }),
         ),
+        recorder,
       });
       if (rp.ok && rp.steps.length) {
         const cap = MAX_PLAN_STEPS + 1;
@@ -835,7 +837,7 @@ function stepsMeta(findings, finalStep) {
     finalStep,
   ];
 }
-const SYNTH_CHUNK_TOKENS = 700;
+const SYNTH_CHUNK_TOKENS = 1800;
 const SYNTH_PERSIST_MS = 6e3;
 export async function finishTurnSynthesis({ turnId, tgId }) {
   const tid = sanitizeTurnId(turnId);
@@ -876,6 +878,7 @@ export async function finishTurnSynthesis({ turnId, tgId }) {
         ms: f.ms,
         ok: f.ok,
       })),
+      reasoningText: turn.stepText ?? null,
     });
     const message = await finishTurn(
       conv,
@@ -933,10 +936,11 @@ ${findingsText}`,
   let lastPersist = Date.now();
   let pendingContent = "";
   let pendingReasoning = "";
+  let accReasoning = turn.stepText ?? "";
   let finish = null;
   let grew = 0;
   const persist = async () => {
-    await touch(tid, { answerText: acc });
+    await touch(tid, { answerText: acc, stepText: accReasoning });
     lastPersist = Date.now();
   };
   const flushEvents = async (force = false) => {
@@ -960,7 +964,10 @@ ${findingsText}`,
         deadlineHit = true;
         break;
       }
-      if (ev.reasoning) pendingReasoning += ev.reasoning;
+      if (ev.reasoning) {
+        pendingReasoning += ev.reasoning;
+        accReasoning += ev.reasoning;
+      }
       if (ev.delta) {
         acc += ev.delta;
         grew += ev.delta.length;
@@ -995,6 +1002,7 @@ ${findingsText}`,
         ms: f.ms,
         ok: f.ok,
       })),
+      reasoningText: accReasoning || null,
       error: errMsg,
     });
     await recorder.event("error", { message: errMsg });
@@ -1012,7 +1020,16 @@ ${findingsText}`,
       totalChars: acc.length,
     };
   }
-  if (finish === "stop" || finish == null) {
+  if (!acc.trim() && accReasoning && !deadlineHit && (turn.stepAttempts ?? 0) < 3) {
+    await touch(tid, { stepAttempts: (turn.stepAttempts ?? 0) + 1 });
+    return {
+      status: "synthesizing",
+      partial: true,
+      appended: 0,
+      totalChars: 0,
+    };
+  }
+  if (finish === "stop" || finish == null || acc.trim()) {
     const meta = buildMeta({
       started,
       model,
@@ -1022,6 +1039,7 @@ ${findingsText}`,
         ms: f.ms,
         ok: f.ok,
       })),
+      reasoningText: accReasoning || null,
     });
     const message = await finishTurn(
       conv,

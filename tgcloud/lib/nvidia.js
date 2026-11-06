@@ -129,13 +129,14 @@ export async function completeChat(messages, opts = {}) {
   const msg = choice?.message ?? {};
   const content = msg.content ?? "";
   const finish = choice?.finish_reason ?? "";
-  if (!content && !msg.tool_calls?.length && finish !== "length") {
+  const reasoning =
+    typeof msg.reasoning_content === "string" ? msg.reasoning_content : "";
+  if (!content && !reasoning && !msg.tool_calls?.length && finish !== "length") {
     throw new Error(`NVIDIA API: пустой ответ (finish_reason=${finish})`);
   }
   return {
     content,
-    reasoning:
-      typeof msg.reasoning_content === "string" ? msg.reasoning_content : "",
+    reasoning,
     toolCalls: msg.tool_calls ?? null,
     model: normalizeModelId(data?.model) ?? opts.model ?? DEFAULT_MODEL,
     usage: data?.usage ?? null,

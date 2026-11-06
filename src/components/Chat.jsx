@@ -155,6 +155,7 @@ function Message({
       e.type === "reasoning" ||
       e.type === "skill" ||
       e.type === "image" ||
+      e.type === "step" ||
       e.type === "error",
   );
   if (editing) {

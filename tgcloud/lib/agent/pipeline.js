@@ -1,4 +1,4 @@
-import { getPlannerModel, completeChat, getSettingOr } from "../nvidia.js";
+import { getPlannerModel, streamChat, getSettingOr } from "../nvidia.js";
 export const STEP_TYPES = [
   "direct_answer",
   "vision",
@@ -274,38 +274,66 @@ export async function planTurn({
   priorSteps = [],
   findings = [],
   executedKeys = [],
+  recorder = null,
 }) {
   const t0 = Date.now();
   const replan = Boolean(priorSteps.length);
   try {
     const search = await searchAvailable();
     const model = await getPlannerModel();
-    const res = await completeChat(
-      [
-        {
-          role: "system",
-          content: plannerSystemPrompt({
-            hasImages,
-            search,
-            readUrl: search,
-            replan,
-            skills,
-          }),
-        },
-        {
-          role: "user",
-          content: plannerUserPrompt({
-            question,
-            history,
-            hasImages,
-            priorSteps,
-            findings,
-          }),
-        },
-      ],
-      { model, temperature: 0.2, maxTokens: 800 },
-    );
-    const { value, repaired } = extractPlanJson(res.content);
+    const msgs = [
+      {
+        role: "system",
+        content: plannerSystemPrompt({
+          hasImages,
+          search,
+          readUrl: search,
+          replan,
+          skills,
+        }),
+      },
+      {
+        role: "user",
+        content: plannerUserPrompt({
+          question,
+          history,
+          hasImages,
+          priorSteps,
+          findings,
+        }),
+      },
+    ];
+
+    let content = "";
+    let reasoning = "";
+    let pendingReasoning = "";
+    let usage = null;
+    let resModel = model;
+
+    for await (const ev of streamChat(msgs, {
+      model,
+      temperature: 0.2,
+      maxTokens: 1500,
+    })) {
+      if (ev.model && !resModel) resModel = ev.model;
+      if (ev.usage) usage = ev.usage;
+      if (ev.delta) content += ev.delta;
+      if (ev.reasoning) {
+        reasoning += ev.reasoning;
+        pendingReasoning += ev.reasoning;
+        if (recorder && pendingReasoning.length >= 250) {
+          await recorder.event("reasoning", { text: pendingReasoning });
+          pendingReasoning = "";
+        }
+      }
+    }
+    if (recorder && pendingReasoning) {
+      await recorder.event("reasoning", { text: pendingReasoning });
+      pendingReasoning = "";
+    }
+
+    const planText = content.trim() || reasoning.trim() || "";
+    const { value, repaired } = extractPlanJson(planText);
     let steps = normalizeSteps(value, { executedKeys });
     if (replan && steps.length) {
       steps = steps.filter((s) => s.type !== "synthesize");
@@ -317,8 +345,8 @@ export async function planTurn({
     return {
       steps,
       repaired,
-      model: res.model ?? model,
-      usage: res.usage ?? null,
+      model: resModel,
+      usage,
       latencyMs: Date.now() - t0,
       ok: true,
     };
