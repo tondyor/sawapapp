@@ -125,6 +125,12 @@ function apiError(status, bodyText) {
     `NVIDIA API ${status}: ${String(hint || bodyText).slice(0, 400)}`,
   );
 }
+function timeoutSignal(ms) {
+  return typeof AbortSignal !== "undefined" &&
+    typeof AbortSignal.timeout === "function"
+    ? AbortSignal.timeout(ms)
+    : undefined;
+}
 export async function completeChat(messages, opts = {}) {
   const apiKey = opts.apiKey ?? (await getApiKey());
   const res = await fetch(`${NVIDIA_BASE_URL}/chat/completions`, {
@@ -134,6 +140,7 @@ export async function completeChat(messages, opts = {}) {
       "Content-Type": "application/json",
       Accept: "application/json",
     },
+    signal: timeoutSignal(opts.timeoutMs ?? 20e3),
     body: JSON.stringify(buildBody(messages, { ...opts, apiKey })),
   });
   const text = await res.text();
@@ -166,6 +173,11 @@ export function normalizeModelId(m) {
 }
 export async function* streamChat(messages, opts = {}) {
   const apiKey = opts.apiKey ?? (await getApiKey());
+  const deadlineMs =
+    typeof opts.deadlineMs === "number" && Number.isFinite(opts.deadlineMs)
+      ? opts.deadlineMs
+      : 22e3;
+  const signal = timeoutSignal(deadlineMs);
   const res = await fetch(`${NVIDIA_BASE_URL}/chat/completions`, {
     method: "POST",
     headers: {
@@ -176,12 +188,9 @@ export async function* streamChat(messages, opts = {}) {
     body: JSON.stringify(
       buildBody(messages, { ...opts, apiKey, stream: true }),
     ),
+    ...(signal ? { signal } : {}),
   });
   if (!res.ok) throw apiError(res.status, await res.text());
-  const deadlineMs =
-    typeof opts.deadlineMs === "number" && Number.isFinite(opts.deadlineMs)
-      ? opts.deadlineMs
-      : 22e3;
   const deadlineAt = Date.now() + deadlineMs;
   const hasTimer = typeof setTimeout === "function";
   const toolAcc = new Map();
@@ -211,17 +220,28 @@ export async function* streamChat(messages, opts = {}) {
     ]);
   for (;;) {
     let next;
-    if (hasTimer) {
-      next = await raceLine();
-      if (next === "__DEADLINE__") {
+    try {
+      if (hasTimer) {
+        next = await raceLine();
+        if (next === "__DEADLINE__") {
+          deadlineHit = true;
+          break;
+        }
+      } else {
+        next = await lineIterator.next();
+      }
+    } catch (e) {
+      if (signal?.aborted) {
         deadlineHit = true;
         break;
       }
-    } else {
-      next = await lineIterator.next();
+      throw e;
     }
-    if (next.done) break;
-    if (Date.now() > deadlineAt) {
+    if (next.done) {
+      if (signal?.aborted) deadlineHit = true;
+      break;
+    }
+    if (Date.now() > deadlineAt || signal?.aborted) {
       deadlineHit = true;
       break;
     }

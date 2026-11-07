@@ -248,7 +248,7 @@ export async function runTurnStep({ turnId, tgId }) {
       plan = fastPlan;
       planMeta.fastPath = true;
     } else if (attemptsPlan >= 3) {
-      plan = fallbackPlan({ hasImages: turnHasImages });
+      plan = fallbackPlan({ hasImages: turnHasImages, agentId: turn.agentId });
       planMeta.fallback = true;
       await turnRecorder.event("plan", {
         steps: plan.map((s) => ({ type: s.type, title: s.title })),
@@ -285,7 +285,8 @@ export async function runTurnStep({ turnId, tgId }) {
         planAttempts: attemptsPlan,
       };
     }
-    if (!plan.length) plan = fallbackPlan({ hasImages: turnHasImages });
+    if (!plan.length)
+      plan = fallbackPlan({ hasImages: turnHasImages, agentId: turn.agentId });
     const planRows = [...plan, ...(plan.some((s) => s.type === "synthesize") ? [] : [{ type: "synthesize", title: "Финальный ответ", params: {} }])].map((s) => ({
       type: s.type,
       title: s.title,

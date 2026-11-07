@@ -142,10 +142,16 @@ export function normalizeSteps(raw, { executedKeys = [] } = {}) {
   }
   return out;
 }
-export function fallbackPlan({ hasImages, executedKeys = [] }) {
+export function fallbackPlan({ hasImages, executedKeys = [], agentId = null }) {
   const steps = [];
   if (hasImages)
     steps.push({ type: "vision", title: "Изучить изображения", params: {} });
+  if (agentId === "marketer")
+    steps.push({
+      type: "skill",
+      title: "Прочитать Growth-фреймворк",
+      params: { skill: "growth-framework" },
+    });
   steps.push({ type: "direct_answer", title: "Прямой ответ", params: {} });
   return normalizeSteps(steps, { executedKeys });
 }
