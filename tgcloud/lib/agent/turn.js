@@ -289,6 +289,12 @@ export async function runTurnStep({ turnId, tgId }) {
     }
     if (!plan.length)
       plan = fallbackPlan({ hasImages: turnHasImages, agentId: turn.agentId });
+    if (turnHasImages && plan.length && plan[0]?.type !== "vision") {
+      plan = [
+        { type: "vision", title: "Изучить изображения", params: {}, key: "vision|", duplicate: false },
+        ...plan,
+      ];
+    }
     if (
       turn.agentId === MARKETER_AGENT_ID &&
       plan.length &&
@@ -736,6 +742,8 @@ ${findings.map((f, i) => `${i + 1}. (${f.type}) ${f.title}: ${f.text}`).join("\n
   const flushEvents = async (force = false) => {
     if (pendingReasoning && (force || pendingReasoning.length >= 350)) {
       await recorder.event("reasoning", { text: pendingReasoning });
+      if (!acc)
+        await sendThinkingDraft({ tgId, turnId: tid, recorder, thinking: accReasoning });
       pendingReasoning = "";
     }
     if (pendingContent && (force || pendingContent.length >= 300)) {
@@ -1013,6 +1021,8 @@ ${f.text}`,
     }
     if (pendingReasoning && (force || pendingReasoning.length >= 350)) {
       await recorder.event("reasoning", { text: pendingReasoning });
+      if (!acc)
+        await sendThinkingDraft({ tgId, turnId: tid, recorder, thinking: accReasoning });
       pendingReasoning = "";
     }
   };

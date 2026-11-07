@@ -33,8 +33,8 @@ export const STEP_CATALOG = {
   synthesize: "финальный ответ пользователю из находок шагов (ставь последним)",
 };
 export const PLAN_BUDGET =
-  "1-6 шагов: ровно настолько глубоко, насколько нужен вопрос";
-export const MAX_PLAN_STEPS = 6;
+  "1-5 шагов: ровно настолько глубоко, насколько нужен вопрос";
+export const MAX_PLAN_STEPS = 5;
 function repairJson(text) {
   const t = String(text ?? "")
     .replace(/```(?:json)?/gi, "")
