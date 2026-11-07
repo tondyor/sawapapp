@@ -287,6 +287,23 @@ export async function runTurnStep({ turnId, tgId }) {
     }
     if (!plan.length)
       plan = fallbackPlan({ hasImages: turnHasImages, agentId: turn.agentId });
+    if (
+      turn.agentId === MARKETER_AGENT_ID &&
+      plan.length &&
+      !plan.some((s) => s.type === "skill")
+    ) {
+      const skillStep = {
+        type: "skill",
+        title: "Прочитать Growth-фреймворк",
+        params: { skill: "growth-framework" },
+        key: "skill|growth-framework",
+        duplicate: false,
+      };
+      const lastFinal =
+        plan.length && isFinalStep(plan[plan.length - 1].type) ? 1 : 0;
+      const at = plan.length - lastFinal;
+      plan = [...plan.slice(0, at), skillStep, ...plan.slice(at)];
+    }
     const planRows = [...plan, ...(plan.some((s) => s.type === "synthesize") ? [] : [{ type: "synthesize", title: "Финальный ответ", params: {} }])].map((s) => ({
       type: s.type,
       title: s.title,
