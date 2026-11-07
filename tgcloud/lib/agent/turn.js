@@ -27,6 +27,7 @@ import {
   historyWithoutTurnQuestion,
 } from "./executors.js";
 import { MARKETER_AGENT_ID, ensureMarketerSkills } from "../skills/mSkills.js";
+import { sendThinkingDraft, sendDraft, sendFinal } from "../chatDraft.js";
 const TERMINAL = ["done", "error", "stopped"];
 function genTurnId() {
   return (
@@ -164,6 +165,7 @@ export async function startTurn({
     })
     .returning();
   await recorder.event("plan_wait", { hasImages });
+  await sendThinkingDraft({ tgId: conv.tgId, turnId, recorder });
   return {
     turnId: row.turnId,
     conversationId: conv.id,
@@ -940,6 +942,7 @@ export async function finishTurnSynthesis({ turnId, tgId }) {
       content: message.content,
       meta,
     });
+    await sendFinal({ tgId, turnId: tid, text: turn.answerText.trim(), recorder });
     await touch(tid, { status: "done", currentStep: findings.length + 1 });
     return {
       status: "done",
@@ -971,16 +974,17 @@ ${f.text}`,
         .join("\n\n")
     : "(шаги не дали находок)";
   let acc = turn.answerText ?? "";
+  const reasoningSoFar = String(turn.stepText ?? "");
+  const hadProgress = Boolean(acc.trim() || reasoningSoFar.trim());
   base.push({
     role: "user",
-    content: acc
+    content: hadProgress
       ? [
           `Вопрос пользователя: ${turn.question}`,
-          `Результаты выполненных шагов хода:
-${findingsText}`,
-          "Ты уже начал писать ответ, но текст оборвался. Ниже — конец уже написанного. Продолжи ответ РОВНО с места обрыва: не повторяй написанное, не здоровайся, не начинай заново; если обрыв в середине предложения — продолжи со средины. Пиши сразу продолжение, без преамбул.",
-          `Конец уже написанного текста:
-…${acc.slice(-1500)}`,
+          `Результаты выполненных шагов хода:\n${findingsText}`,
+          "Ты уже начал писать ответ, но текст оборвался. Ниже — конец уже написанного рассуждения и уже написанного текста. Продолжи РОВНО с места обрыва: не повторяй написанное, не здоровайся, не начинай заново; если обрыв в середине предложения — продолжи со средины. Пиши сразу продолжение, без преамбул.",
+          `Конец уже написанного рассуждения:\n…${reasoningSoFar.slice(-1500)}`,
+          `Конец уже написанного текста:\n…${acc.slice(-1500)}`,
         ].join("\n\n")
       : [
           `Вопрос пользователя: ${turn.question}`,
@@ -1004,6 +1008,7 @@ ${findingsText}`,
   const flushEvents = async (force = false) => {
     if (pendingContent && (force || pendingContent.length >= 300)) {
       await recorder.event("content", { text: pendingContent });
+      await sendDraft({ tgId, turnId: tid, text: acc, recorder });
       pendingContent = "";
     }
     if (pendingReasoning && (force || pendingReasoning.length >= 350)) {
@@ -1067,6 +1072,7 @@ ${findingsText}`,
     try {
       await finishTurn(conv, "[ошибка: ответ не получен]", meta);
     } catch (_) {}
+    await sendFinal({ tgId, turnId: tid, text: "[ошибка: ответ не получен]", recorder });
     await touch(tid, { status: "error", error: errMsg });
     return { status: "error", error: errMsg };
   }
@@ -1109,6 +1115,7 @@ ${findingsText}`,
       content: message.content,
       meta,
     });
+    await sendFinal({ tgId, turnId: tid, text: acc.trim() || "[пустой ответ]", recorder });
     await touch(tid, {
       status: "done",
       answerDone: true,
@@ -1188,6 +1195,7 @@ export async function stopTurn({ turnId, tgId }) {
     tgId,
   });
   await recorder.event("stop", { steps: done.length });
+  await sendFinal({ tgId, turnId: tid, text: lines.join("\n"), recorder });
   return {
     status: "stopped",
     stepsDone: done.length,
