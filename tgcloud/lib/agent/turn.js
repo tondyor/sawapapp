@@ -697,9 +697,7 @@ export async function runTurnStep({ turnId, tgId }) {
 function keyParams(stepRow) {
   return stepRow?.params ?? {};
 }
-const REASON_CHUNK_TOKENS = 700;
 const REASON_PERSIST_MS = 6e3;
-const SOFT_DEADLINE_MS = 25e3;
 async function runReasonChunk({ tid, turn, step, ctx, idx, t0 }) {
   const { agent, conv, history, question, findings, recorder } = ctx;
   const findingsText = findings.length
@@ -715,23 +713,15 @@ ${findings.map((f, i) => `${i + 1}. (${f.type}) ${f.title}: ${f.text}`).join("\n
   const acc = turn.stepText ?? "";
   base.push({
     role: "user",
-    content: acc
-      ? [
-          "Ты — внутренний модуль анализа AI-агента. Это служебный шаг хода, не диалог с пользователем: не приветствуй и не обращайся к пользователю.",
-          `Вопрос пользователя: ${question}`,
-          `Подзадача шага: ${task}`,
-          findingsText,
-          "Ты уже начал писать результат анализа, но текст оборвался. Ниже — конец уже написанного. Продолжи РОВНО с места обрыва: не повторяй написанное, не начинай заново. Пиши сразу продолжение.",
-          `Конец уже написанного текста:
-…${acc.slice(-1500)}`,
-        ].join("\n\n")
-      : [
-          "Ты — внутренний модуль анализа AI-агента. Это служебный шаг хода, не диалог с пользователем: не приветствуй и не обращайся к пользователю.",
-          `Вопрос пользователя: ${question}`,
-          `Подзадача шага: ${task}`,
-          findingsText,
-          "Верни РЕЗУЛЬТАТ анализа: выводы, факты, числа. Он пойдёт планировщику и финальному ответу.",
-        ].join("\n\n"),
+    content: [
+      "Ты — внутренний модуль анализа AI-агента. Это служебный шаг хода, не диалог с пользователем: не приветствуй и не обращайся к пользователю.",
+      `Вопрос пользователя: ${question}`,
+      `Подзадача шага: ${task}`,
+      findingsText,
+      acc
+        ? `Твой предыдущий текст анализа:\n${acc}\nИспользуй его как контекст. Продолжай результат анализа: выводы, факты, числа. Не повторяй написанное, не начинай заново — просто развивай выводы дальше.`
+        : "Верни РЕЗУЛЬТАТ анализа: выводы, факты, числа. Он пойдёт планировщику и финальному ответу.",
+    ].join("\n\n"),
   });
   const model = await resolveAnswerModel();
   let lastPersist = Date.now();
@@ -743,7 +733,7 @@ ${findings.map((f, i) => `${i + 1}. (${f.type}) ${f.title}: ${f.text}`).join("\n
     if (pendingReasoning && (force || pendingReasoning.length >= 350)) {
       await recorder.event("reasoning", { text: pendingReasoning });
       if (!acc)
-        await sendThinkingDraft({ tgId, turnId: tid, recorder, thinking: accReasoning });
+        await sendThinkingDraft({ tgId, turnId: tid, recorder, thinking: accReason });
       pendingReasoning = "";
     }
     if (pendingContent && (force || pendingContent.length >= 300)) {
@@ -752,16 +742,11 @@ ${findings.map((f, i) => `${i + 1}. (${f.type}) ${f.title}: ${f.text}`).join("\n
     }
   };
   let accReason = acc;
-  let deadlineHit = false;
   try {
     for await (const ev of streamChat(base, {
       model,
-      maxTokens: REASON_CHUNK_TOKENS,
+      maxTokens: 8192,
     })) {
-      if (Date.now() - t0 > SOFT_DEADLINE_MS) {
-        deadlineHit = true;
-        break;
-      }
       if (ev.reasoning) {
         pendingReasoning += ev.reasoning;
         accReason += ev.reasoning;
@@ -786,7 +771,7 @@ ${findings.map((f, i) => `${i + 1}. (${f.type}) ${f.title}: ${f.text}`).join("\n
     } catch (_) {}
   }
   await touch(tid, { stepText: accReason });
-  if (deadlineHit || finish === "length") {
+  if (finish === "length") {
     return {
       status: "executing",
       currentStep: idx,
@@ -897,7 +882,6 @@ function stepsMeta(findings, finalStep) {
     finalStep,
   ];
 }
-const SYNTH_CHUNK_TOKENS = 1800;
 const SYNTH_PERSIST_MS = 6e3;
 export async function finishTurnSynthesis({ turnId, tgId }) {
   const tid = sanitizeTurnId(turnId);
@@ -985,21 +969,16 @@ ${f.text}`,
   const reasoningSoFar = String(turn.stepText ?? "");
   base.push({
     role: "user",
-    content: !acc.trim()
-      ? [
-          `Вопрос пользователя: ${turn.question}`,
-          "Результаты выполненных шагов хода:",
-          findingsText,
-          reasoningSoFar.trim()
-            ? "Ты уже много рассуждал. ПРЕКРАЩАЙ РАССУЖДАТЬ. У тебя достаточно информации, чтобы дать ответ. Теперь сразу пиши финальный ответ пользователю: по структуре фреймворка, с конкретными метриками, гипотезой, вариантами и планом на 48 часов — без размышлений."
-            : "Составь финальный ответ пользователю на основе находок. Если инструмент не сработал — скажи об этом честно и ответь тем, что есть. Отвечай на языке вопроса.",
-        ].join("\n\n")
-      : [
-          `Вопрос пользователя: ${turn.question}`,
-          `Результаты выполненных шагов хода:\n${findingsText}`,
-          "Ты уже начал писать ответ, но текст оборвался. Ниже — конец уже написанного текста. Продолжи РОВНО с места обрыва: не повторяй написанное, не здоровайся, не начинай заново; если обрыв в середине предложения — продолжи со средины. Пиши сразу продолжение, без преамбул.",
-          `Конец уже написанного текста:\n…${acc.slice(-1500)}`,
-        ].join("\n\n"),
+    content: [
+      `Вопрос пользователя: ${turn.question}`,
+      "Результаты выполненных шагов хода:",
+      findingsText,
+      acc
+        ? `Вот как ты уже писал ответ:\n${acc}\nИспользуй это как контекст. Пиши ответ дальше, не повторяя написанное.`
+        : reasoningSoFar.trim()
+          ? `У тебя уже есть рассуждения (сохранены как контекст):\n${reasoningSoFar}\nИспользуй их как контекст, пиши финальный ответ пользователю. Отвечай на языке вопроса.`
+          : "Составь финальный ответ пользователю на основе находок. Если инструмент не сработал — скажи об этом честно и ответь тем, что есть. Отвечай на языке вопроса.",
+    ].join("\n\n"),
   });
   const model = await resolveAnswerModel();
   const started = Date.now();
@@ -1027,16 +1006,11 @@ ${f.text}`,
     }
   };
   const t0 = Date.now();
-  let deadlineHit = false;
   try {
     for await (const ev of streamChat(base, {
       model,
-      maxTokens: SYNTH_CHUNK_TOKENS,
+      maxTokens: 8192,
     })) {
-      if (Date.now() - t0 > SOFT_DEADLINE_MS) {
-        deadlineHit = true;
-        break;
-      }
       if (ev.reasoning) {
         pendingReasoning += ev.reasoning;
         accReasoning += ev.reasoning;
@@ -1086,15 +1060,7 @@ ${f.text}`,
     await touch(tid, { status: "error", error: errMsg });
     return { status: "error", error: errMsg };
   }
-  if (deadlineHit && finish !== "stop") {
-    return {
-      status: "synthesizing",
-      partial: true,
-      appended: grew,
-      totalChars: acc.length,
-    };
-  }
-  if (!acc.trim() && accReasoning && !deadlineHit && (turn.stepAttempts ?? 0) < 3) {
+  if (!acc.trim() && accReasoning && (turn.stepAttempts ?? 0) < 3) {
     await touch(tid, { stepAttempts: (turn.stepAttempts ?? 0) + 1 });
     return {
       status: "synthesizing",

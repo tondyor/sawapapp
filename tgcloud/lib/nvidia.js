@@ -125,12 +125,6 @@ function apiError(status, bodyText) {
     `NVIDIA API ${status}: ${String(hint || bodyText).slice(0, 400)}`,
   );
 }
-function timeoutSignal(ms) {
-  return typeof AbortSignal !== "undefined" &&
-    typeof AbortSignal.timeout === "function"
-    ? AbortSignal.timeout(ms)
-    : undefined;
-}
 export async function completeChat(messages, opts = {}) {
   const apiKey = opts.apiKey ?? (await getApiKey());
   const res = await fetch(`${NVIDIA_BASE_URL}/chat/completions`, {
@@ -140,7 +134,6 @@ export async function completeChat(messages, opts = {}) {
       "Content-Type": "application/json",
       Accept: "application/json",
     },
-    signal: timeoutSignal(opts.timeoutMs ?? 20e3),
     body: JSON.stringify(buildBody(messages, { ...opts, apiKey })),
   });
   const text = await res.text();
@@ -173,11 +166,6 @@ export function normalizeModelId(m) {
 }
 export async function* streamChat(messages, opts = {}) {
   const apiKey = opts.apiKey ?? (await getApiKey());
-  const deadlineMs =
-    typeof opts.deadlineMs === "number" && Number.isFinite(opts.deadlineMs)
-      ? opts.deadlineMs
-      : 22e3;
-  const signal = timeoutSignal(deadlineMs);
   const res = await fetch(`${NVIDIA_BASE_URL}/chat/completions`, {
     method: "POST",
     headers: {
@@ -188,15 +176,11 @@ export async function* streamChat(messages, opts = {}) {
     body: JSON.stringify(
       buildBody(messages, { ...opts, apiKey, stream: true }),
     ),
-    ...(signal ? { signal } : {}),
   });
   if (!res.ok) throw apiError(res.status, await res.text());
-  const deadlineAt = Date.now() + deadlineMs;
-  const hasTimer = typeof setTimeout === "function";
   const toolAcc = new Map();
   let usage = null;
-  let deadlineHit = false;
-  const tail = () => {
+  const finish = () => {
     if (toolAcc.size)
       return {
         delta: "",
@@ -206,51 +190,14 @@ export async function* streamChat(messages, opts = {}) {
         model: null,
         usage,
       };
-    if (deadlineHit)
-      return { delta: "", reasoning: null, finish: "length", model: null, usage };
     return { delta: "", reasoning: null, finish: null, model: null, usage };
   };
-  const lineIterator = sseLines(res.body)[Symbol.asyncIterator]();
-  const raceLine = () =>
-    Promise.race([
-      lineIterator.next(),
-      new Promise((resolve) =>
-        setTimeout(() => resolve("__DEADLINE__"), Math.max(50, deadlineAt - Date.now())),
-      ),
-    ]);
-  for (;;) {
-    let next;
-    try {
-      if (hasTimer) {
-        next = await raceLine();
-        if (next === "__DEADLINE__") {
-          deadlineHit = true;
-          break;
-        }
-      } else {
-        next = await lineIterator.next();
-      }
-    } catch (e) {
-      if (signal?.aborted) {
-        deadlineHit = true;
-        break;
-      }
-      throw e;
-    }
-    if (next.done) {
-      if (signal?.aborted) deadlineHit = true;
-      break;
-    }
-    if (Date.now() > deadlineAt || signal?.aborted) {
-      deadlineHit = true;
-      break;
-    }
-    const line = next.value;
+  for await (const line of sseLines(res.body)) {
     const t = line.trim();
     if (!t.startsWith("data:")) continue;
     const payload = t.slice(5).trim();
     if (payload === "[DONE]") {
-      yield tail();
+      yield finish();
       return;
     }
     let j;
@@ -295,7 +242,7 @@ export async function* streamChat(messages, opts = {}) {
       };
     }
   }
-  yield tail();
+  yield finish();
 }
 function utf8Decode(bytes) {
   if (typeof TextDecoder !== "undefined")

@@ -9,7 +9,6 @@ export function draftIdFor(turnId) {
 }
 function escapeHtml(text) {
   return String(text ?? "")
-    .slice(-1500)
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;");

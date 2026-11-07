@@ -328,7 +328,7 @@ export async function planTurn({
     for await (const ev of streamChat(msgs, {
       model,
       temperature: 0.2,
-      maxTokens: 600,
+      maxTokens: 8192,
     })) {
       if (ev.model && !resModel) resModel = ev.model;
       if (ev.usage) usage = ev.usage;

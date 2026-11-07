@@ -474,6 +474,7 @@ async function* streamRounds(
     for await (const ev of streamChat(msgs, {
       model,
       tools: tool ? [tool] : void 0,
+      maxTokens: 8192,
     })) {
       if (ev.model && !out.model) out.model = ev.model;
       if (ev.usage) out.usage = ev.usage;
