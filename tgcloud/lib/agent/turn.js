@@ -272,6 +272,7 @@ export async function runTurnStep({ turnId, tgId }) {
             ? await ensureMarketerSkills()
             : [],
         recorder: turnRecorder,
+        checkpoint: turnConv.checkpoint ?? null,
       });
       plan = res.steps;
       planMeta = {
@@ -557,6 +558,7 @@ export async function runTurnStep({ turnId, tgId }) {
           planKey({ type: f.type, params: keyParams(plan[f.index]) }),
         ),
         recorder,
+        checkpoint: conv.checkpoint ?? null,
       });
       if (rp.ok && rp.steps.length) {
         const cap = MAX_PLAN_STEPS + 1;
@@ -681,7 +683,8 @@ ${findings.map((f, i) => `${i + 1}. (${f.type}) ${f.title}: ${f.text}`).join("\n
   const task = String(step.params?.task ?? step.title ?? "проанализируй вопрос");
   const base = await buildLlmMessages(
     agent,
-    historyWithoutTurnQuestion(history, question)
+    historyWithoutTurnQuestion(history, question),
+    { checkpoint: ctx.conv?.checkpoint ?? null },
   );
   const acc = turn.stepText ?? "";
   base.push({
@@ -936,6 +939,7 @@ export async function finishTurnSynthesis({ turnId, tgId }) {
   const base = await buildLlmMessages(
     agent,
     historyWithoutTurnQuestion(history, turn.question),
+    { checkpoint: conv?.checkpoint ?? null },
   );
   const findingsText = findings.length
     ? findings

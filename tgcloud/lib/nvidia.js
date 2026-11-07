@@ -178,24 +178,59 @@ export async function* streamChat(messages, opts = {}) {
     ),
   });
   if (!res.ok) throw apiError(res.status, await res.text());
+  const deadlineMs =
+    typeof opts.deadlineMs === "number" && Number.isFinite(opts.deadlineMs)
+      ? opts.deadlineMs
+      : 22e3;
+  const deadlineAt = Date.now() + deadlineMs;
+  const hasTimer = typeof setTimeout === "function";
   const toolAcc = new Map();
   let usage = null;
-  for await (const line of sseLines(res.body)) {
+  let deadlineHit = false;
+  const tail = () => {
+    if (toolAcc.size)
+      return {
+        delta: "",
+        reasoning: null,
+        finish: "tool_calls",
+        toolCalls: [...toolAcc.values()],
+        model: null,
+        usage,
+      };
+    if (deadlineHit)
+      return { delta: "", reasoning: null, finish: "length", model: null, usage };
+    return { delta: "", reasoning: null, finish: null, model: null, usage };
+  };
+  const lineIterator = sseLines(res.body)[Symbol.asyncIterator]();
+  const raceLine = () =>
+    Promise.race([
+      lineIterator.next(),
+      new Promise((resolve) =>
+        setTimeout(() => resolve("__DEADLINE__"), Math.max(50, deadlineAt - Date.now())),
+      ),
+    ]);
+  for (;;) {
+    let next;
+    if (hasTimer) {
+      next = await raceLine();
+      if (next === "__DEADLINE__") {
+        deadlineHit = true;
+        break;
+      }
+    } else {
+      next = await lineIterator.next();
+    }
+    if (next.done) break;
+    if (Date.now() > deadlineAt) {
+      deadlineHit = true;
+      break;
+    }
+    const line = next.value;
     const t = line.trim();
     if (!t.startsWith("data:")) continue;
     const payload = t.slice(5).trim();
     if (payload === "[DONE]") {
-      if (toolAcc.size)
-        yield {
-          delta: "",
-          reasoning: null,
-          finish: "tool_calls",
-          toolCalls: [...toolAcc.values()],
-          model: null,
-          usage,
-        };
-      else if (usage)
-        yield { delta: "", reasoning: null, finish: null, model: null, usage };
+      yield tail();
       return;
     }
     let j;
@@ -240,17 +275,7 @@ export async function* streamChat(messages, opts = {}) {
       };
     }
   }
-  if (toolAcc.size)
-    yield {
-      delta: "",
-      reasoning: null,
-      finish: "tool_calls",
-      toolCalls: [...toolAcc.values()],
-      model: null,
-      usage,
-    };
-  else if (usage)
-    yield { delta: "", reasoning: null, finish: null, model: null, usage };
+  yield tail();
 }
 function utf8Decode(bytes) {
   if (typeof TextDecoder !== "undefined")

@@ -248,8 +248,10 @@ function plannerUserPrompt({
   hasImages,
   priorSteps,
   findings,
+  checkpoint,
 }) {
   const parts = [`Вопрос пользователя: ${question}`];
+  if (checkpoint) parts.push(`Чекпоинт предыдущего диалога (сжатый пересказ):\n${checkpoint}`);
   parts.push(`История диалога (кратко):
 ${historyBrief(history)}`);
   parts.push(`Изображения приложены: ${hasImages ? "да" : "нет"}`);
@@ -285,6 +287,7 @@ export async function planTurn({
   findings = [],
   executedKeys = [],
   recorder = null,
+  checkpoint = null,
 }) {
   const t0 = Date.now();
   const replan = Boolean(priorSteps.length);
@@ -305,6 +308,7 @@ export async function planTurn({
         hasImages,
         priorSteps,
         findings,
+        checkpoint,
       }),
     ].join("\n\n");
     const msgs = [{ role: "user", content: promptText }];

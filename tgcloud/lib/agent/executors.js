@@ -12,7 +12,7 @@ import {
 } from "../nvidia.js";
 import { webSearch, webRead } from "./websearch.js";
 import { getSkill } from "../skills/index.js";
-import { ensureMarketerSkills } from "../skills/mSkills.js";
+import { MARKETER_AGENT_ID, ensureMarketerSkills } from "../skills/mSkills.js";
 export const MAX_FINDING_CHARS = 2e3;
 const COMPRESS_PROMPT = [
   "Сожми отчёт шага AI-агента в находку для планировщика и финального ответа.",
@@ -144,7 +144,10 @@ async function runStream({ llmMessages, ctx, model: forcedModel }) {
   }
 }
 export async function execDirectAnswer(step, ctx) {
-  const llmMessages = await buildLlmMessages(ctx.agent, ctx.history);
+  const llmMessages = await buildLlmMessages(ctx.agent, ctx.history, {
+    includeSkillTool: ctx.agent?.id === MARKETER_AGENT_ID,
+    checkpoint: ctx.conv?.checkpoint ?? null,
+  });
   const out = await runStream({ llmMessages, ctx });
   return { stream: out, content: out.content ?? "", finding: null };
 }
@@ -159,6 +162,10 @@ export async function execReason(step, ctx) {
   const base = await buildLlmMessages(
     ctx.agent,
     historyWithoutTurnQuestion(ctx.history, ctx.question),
+    {
+      includeSkillTool: ctx.agent?.id === MARKETER_AGENT_ID,
+      checkpoint: ctx.conv?.checkpoint ?? null,
+    },
   );
   const findingsText = (ctx.findings ?? []).length
     ? `Находки предыдущих шагов:
@@ -188,6 +195,10 @@ export async function execSynthesize(step, ctx) {
   const base = await buildLlmMessages(
     ctx.agent,
     historyWithoutTurnQuestion(ctx.history, ctx.question),
+    {
+      includeSkillTool: ctx.agent?.id === MARKETER_AGENT_ID,
+      checkpoint: ctx.conv?.checkpoint ?? null,
+    },
   );
   const findingsText = (ctx.findings ?? []).length
     ? ctx.findings

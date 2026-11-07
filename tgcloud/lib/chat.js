@@ -20,6 +20,7 @@ import {
   streamChat,
   resolveAnswerModel,
   getVisionModel,
+  getCompressModel,
 } from "./nvidia.js";
 import { readFileBytes, bytesToBase64 } from "./files.js";
 import {
@@ -27,6 +28,77 @@ import {
   sanitizeTurnId,
   cleanupConversationTurns,
 } from "./turnEvents.js";
+const COMPACT_TOKEN_LIMIT = 250e3;
+const CHARS_PER_TOKEN = 4;
+export function estimateHistoryTokens(rows) {
+  let chars = 0;
+  for (const m of rows ?? []) {
+    chars += String(m?.content ?? "").length;
+    const meta = m?.meta ?? null;
+    if (meta?.reasoningText) chars += String(meta.reasoningText).length;
+    for (const att of m?.attachments ?? [])
+      chars += String(att?.vision ?? "").length;
+  }
+  return Math.round(chars / CHARS_PER_TOKEN);
+}
+const CHECKPOINT_PROMPT = [
+  "Ты — модуль сжатия контекста AI-агента. Сожми историю диалога в чекпоинт по шаблону ниже.",
+  "Формат ответа — строго:",
+  "<conversation-checkpoint>",
+  "... краткое резюме: факты, имена, числа, решения, договорённости, незакрытые вопросы ...",
+  "</conversation-checkpoint>",
+  "Сохрани всё значимое для продолжения диалога. Без вступлений и пояснений.",
+].join("\n");
+async function buildCheckpoint(convId) {
+  const rows = await db
+    .select({
+      role: messages.role,
+      content: messages.content,
+      meta: messages.meta,
+      attachments: messages.attachments,
+    })
+    .from(messages)
+    .where(eq(messages.conversationId, convId))
+    .all();
+  const body = rows
+    .map(
+      (m) =>
+        `${m.role === "user" ? "Пользователь" : "Агент"}: ${String(m.content ?? "").slice(0, 1500)}`,
+    )
+    .join("\n");
+  const model = await getCompressModel();
+  const r = await completeChat(
+    [
+      { role: "system", content: CHECKPOINT_PROMPT },
+      { role: "user", content: body.slice(0, 120e3) },
+    ],
+    { model, temperature: 0.2, maxTokens: 3e3 },
+  );
+  return String(r.content ?? "").trim();
+}
+export async function compactIfNeeded(conv) {
+  const base = { checkpoint: conv?.checkpoint ?? null, compacted: false, estimate: 0 };
+  if (!conv?.id) return base;
+  const rows = await db
+    .select({
+      content: messages.content,
+      meta: messages.meta,
+      attachments: messages.attachments,
+    })
+    .from(messages)
+    .where(eq(messages.conversationId, conv.id))
+    .all();
+  const estimate = estimateHistoryTokens(rows);
+  base.estimate = estimate;
+  if (estimate <= COMPACT_TOKEN_LIMIT) return base;
+  const checkpoint = await buildCheckpoint(conv.id);
+  if (!checkpoint) return base;
+  await db
+    .update(conversations)
+    .set({ checkpoint })
+    .where(eq(conversations.id, conv.id));
+  return { checkpoint, compacted: true, estimate };
+}
 export async function ensureUser(tgUser) {
   if (!tgUser || !tgUser.id) throw new Error("Нет пользователя Telegram");
   const existing = await db
@@ -245,7 +317,7 @@ ${a.vision}`,
 export async function buildLlmMessages(
   agent,
   history,
-  { includeSkillTool = false } = {},
+  { includeSkillTool = false, checkpoint = null } = {},
 ) {
   const sysParts = [agent.systemPrompt];
   if (includeSkillTool) {
@@ -260,6 +332,11 @@ export async function buildLlmMessages(
     }
   }
   const out = [{ role: "system", content: sysParts.join("\n\n") }];
+  if (checkpoint)
+    out.push({
+      role: "system",
+      content: `Чекпоинт предыдущего диалога (сжатая память; доверяй ему как истории):\n\n${checkpoint}`,
+    });
   for (const m of history) {
     if (m.role !== "user" && m.role !== "assistant") continue;
     out.push({ role: m.role, content: messageTextForModel(m) });
@@ -323,6 +400,8 @@ export async function prepareTurn({
     await appendMessage(conv, "user", contentForDb, null, attachments ?? null);
     history = await getHistory(conv.id);
   }
+  const compacted = await compactIfNeeded(conv);
+  conv = { ...conv, checkpoint: compacted.checkpoint };
   const model = await resolveAnswerModel();
   return { user: userRow, agent, conv, history, model };
 }
@@ -523,6 +602,7 @@ async function runTurn({ agent, conv, history, model }, turnId) {
     await runVisionStep({ history, recorder, out });
     const llmMessages = await buildLlmMessages(agent, history, {
       includeSkillTool: true,
+      checkpoint: conv?.checkpoint ?? null,
     });
     for await (const _ev of streamRounds(
       { agent, llmMessages, model },

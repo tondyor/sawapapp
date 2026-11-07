@@ -24,6 +24,7 @@ export const conversations = table(
     tgId: integer("tg_id").notNull(),
     agentId: text("agent_id").notNull(),
     title: text("title"),
+    checkpoint: text("checkpoint"),
     reasoning: text("reasoning")
       .default("fast")
       .deprecated("уровни рассуждений удалены из продукта"),
